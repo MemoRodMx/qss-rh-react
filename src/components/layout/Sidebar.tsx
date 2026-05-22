@@ -46,6 +46,7 @@ interface SidebarProps {
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/employees", label: "Empleados", icon: Users },
+  { to: "/customers", label: "Clientes", icon: Building2 },
   { to: "/companies", label: "Empresas", icon: Building2 },
   { to: "/attendance", label: "Asistencia", icon: Calendar },
   { to: "/reports", label: "Reportes", icon: FileText },

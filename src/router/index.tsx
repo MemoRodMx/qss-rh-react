@@ -5,6 +5,8 @@ import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { GuestRoute } from "@/features/auth/components/GuestRoute";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { EmployeesPage } from "@/features/employees/pages/EmployeesPage";
+import { CustomersPage } from "@/features/customers/pages/CustomersPage";
+import { CustomerFormPage } from "@/features/customers/pages/CustomerFormPage";
 import { CompaniesPage } from "@/features/companies/pages/CompaniesPage";
 import { CompanyFormPage } from "@/features/companies/pages/CompanyFormPage";
 import { StatesPage } from "@/features/catalogs/pages/StatesPage";
@@ -34,6 +36,9 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: "employees", element: <EmployeesPage /> },
+          { path: "customers", element: <CustomersPage /> },
+          { path: "customers/new", element: <CustomerFormPage /> },
+          { path: "customers/:id/edit", element: <CustomerFormPage /> },
           { path: "companies", element: <CompaniesPage /> },
           { path: "companies/new", element: <CompanyFormPage /> },
           { path: "companies/:id/edit", element: <CompanyFormPage /> },

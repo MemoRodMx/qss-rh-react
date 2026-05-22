@@ -517,7 +517,16 @@ export function CompanyFormPage() {
                       id="status"
                       className={errors.status ? "border-destructive" : ""}
                     >
-                      <SelectValue placeholder="Seleccionar" />
+                      <SelectValue placeholder="Seleccionar">
+                        {(value: string | null) => {
+                          if (!value) return "Seleccionar";
+                          const labels: Record<string, string> = {
+                            ACTIVE: "Activo",
+                            INACTIVE: "Inactivo",
+                          };
+                          return labels[value] ?? value;
+                        }}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ACTIVE">Activo</SelectItem>

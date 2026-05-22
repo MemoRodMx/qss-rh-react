@@ -401,7 +401,13 @@ export function ShiftsSchedulesPage() {
                   id="customer_id"
                   className={errors.customer_id ? "border-destructive" : ""}
                 >
-                  <SelectValue placeholder="Seleccionar cliente" />
+                  <SelectValue placeholder="Seleccionar cliente">
+                    {(value: string | null) => {
+                      if (!value) return "Seleccionar cliente";
+                      const customer = customers.find((c) => c.code === value);
+                      return customer?.name ?? value;
+                    }}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {customers.map((customer) => (
