@@ -5,6 +5,7 @@ import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { GuestRoute } from "@/features/auth/components/GuestRoute";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { EmployeesPage } from "@/features/employees/pages/EmployeesPage";
+import { EmployeeFormPage } from "@/features/employees/pages/EmployeeFormPage";
 import { CustomersPage } from "@/features/customers/pages/CustomersPage";
 import { CustomerFormPage } from "@/features/customers/pages/CustomerFormPage";
 import { CompaniesPage } from "@/features/companies/pages/CompaniesPage";
@@ -36,6 +37,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: "employees", element: <EmployeesPage /> },
+          { path: "employees/new", element: <EmployeeFormPage /> },
+          { path: "employees/:id/edit", element: <EmployeeFormPage /> },
           { path: "customers", element: <CustomersPage /> },
           { path: "customers/new", element: <CustomerFormPage /> },
           { path: "customers/:id/edit", element: <CustomerFormPage /> },
