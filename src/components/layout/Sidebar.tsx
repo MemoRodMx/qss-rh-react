@@ -5,13 +5,20 @@ import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
   Users,
+  Building2,
   Calendar,
   FileText,
   Settings,
   LogOut,
   ChevronLeft,
+  ChevronDown,
   AlertTriangle,
+  BookOpen,
+  MapPin,
+  CalendarDays,
+  Clock,
 } from "lucide-react";
+
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { APP_NAME } from "@/lib/constants";
 import { Avatar, AvatarFallback, AvatarBadge } from "@/components/ui/avatar";
@@ -39,14 +46,34 @@ interface SidebarProps {
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/employees", label: "Empleados", icon: Users },
+  { to: "/companies", label: "Empresas", icon: Building2 },
   { to: "/attendance", label: "Asistencia", icon: Calendar },
   { to: "/reports", label: "Reportes", icon: FileText },
   { to: "/settings", label: "Configuración", icon: Settings },
 ];
 
+const catalogItems = [
+  { to: "/catalogs/states", label: "Estados", icon: MapPin },
+  { to: "/catalogs/cities", label: "Ciudades", icon: MapPin },
+  { to: "/catalogs/zipcodes", label: "Códigos Postales", icon: MapPin },
+  { to: "/catalogs/colonies", label: "Colonias", icon: MapPin },
+  {
+    to: "/catalogs/public-holidays",
+    label: "Días Festivos",
+    icon: CalendarDays,
+  },
+  {
+    to: "/catalogs/payroll-calendars",
+    label: "Calendario Nómina",
+    icon: CalendarDays,
+  },
+  { to: "/catalogs/shifts-schedules", label: "Turnos y Horarios", icon: Clock },
+];
+
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { user, logout } = useAuth();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
 
   const initials = user?.name
     ?.split(" ")
@@ -92,7 +119,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <Separator className="bg-white/10" />
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-2">
+      <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
         {navItems.map((item) => {
           const link = (
             <NavLink
@@ -140,6 +167,69 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           }
           return link;
         })}
+
+        {/* ── Catálogos section ──────────────────────────────────────────── */}
+        {collapsed ? (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 text-teal-200/70 hover:bg-white/10 hover:text-white cursor-pointer"
+                >
+                  <BookOpen className="h-4 w-4 shrink-0" />
+                </button>
+              }
+            />
+            <TooltipContent side="right" sideOffset={8}>
+              Catálogos
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => setCatalogOpen(!catalogOpen)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 cursor-pointer",
+                catalogOpen
+                  ? "bg-white/15 text-white"
+                  : "text-teal-200/70 hover:bg-white/10 hover:text-white",
+              )}
+            >
+              <BookOpen className="h-4 w-4 shrink-0" />
+              <span className="flex-1 text-left">Catálogos</span>
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 transition-transform duration-200",
+                  catalogOpen && "rotate-180",
+                )}
+              />
+            </button>
+
+            {catalogOpen && (
+              <div className="ml-2 space-y-0.5 border-l border-white/10 pl-2">
+                {catalogItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                        isActive
+                          ? "bg-white/15 text-white"
+                          : "text-teal-200/50 hover:bg-white/10 hover:text-white",
+                      )
+                    }
+                  >
+                    <item.icon className="h-3 w-3 shrink-0" />
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </nav>
 
       <Separator className="bg-white/10" />

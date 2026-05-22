@@ -6,6 +6,9 @@ export const ROUTES = {
   DASHBOARD: "/",
   EMPLOYEES: "/employees",
   EMPLOYEE_DETAIL: "/employees/:id",
+  COMPANIES: "/companies",
+  COMPANY_NEW: "/companies/new",
+  COMPANY_EDIT: "/companies/:id/edit",
 } as const;
 
 export const SHADOW_LEVELS = {

@@ -51,3 +51,39 @@ export interface LoginCredentials {
   username: string;
   password: string;
 }
+
+export interface CompanyAddress {
+  street?: string;
+  ext_number?: string;
+  int_number?: string;
+  colony?: string;
+  city?: string;
+  state?: string;
+  zipcode?: string;
+}
+
+export interface CompanyDocument {
+  document_number?: string;
+  expiration_date?: string | null;
+}
+
+export interface Company {
+  _id: string;
+  legal_name: string;
+  rfc: string;
+  patronal_registration: string;
+  legal_representative: string;
+  fiscal_reg_number?: string;
+  address?: CompanyAddress;
+  repse?: CompanyDocument;
+  canaco?: CompanyDocument;
+  siem?: CompanyDocument;
+  iso_18788?: CompanyDocument;
+  celic?: CompanyDocument;
+  operating_license?: CompanyDocument;
+  land_use_license?: CompanyDocument;
+  suppliers_registry?: CompanyDocument;
+  status: "ACTIVE" | "INACTIVE";
+  plants?: Array<{ plant_id: string }>;
+  company_id?: string;
+}

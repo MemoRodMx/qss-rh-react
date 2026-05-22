@@ -5,6 +5,15 @@ import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { GuestRoute } from "@/features/auth/components/GuestRoute";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
 import { EmployeesPage } from "@/features/employees/pages/EmployeesPage";
+import { CompaniesPage } from "@/features/companies/pages/CompaniesPage";
+import { CompanyFormPage } from "@/features/companies/pages/CompanyFormPage";
+import { StatesPage } from "@/features/catalogs/pages/StatesPage";
+import { CitiesPage } from "@/features/catalogs/pages/CitiesPage";
+import { ZipcodesPage } from "@/features/catalogs/pages/ZipcodesPage";
+import { ColoniesPage } from "@/features/catalogs/pages/ColoniesPage";
+import { PublicHolidaysPage } from "@/features/catalogs/pages/PublicHolidaysPage";
+import { PayrollCalendarsPage } from "@/features/catalogs/pages/PayrollCalendarsPage";
+import { ShiftsSchedulesPage } from "@/features/catalogs/pages/ShiftsSchedulesPage";
 
 export const router = createBrowserRouter([
   {
@@ -25,6 +34,22 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: "employees", element: <EmployeesPage /> },
+          { path: "companies", element: <CompaniesPage /> },
+          { path: "companies/new", element: <CompanyFormPage /> },
+          { path: "companies/:id/edit", element: <CompanyFormPage /> },
+          { path: "catalogs/states", element: <StatesPage /> },
+          { path: "catalogs/cities", element: <CitiesPage /> },
+          { path: "catalogs/zipcodes", element: <ZipcodesPage /> },
+          { path: "catalogs/colonies", element: <ColoniesPage /> },
+          { path: "catalogs/public-holidays", element: <PublicHolidaysPage /> },
+          {
+            path: "catalogs/payroll-calendars",
+            element: <PayrollCalendarsPage />,
+          },
+          {
+            path: "catalogs/shifts-schedules",
+            element: <ShiftsSchedulesPage />,
+          },
           { path: "*", element: <Navigate to="/" replace /> },
         ],
       },
