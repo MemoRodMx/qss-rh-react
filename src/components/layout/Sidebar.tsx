@@ -19,11 +19,13 @@ import {
   CalendarCheck,
   Users,
   UserCog,
+  Shield,
 } from "lucide-react";
 
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { APP_NAME } from "@/lib/constants";
 import { Avatar, AvatarFallback, AvatarBadge } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -54,6 +56,7 @@ const navItems = [
   { to: "/vacation-requests", label: "Vacaciones", icon: CalendarDays },
   { to: "/attendance", label: "Asistencia", icon: Calendar },
   { to: "/users", label: "Usuarios", icon: UserCog },
+  { to: "/audit-logs", label: "Auditoría", icon: Shield },
   { to: "/reports", label: "Reportes", icon: FileText },
   { to: "/settings", label: "Configuración", icon: Settings },
 ];
@@ -75,6 +78,30 @@ const catalogItems = [
   },
   { to: "/catalogs/shifts-schedules", label: "Turnos y Horarios", icon: Clock },
 ];
+
+const roleConfig: Record<
+  string,
+  { label: string; variant: "teal" | "success" | "warning" | "default" }
+> = {
+  System: { label: "Sistema", variant: "teal" },
+  Admin: { label: "Admin", variant: "success" },
+  User: { label: "Usuario", variant: "warning" },
+};
+
+function RoleBadge({ role }: { role: string }) {
+  const config = roleConfig[role] ?? {
+    label: role,
+    variant: "default" as const,
+  };
+  return (
+    <Badge
+      variant={config.variant}
+      className="cursor-default text-[10px] leading-none px-1.5 py-0.5"
+    >
+      {config.label}
+    </Badge>
+  );
+}
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { user, logout } = useAuth();
@@ -127,6 +154,10 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
         {navItems.map((item) => {
+          // Skip audit-logs for non-System users
+          if (item.to === "/audit-logs" && user?.role !== "System") {
+            return null;
+          }
           const link = (
             <NavLink
               key={item.to}
@@ -241,68 +272,96 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <Separator className="bg-white/10" />
 
       {/* User info */}
-      <div className="p-3">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8 ring-2 ring-teal-300/30">
-            <AvatarFallback className="bg-teal-700 text-xs text-teal-100">
-              {initials}
-            </AvatarFallback>
-            <AvatarBadge className="bg-emerald-400" />
-          </Avatar>
-          {!collapsed && (
-            <div className="flex-1 truncate animate-fade-in">
-              <p className="text-sm font-medium text-teal-100">{user?.name}</p>
-              <p className="text-xs text-teal-200/60 capitalize">
-                {user?.role}
-              </p>
-            </div>
-          )}
-
-          {/* Logout with confirmation dialog */}
-          <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
-            <DialogTrigger
+      <div className={cn("bg-white/5", collapsed ? "p-2" : "p-3")}>
+        {collapsed ? (
+          /* ── Collapsed: tooltip on avatar ─────────────────────────── */
+          <Tooltip>
+            <TooltipTrigger
               render={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="cursor-pointer shrink-0 text-teal-300 hover:bg-white/10 hover:text-white"
-                  title="Cerrar sesión"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center justify-center">
+                  <Avatar className="h-9 w-9 ring-2 ring-teal-300/30">
+                    <AvatarFallback className="bg-teal-700 text-xs text-teal-100">
+                      {initials}
+                    </AvatarFallback>
+                    <AvatarBadge className="bg-emerald-400" />
+                  </Avatar>
+                </div>
               }
             />
-            <DialogContent>
-              <DialogHeader>
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-                  <AlertTriangle className="h-6 w-6 text-destructive" />
-                </div>
-                <DialogTitle className="text-center">
-                  ¿Cerrar sesión?
-                </DialogTitle>
-                <DialogDescription className="text-center">
-                  Estás a punto de cerrar tu sesión actual. ¿Deseas continuar?
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="gap-2 sm:justify-center">
-                <Button
-                  variant="outline"
-                  onClick={() => setLogoutDialogOpen(false)}
-                  className="cursor-pointer"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleLogout}
-                  className="cursor-pointer"
-                >
-                  Cerrar sesión
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+            <TooltipContent side="right" sideOffset={8} className="space-y-1">
+              <p className="text-sm font-medium">{user?.name}</p>
+              <p className="text-xs text-muted-foreground">@{user?.username}</p>
+              <RoleBadge role={user?.role ?? ""} />
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          /* ── Expanded: full user card ─────────────────────────────── */
+          <div className="flex items-center gap-3 animate-fade-in">
+            <Avatar className="h-10 w-10 shrink-0 ring-2 ring-teal-300/30 ring-offset-2 ring-offset-[#0f2a2a]">
+              <AvatarFallback className="bg-teal-700 text-sm font-semibold text-teal-100">
+                {initials}
+              </AvatarFallback>
+              <AvatarBadge className="bg-emerald-400" />
+            </Avatar>
+
+            <div className="flex-1 min-w-0">
+              <p className="truncate text-sm font-semibold text-teal-100 leading-tight">
+                {user?.name}
+              </p>
+              <p className="truncate text-xs text-teal-200/50 leading-tight">
+                @{user?.username}
+              </p>
+              <div className="mt-1">
+                <RoleBadge role={user?.role ?? ""} />
+              </div>
+            </div>
+
+            {/* Logout with confirmation dialog */}
+            <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+              <DialogTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="cursor-pointer shrink-0 text-teal-300 hover:bg-white/10 hover:text-white"
+                    title="Cerrar sesión"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                }
+              />
+              <DialogContent>
+                <DialogHeader>
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                    <AlertTriangle className="h-6 w-6 text-destructive" />
+                  </div>
+                  <DialogTitle className="text-center">
+                    ¿Cerrar sesión?
+                  </DialogTitle>
+                  <DialogDescription className="text-center">
+                    Estás a punto de cerrar tu sesión actual. ¿Deseas continuar?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="gap-2 sm:justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => setLogoutDialogOpen(false)}
+                    className="cursor-pointer"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleLogout}
+                    className="cursor-pointer"
+                  >
+                    Cerrar sesión
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </div>
     </aside>
   );

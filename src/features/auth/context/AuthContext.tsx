@@ -20,15 +20,35 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const token = localStorage.getItem("auth_token");
-    return token ? ({ id: "", username: "", role: "" } as User) : null;
-  });
-  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const clearSession = useCallback(() => {
     localStorage.removeItem("auth_token");
     setUser(null);
+  }, []);
+
+  // Validate token on mount by calling /auth/me
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+
+    authService
+      .getProfile()
+      .then((profile) => {
+        setUser(profile);
+      })
+      .catch(() => {
+        // Token is invalid or expired — clear session
+        localStorage.removeItem("auth_token");
+        setUser(null);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   // Listen for unauthorized events from the API interceptor

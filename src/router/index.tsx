@@ -29,6 +29,7 @@ import { AttendanceRecordDetailPage } from "@/features/attendance/pages/Attendan
 import { AttendanceRecordFormPage } from "@/features/attendance/pages/AttendanceRecordFormPage";
 import { UsersPage } from "@/features/users/pages/UsersPage";
 import { UserFormPage } from "@/features/users/pages/UserFormPage";
+import { AuditLogsPage } from "@/features/audit-logs/pages/AuditLogsPage";
 
 export const router = createBrowserRouter([
   {
@@ -91,6 +92,7 @@ export const router = createBrowserRouter([
           { path: "users", element: <UsersPage /> },
           { path: "users/new", element: <UserFormPage /> },
           { path: "users/:id/edit", element: <UserFormPage /> },
+          { path: "audit-logs", element: <AuditLogsPage /> },
           { path: "attendance", element: <AttendanceRecordsPage /> },
           { path: "attendance/new", element: <AttendanceRecordFormPage /> },
           { path: "attendance/:id", element: <AttendanceRecordDetailPage /> },
