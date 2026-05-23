@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { restRoleService } from "../services/restRoleService";
+import { settingsService } from "@/features/settings/services/settingsService";
 import { DayAssignmentField } from "../components/DayAssignmentField";
 import type { Supervisor, SupervisorPlant, ShiftOption } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -122,7 +123,7 @@ export function RestRoleFormPage() {
       const [supervisorsData, shiftsData, positionIdsData] = await Promise.all([
         restRoleService.listSupervisors(),
         restRoleService.listShifts(),
-        restRoleService.getConfiguredPositionIds(),
+        settingsService.getConfig(),
       ]);
       setSupervisors(supervisorsData);
       setShifts(shiftsData);

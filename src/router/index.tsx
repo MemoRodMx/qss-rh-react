@@ -30,6 +30,7 @@ import { AttendanceRecordFormPage } from "@/features/attendance/pages/Attendance
 import { UsersPage } from "@/features/users/pages/UsersPage";
 import { UserFormPage } from "@/features/users/pages/UserFormPage";
 import { AuditLogsPage } from "@/features/audit-logs/pages/AuditLogsPage";
+import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 
 export const router = createBrowserRouter([
   {
@@ -92,6 +93,7 @@ export const router = createBrowserRouter([
           { path: "users", element: <UsersPage /> },
           { path: "users/new", element: <UserFormPage /> },
           { path: "users/:id/edit", element: <UserFormPage /> },
+          { path: "settings", element: <SettingsPage /> },
           { path: "audit-logs", element: <AuditLogsPage /> },
           { path: "attendance", element: <AttendanceRecordsPage /> },
           { path: "attendance/new", element: <AttendanceRecordFormPage /> },

@@ -100,9 +100,4 @@ export const restRoleService = {
     });
     return Array.isArray(data) ? data : (data?.data ?? []);
   },
-
-  async getConfiguredPositionIds(): Promise<string[]> {
-    const { data } = await api.get("/settings/rest-role-positions");
-    return Array.isArray(data) ? data : (data?.position_ids ?? []);
-  },
 };

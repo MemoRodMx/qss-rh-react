@@ -16,6 +16,8 @@
   --color-primary-foreground: hsl(var(--primary-foreground));
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-teal: hsl(var(--teal));
+  --color-teal-foreground: hsl(var(--teal-foreground));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-accent: hsl(var(--accent));
@@ -50,59 +52,73 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 
   /* Teal-tinted shadows */
-  --shadow-1: 0 1px 3px 0 rgba(15, 118, 110, 0.06), 0 1px 2px -1px rgba(15, 118, 110, 0.06);
-  --shadow-2: 0 4px 6px -1px rgba(15, 118, 110, 0.07), 0 2px 4px -2px rgba(15, 118, 110, 0.05);
-  --shadow-3: 0 10px 15px -3px rgba(15, 118, 110, 0.08), 0 4px 6px -4px rgba(15, 118, 110, 0.04);
-  --shadow-4: 0 20px 25px -5px rgba(15, 118, 110, 0.1), 0 8px 10px -6px rgba(15, 118, 110, 0.05);
-  --shadow-5: 0 25px 50px -12px rgba(15, 118, 110, 0.25);
+  --shadow-1: 0 1px 3px 0 hsl(var(--teal) / 0.06), 0 1px 2px -1px hsl(var(--teal) / 0.06);
+  --shadow-2: 0 4px 6px -1px hsl(var(--teal) / 0.07), 0 2px 4px -2px hsl(var(--teal) / 0.05);
+  --shadow-3: 0 10px 15px -3px hsl(var(--teal) / 0.08), 0 4px 6px -4px hsl(var(--teal) / 0.04);
+  --shadow-4: 0 20px 25px -5px hsl(var(--teal) / 0.1), 0 8px 10px -6px hsl(var(--teal) / 0.05);
+  --shadow-5: 0 25px 50px -12px hsl(var(--teal) / 0.25);
 }
 
 @layer base {
   :root {
     /* Teal Eye-Care Palette - Light */
-    --background: 160 20% 97%;
-    --foreground: 160 10% 15%;
+    --background: var(--teal-hue) 20% 97%;
+    --foreground: var(--teal-hue) 10% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 160 10% 15%;
+    --card-foreground: var(--teal-hue) 10% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 160 10% 15%;
-    --primary: 174 60% 35%;
+    --popover-foreground: var(--teal-hue) 10% 15%;
+    --primary: var(--teal-hue) 60% 35%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 172 66% 50%;
-    --secondary-foreground: 174 60% 15%;
-    --muted: 160 15% 93%;
-    --muted-foreground: 160 10% 38%;
-    --accent: 200 98% 39%;
+    --secondary: var(--teal-hue) var(--teal-sat) 50%;
+    --secondary-foreground: var(--teal-hue) 60% 15%;
+    --teal-hue: 160;
+    --teal-sat: 60%;
+    --teal: var(--teal-hue) var(--teal-sat) 65%;
+    --teal-foreground: var(--teal-hue) 60% 15%;
+    --sidebar-bg: var(--teal-hue) var(--teal-sat) 12%;
+    --sidebar-surface: var(--teal-hue) var(--teal-sat) 8%;
+    --sidebar-border: var(--teal-hue) var(--teal-sat) 15%;
+    --muted: var(--teal-hue) 15% 93%;
+    --muted-foreground: var(--teal-hue) 10% 38%;
+    --accent: var(--teal-hue) 98% 39%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 160 20% 85%;
-    --input: 160 20% 85%;
-    --ring: 174 60% 35%;
+    --border: var(--teal-hue) 20% 85%;
+    --input: var(--teal-hue) 20% 85%;
+    --ring: var(--teal-hue) 60% 35%;
     --radius: 0.625rem;
   }
 
   .dark {
     /* Teal Eye-Care Palette - Dark */
-    --background: 200 15% 12%;
-    --foreground: 160 10% 90%;
-    --card: 200 15% 16%;
-    --card-foreground: 160 10% 90%;
-    --popover: 200 15% 16%;
-    --popover-foreground: 160 10% 90%;
-    --primary: 174 60% 45%;
+    --background: var(--teal-hue) 15% 12%;
+    --foreground: var(--teal-hue) 10% 90%;
+    --card: var(--teal-hue) 15% 16%;
+    --card-foreground: var(--teal-hue) 10% 90%;
+    --popover: var(--teal-hue) 15% 16%;
+    --popover-foreground: var(--teal-hue) 10% 90%;
+    --primary: var(--teal-hue) 60% 45%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 172 66% 55%;
-    --secondary-foreground: 200 15% 12%;
-    --muted: 200 10% 20%;
-    --muted-foreground: 160 10% 65%;
-    --accent: 200 80% 50%;
+    --secondary: var(--teal-hue) var(--teal-sat) 55%;
+    --secondary-foreground: var(--teal-hue) 15% 12%;
+    --teal-hue: 172;
+    --teal-sat: 66%;
+    --teal: var(--teal-hue) var(--teal-sat) 55%;
+    --teal-foreground: var(--teal-hue) 15% 12%;
+    --sidebar-bg: var(--teal-hue) var(--teal-sat) 12%;
+    --sidebar-surface: var(--teal-hue) var(--teal-sat) 8%;
+    --sidebar-border: var(--teal-hue) var(--teal-sat) 15%;
+    --muted: var(--teal-hue) 10% 20%;
+    --muted-foreground: var(--teal-hue) 10% 65%;
+    --accent: var(--teal-hue) 80% 50%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 73% 50%;
     --destructive-foreground: 0 0% 98%;
-    --border: 200 10% 25%;
-    --input: 200 10% 25%;
-    --ring: 174 60% 45%;
+    --border: var(--teal-hue) 10% 25%;
+    --input: var(--teal-hue) 10% 25%;
+    --ring: var(--teal-hue) 60% 45%;
   }
 
   * {

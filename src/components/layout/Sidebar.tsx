@@ -96,7 +96,7 @@ function RoleBadge({ role }: { role: string }) {
   return (
     <Badge
       variant={config.variant}
-      className="cursor-default text-[10px] leading-none px-1.5 py-0.5"
+      className="cursor-default text-[10px] leading-none px-1.5 py-0.5 text-white"
     >
       {config.label}
     </Badge>
@@ -123,14 +123,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-white/10 bg-gradient-to-b from-[#1a3a3a] to-[#0f2a2a] transition-all duration-300 ease-out",
+        "flex flex-col border-r border-[hsl(var(--sidebar-border))] bg-gradient-to-b from-[hsl(var(--sidebar-bg))] to-[hsl(var(--sidebar-surface))] transition-all duration-300 ease-out",
         collapsed ? "w-16" : "w-64",
       )}
     >
       {/* Logo */}
       <div className="flex h-14 items-center justify-between px-4">
         {!collapsed && (
-          <span className="animate-fade-in text-sm font-semibold tracking-tight text-teal-100">
+          <span className="animate-fade-in text-sm font-semibold tracking-tight text-[hsl(var(--teal)_/_0.9)]">
             {APP_NAME}
           </span>
         )}
@@ -138,7 +138,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           variant="ghost"
           size="icon"
           onClick={onToggle}
-          className="cursor-pointer text-teal-300 hover:bg-white/10 hover:text-white"
+          className="cursor-pointer text-[hsl(var(--teal)_/_0.85)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white"
         >
           <ChevronLeft
             className={cn(
@@ -149,7 +149,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </Button>
       </div>
 
-      <Separator className="bg-white/10" />
+      <Separator className="bg-[hsl(var(--sidebar-border))]" />
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
@@ -166,8 +166,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                   isActive
-                    ? "bg-white/15 text-white shadow-[inset_3px_0_0_0] shadow-teal-300"
-                    : "text-teal-200/70 hover:bg-white/10 hover:text-white",
+                    ? "bg-[hsl(var(--sidebar-border))] text-white shadow-[inset_3px_0_0_0] shadow-[hsl(var(--teal)_/_0.8)]"
+                    : "text-[hsl(var(--teal)_/_0.8)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white",
                 )
               }
             >
@@ -187,8 +187,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                         cn(
                           "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                           isActive
-                            ? "bg-white/15 text-white shadow-[inset_3px_0_0_0] shadow-teal-300"
-                            : "text-teal-200/70 hover:bg-white/10 hover:text-white",
+                            ? "bg-[hsl(var(--sidebar-border))] text-white shadow-[inset_3px_0_0_0] shadow-[hsl(var(--teal)_/_0.8)]"
+                            : "text-[hsl(var(--teal)_/_0.8)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white",
                         )
                       }
                     >
@@ -212,7 +212,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               render={
                 <button
                   type="button"
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 text-teal-200/70 hover:bg-white/10 hover:text-white cursor-pointer"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 text-[hsl(var(--teal)_/_0.8)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white cursor-pointer"
                 >
                   <BookOpen className="h-4 w-4 shrink-0" />
                 </button>
@@ -230,8 +230,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               className={cn(
                 "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 cursor-pointer",
                 catalogOpen
-                  ? "bg-white/15 text-white"
-                  : "text-teal-200/70 hover:bg-white/10 hover:text-white",
+                  ? "bg-[hsl(var(--sidebar-border))] text-white"
+                  : "text-[hsl(var(--teal)_/_0.8)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white",
               )}
             >
               <BookOpen className="h-4 w-4 shrink-0" />
@@ -245,7 +245,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             </button>
 
             {catalogOpen && (
-              <div className="ml-2 space-y-0.5 border-l border-white/10 pl-2">
+              <div className="ml-2 space-y-0.5 border-l border-[hsl(var(--sidebar-border))] pl-2">
                 {catalogItems.map((item) => (
                   <NavLink
                     key={item.to}
@@ -254,8 +254,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                       cn(
                         "flex items-center gap-3 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200",
                         isActive
-                          ? "bg-white/15 text-white"
-                          : "text-teal-200/50 hover:bg-white/10 hover:text-white",
+                          ? "bg-[hsl(var(--sidebar-border))] text-white"
+                          : "text-[hsl(var(--teal)_/_0.65)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white",
                       )
                     }
                   >
@@ -269,18 +269,20 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         )}
       </nav>
 
-      <Separator className="bg-white/10" />
+      <Separator className="bg-[hsl(var(--sidebar-border))]" />
 
       {/* User info */}
-      <div className={cn("bg-white/5", collapsed ? "p-2" : "p-3")}>
+      <div
+        className={cn("bg-[hsl(var(--sidebar-bg))]", collapsed ? "p-2" : "p-3")}
+      >
         {collapsed ? (
           /* ── Collapsed: tooltip on avatar ─────────────────────────── */
           <Tooltip>
             <TooltipTrigger
               render={
                 <div className="flex items-center justify-center">
-                  <Avatar className="h-9 w-9 ring-2 ring-teal-300/30">
-                    <AvatarFallback className="bg-teal-700 text-xs text-teal-100">
+                  <Avatar className="h-9 w-9 ring-2 ring-[hsl(var(--teal)_/_0.3)]">
+                    <AvatarFallback className="bg-[hsl(var(--sidebar-border))] text-xs text-[hsl(var(--teal)_/_0.9)]">
                       {initials}
                     </AvatarFallback>
                     <AvatarBadge className="bg-emerald-400" />
@@ -297,18 +299,18 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         ) : (
           /* ── Expanded: full user card ─────────────────────────────── */
           <div className="flex items-center gap-3 animate-fade-in">
-            <Avatar className="h-10 w-10 shrink-0 ring-2 ring-teal-300/30 ring-offset-2 ring-offset-[#0f2a2a]">
-              <AvatarFallback className="bg-teal-700 text-sm font-semibold text-teal-100">
+            <Avatar className="h-10 w-10 shrink-0 ring-2 ring-[hsl(var(--teal)_/_0.3)] ring-offset-2 ring-offset-[hsl(var(--sidebar-surface))]">
+              <AvatarFallback className="bg-[hsl(var(--sidebar-border))] text-sm font-semibold text-[hsl(var(--teal)_/_0.9)]">
                 {initials}
               </AvatarFallback>
               <AvatarBadge className="bg-emerald-400" />
             </Avatar>
 
             <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-semibold text-teal-100 leading-tight">
+              <p className="truncate text-sm font-semibold text-[hsl(var(--teal)_/_0.9)] leading-tight">
                 {user?.name}
               </p>
-              <p className="truncate text-xs text-teal-200/50 leading-tight">
+              <p className="truncate text-xs text-[hsl(var(--teal))] leading-tight">
                 @{user?.username}
               </p>
               <div className="mt-1">
@@ -323,7 +325,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="cursor-pointer shrink-0 text-teal-300 hover:bg-white/10 hover:text-white"
+                    className="cursor-pointer shrink-0 text-[hsl(var(--teal)_/_0.85)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white"
                     title="Cerrar sesión"
                   >
                     <LogOut className="h-4 w-4" />
