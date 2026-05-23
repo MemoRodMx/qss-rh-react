@@ -1,15 +1,11 @@
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { employeeService } from "../services/employeeService";
-import { generateCurpBase, generateRfcBase } from "../utils/useCurpRfc";
-import type {
-  EmployeeFormValues,
-  CatalogOption,
-  SupervisorOption,
-  BankOption,
-} from "../types";
+import { generateCurpBase } from "../utils/useCurpRfc";
+import type { CatalogOption, SupervisorOption, BankOption } from "../types";
 
 // ── Zod schema ──────────────────────────────────────────────────────────────
 const employeeFormSchema = z.object({
@@ -306,6 +302,7 @@ export function useEmployeeForm() {
   const watchedZipcode = watch("address_zipcode");
   const watchedDailySalary = watch("salary_daily_salary");
   const watchedSalaryType = watch("salary_salary_type");
+  const watchedDayPerMonth = watch("salary_day_per_month");
   const watchedHireDate = watch("hire_date");
 
   // ── Load auxiliary data ───────────────────────────────────────────────────
@@ -539,12 +536,15 @@ export function useEmployeeForm() {
     const daily = parseFloat(watchedDailySalary);
     if (!isNaN(daily) && daily > 0) {
       setValue("salary_weekly_salary", (daily * 7).toFixed(2));
-      setValue("salary_monthly_salary", (daily * 30).toFixed(2));
+      const daysPerMonth = parseFloat(watchedDayPerMonth);
+      const multiplier =
+        !isNaN(daysPerMonth) && daysPerMonth > 0 ? daysPerMonth : 30;
+      setValue("salary_monthly_salary", (daily * multiplier).toFixed(2));
     } else {
       setValue("salary_weekly_salary", "");
       setValue("salary_monthly_salary", "");
     }
-  }, [watchedDailySalary, watchedSalaryType, setValue]);
+  }, [watchedDailySalary, watchedSalaryType, watchedDayPerMonth, setValue]);
 
   // ── CURP auto-generation ──────────────────────────────────────────────────
   // Only overwrite the CURP when the generated base actually differs from the
@@ -584,31 +584,16 @@ export function useEmployeeForm() {
     setValue,
   ]);
 
-  // ── RFC auto-generation ───────────────────────────────────────────────────
-  // Same logic: only overwrite when the generated base (first 10 chars) differs
-  // from the saved value's prefix.
-  useEffect(() => {
-    const base = generateRfcBase(
-      watchedName,
-      watchedSurname,
-      watchedLastname,
-      watchedBirthDate || null,
-    );
-    if (!base) return;
+  // ── Submit handler ─────────────────────────────────────────────────────────
+  const onSubmit = async (values: FormValues) => {
+    setIsSubmitting(true);
+    setServerError(null);
 
-    const saved = savedRfcRef.current;
-    // If there's a saved value and the generated base matches its first 10 chars,
-    // keep the saved value (preserving the homoclave)
-    if (saved && saved.startsWith(base)) return;
-
-    setValue("rfc", base);
-  }, [
-    watchedName,
-    watchedSurname,
-    watchedLastname,
-    watchedBirthDate,
-    setValue,
-  ]);
+    try {
+      const payload = {
+        customer_id: values.customer_id,
+        employee_number: values.employee_number || undefined,
+        name: values.name,
         surname: values.surname,
         lastname: values.lastname || undefined,
         rfc: values.rfc || undefined,
@@ -685,6 +670,7 @@ export function useEmployeeForm() {
       };
 
       // Clean undefined values from nested objects
+      const payloadAny = payload as Record<string, unknown>;
       for (const key of [
         "work_location",
         "salary",
@@ -692,11 +678,11 @@ export function useEmployeeForm() {
         "address",
         "personal_data",
       ]) {
-        const obj = payload[key] as Record<string, unknown>;
+        const obj = payloadAny[key] as Record<string, unknown>;
         for (const k of Object.keys(obj)) {
           if (obj[k] === undefined) delete obj[k];
         }
-        if (Object.keys(obj).length === 0) delete payload[key];
+        if (Object.keys(obj).length === 0) delete payloadAny[key];
       }
 
       if (isEditMode) {
