@@ -1,84 +1,46 @@
-export interface RestRole {
-  _id: string;
-  plant_id: string;
-  plant_name?: string;
-  plant_code?: string;
-  shift_id: string;
-  shift_name?: string;
-  shift_code?: string;
-  year: number;
-  week: number;
-  supervisor_id?: { _id: string; name: string; employee_number: string };
-  supervisor_name?: string;
-  creator_username?: string;
-  reviewer_username?: string;
-  reviewed_at?: string;
-  review_notes?: string;
-  status: RestRoleStatus;
-  days: RestRoleDay[];
-  status_log?: StatusLogEntry[];
-  company_id?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export type RestRoleStatus = "PENDIENTE DE REVISION" | "ACEPTADA" | "RECHAZADA";
-
 export interface RestRoleDay {
-  day_name: DayKey;
-  employees: RestRoleEmployee[];
+  day_name: string;
+  employee_numbers: string[];
 }
 
-export interface RestRoleEmployee {
+export interface RestRoleDayEmployee {
   number: string;
   full_name: string;
 }
 
-export type DayKey =
-  | "monday"
-  | "tuesday"
-  | "wednesday"
-  | "thursday"
-  | "friday"
-  | "saturday"
-  | "sunday";
-
-export interface DayConfig {
-  key: DayKey;
-  label: string;
+export interface RestRoleDayWithEmployees {
+  day_name: string;
+  employee_numbers: string[];
+  employees: RestRoleDayEmployee[];
 }
 
-export const DAY_NAMES: DayConfig[] = [
-  { key: "monday", label: "Lunes" },
-  { key: "tuesday", label: "Martes" },
-  { key: "wednesday", label: "Miércoles" },
-  { key: "thursday", label: "Jueves" },
-  { key: "friday", label: "Viernes" },
-  { key: "saturday", label: "Sábado" },
-  { key: "sunday", label: "Domingo" },
-];
+export interface RestRoleStatusLogEntry {
+  status: string;
+  notes: string | null;
+  changed_by_username: string;
+  changed_at: string;
+}
 
-export const DAY_NAMES_MAP: Record<DayKey, string> = {
-  monday: "Lunes",
-  tuesday: "Martes",
-  wednesday: "Miércoles",
-  thursday: "Jueves",
-  friday: "Viernes",
-  saturday: "Sábado",
-  sunday: "Domingo",
-};
-
-export const STATUS_SEVERITY: Record<RestRoleStatus, string> = {
-  "PENDIENTE DE REVISION": "warning",
-  ACEPTADA: "success",
-  RECHAZADA: "danger",
-};
-
-export const STATUS_LABELS: Record<RestRoleStatus, string> = {
-  "PENDIENTE DE REVISION": "Pendiente de revisión",
-  ACEPTADA: "Aceptada",
-  RECHAZADA: "Rechazada",
-};
+export interface RestRole {
+  _id: string;
+  plant_id: string;
+  plant_name?: string;
+  shift_id: string;
+  shift_name?: string;
+  year: number;
+  week: number;
+  supervisor_id: string;
+  supervisor_name?: string;
+  created_by: string;
+  creator_username?: string;
+  status: "PENDIENTE DE REVISION" | "ACEPTADA" | "RECHAZADA";
+  reviewed_by?: string;
+  reviewer_username?: string;
+  reviewed_at?: string;
+  review_notes?: string;
+  days: RestRoleDayWithEmployees[];
+  status_log: RestRoleStatusLogEntry[];
+}
 
 export interface Supervisor {
   _id: string;
@@ -95,37 +57,58 @@ export interface SupervisorPlant {
   shift_name: string | null;
 }
 
-export interface Shift {
+export interface EmployeeSearchResult {
+  employee_number: string;
+  fullname: string;
+}
+
+export interface DayAssignment {
+  employee_number: string;
+  label: string;
+}
+
+export interface ShiftOption {
   _id: string;
   code: string;
   name: string;
 }
 
-export interface EmployeeSuggestion {
-  employee_number: string;
-  label: string;
+export interface PlantOption {
+  _id: string;
+  name: string;
 }
 
-export interface StatusLogEntry {
-  status: RestRoleStatus;
-  changed_at: string;
-  changed_by_username: string;
-  notes?: string;
-}
+export const DAY_NAMES = [
+  { key: "monday", label: "Lunes" },
+  { key: "tuesday", label: "Martes" },
+  { key: "wednesday", label: "Miércoles" },
+  { key: "thursday", label: "Jueves" },
+  { key: "friday", label: "Viernes" },
+  { key: "saturday", label: "Sábado" },
+  { key: "sunday", label: "Domingo" },
+] as const;
 
-export interface RestRoleFormValues {
-  plant_id: string;
-  shift_id: string;
-  year: number;
-  week: number;
-  supervisor_id: string;
-}
+export const DAY_NAMES_MAP: Record<string, string> = {
+  monday: "Lunes",
+  tuesday: "Martes",
+  wednesday: "Miércoles",
+  thursday: "Jueves",
+  friday: "Viernes",
+  saturday: "Sábado",
+  sunday: "Domingo",
+};
 
-export interface DayPayload {
-  day_name: string;
-  employee_numbers: string[];
-}
+export const STATUS_SEVERITY: Record<
+  string,
+  "warning" | "success" | "destructive"
+> = {
+  "PENDIENTE DE REVISION": "warning",
+  ACEPTADA: "success",
+  RECHAZADA: "destructive",
+};
 
-export interface ReviewFormValues {
-  review_notes: string;
-}
+export const STATUS_LABELS: Record<string, string> = {
+  "PENDIENTE DE REVISION": "Pendiente de revisión",
+  ACEPTADA: "Aceptada",
+  RECHAZADA: "Rechazada",
+};

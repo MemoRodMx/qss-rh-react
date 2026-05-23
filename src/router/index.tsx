@@ -15,12 +15,12 @@ import { ColoniesPage } from "@/features/catalogs/pages/ColoniesPage";
 import { PublicHolidaysPage } from "@/features/catalogs/pages/PublicHolidaysPage";
 import { PayrollCalendarsPage } from "@/features/catalogs/pages/PayrollCalendarsPage";
 import { ShiftsSchedulesPage } from "@/features/catalogs/pages/ShiftsSchedulesPage";
+import { EmployeesPage } from "@/features/employees/pages/EmployeesPage";
+import { EmployeeFormPage } from "@/features/employees/pages/EmployeeFormPage";
 import { RestRolesPage } from "@/features/rest-roles/pages/RestRolesPage";
 import { RestRoleFormPage } from "@/features/rest-roles/pages/RestRoleFormPage";
 import { RestRoleDetailPage } from "@/features/rest-roles/pages/RestRoleDetailPage";
 import { RestRoleReviewPage } from "@/features/rest-roles/pages/RestRoleReviewPage";
-import { EmployeesPage } from "@/features/employees/pages/EmployeesPage";
-import { EmployeeFormPage } from "@/features/employees/pages/EmployeeFormPage";
 
 export const router = createBrowserRouter([
   {
@@ -59,14 +59,14 @@ export const router = createBrowserRouter([
             path: "catalogs/shifts-schedules",
             element: <ShiftsSchedulesPage />,
           },
-          { path: "rest-roles", element: <RestRolesPage /> },
-          { path: "rest-roles/new", element: <RestRoleFormPage /> },
-          { path: "rest-roles/:id/edit", element: <RestRoleFormPage /> },
-          { path: "rest-roles/:id/detail", element: <RestRoleDetailPage /> },
-          { path: "rest-roles/:id/review", element: <RestRoleReviewPage /> },
           { path: "employees", element: <EmployeesPage /> },
           { path: "employees/new", element: <EmployeeFormPage /> },
           { path: "employees/:id/edit", element: <EmployeeFormPage /> },
+          { path: "rest-roles", element: <RestRolesPage /> },
+          { path: "rest-roles/new", element: <RestRoleFormPage /> },
+          { path: "rest-roles/:id", element: <RestRoleDetailPage /> },
+          { path: "rest-roles/:id/edit", element: <RestRoleFormPage /> },
+          { path: "rest-roles/:id/review", element: <RestRoleReviewPage /> },
           { path: "*", element: <Navigate to="/" replace /> },
         ],
       },

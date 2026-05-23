@@ -1,84 +1,107 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { restRoleService } from "../services/restRoleService";
-import { DAY_NAMES_MAP, STATUS_LABELS } from "../types";
-import type { RestRole, RestRoleStatus } from "../types";
+import {
+  DAY_NAMES_MAP,
+  STATUS_SEVERITY,
+  STATUS_LABELS,
+  type RestRole,
+} from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   ArrowLeft,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  AlertCircle,
-  Users,
-  CalendarDays,
+  CalendarCheck,
+  AlertTriangle,
+  User,
   Building2,
   Clock,
-  UserCheck,
   Calendar,
-  Hash,
+  CheckCircle2,
+  XCircle,
+  ClipboardCheck,
 } from "lucide-react";
 
-const statusVariantMap: Record<
-  string,
-  "warning" | "success" | "destructive" | "secondary"
-> = {
-  "PENDIENTE DE REVISION": "warning",
-  ACEPTADA: "success",
-  RECHAZADA: "destructive",
-};
-
 export function RestRoleReviewPage() {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
   const [role, setRole] = useState<RestRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [reviewNotes, setReviewNotes] = useState("");
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [notes, setNotes] = useState("");
+
+  // Confirm dialogs
+  const [acceptDialogOpen, setAcceptDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!id) return;
 
-    const loadRole = async () => {
+    let cancelled = false;
+
+    async function load() {
       setIsLoading(true);
       try {
-        const data = await restRoleService.getById(id);
-        setRole(data);
+        const data = await restRoleService.getById(id!);
+        if (!cancelled) setRole(data);
       } catch {
-        setError("Error al cargar el rol de descanso");
+        if (!cancelled) setServerError("Error al cargar el rol de descanso");
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
     };
-    loadRole();
   }, [id]);
 
-  const handleReview = async (action: "ACEPTADA" | "RECHAZADA") => {
+  const handleAccept = async () => {
     if (!id) return;
     setIsSubmitting(true);
-    setError("");
-
     try {
       await restRoleService.review(id, {
-        action,
-        review_notes: reviewNotes.trim() || undefined,
+        status: "ACEPTADA",
+        notes: notes || undefined,
       });
       navigate("/rest-roles");
-    } catch (err: unknown) {
-      const apiError = err as {
-        response?: { data?: { message?: string } };
-      };
-      setError(
-        apiError?.response?.data?.message || "Error al procesar la revisión",
-      );
+    } catch {
+      setServerError("Error al aceptar el rol de descanso");
     } finally {
       setIsSubmitting(false);
+      setAcceptDialogOpen(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!id) return;
+    setIsSubmitting(true);
+    try {
+      await restRoleService.review(id, {
+        status: "RECHAZADA",
+        notes: notes || undefined,
+      });
+      navigate("/rest-roles");
+    } catch {
+      setServerError("Error al rechazar el rol de descanso");
+    } finally {
+      setIsSubmitting(false);
+      setRejectDialogOpen(false);
     }
   };
 
@@ -86,10 +109,11 @@ export function RestRoleReviewPage() {
     return (
       <div className="space-y-6 max-w-[1080px] animate-fade-in">
         <div className="flex items-center gap-3">
-          <Skeleton className="h-9 w-24" />
-          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-8 w-8 rounded-full" />
+          <Skeleton className="h-6 w-48" />
         </div>
-        <Skeleton className="h-[500px] rounded-xl" />
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <Skeleton className="h-64 w-full rounded-xl" />
       </div>
     );
   }
@@ -104,14 +128,20 @@ export function RestRoleReviewPage() {
             className="cursor-pointer"
             onClick={() => navigate("/rest-roles")}
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              Rol no encontrado
-            </h1>
-          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Rol no encontrado
+          </h1>
         </div>
+        <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <AlertTriangle className="h-8 w-8 text-destructive mb-4" />
+            <p className="text-muted-foreground">
+              El rol de descanso solicitado no existe o fue eliminado.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -126,25 +156,37 @@ export function RestRoleReviewPage() {
             className="cursor-pointer"
             onClick={() => navigate("/rest-roles")}
           >
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              Rol ya revisado
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Este rol de descanso ya ha sido{" "}
-              {role.status === "ACEPTADA" ? "aceptado" : "rechazado"}.
-            </p>
-          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Revisión de rol de descanso
+          </h1>
         </div>
-        <Button
-          variant="outline"
-          className="cursor-pointer"
-          onClick={() => navigate(`/rest-roles/${id}/detail`)}
-        >
-          Ver detalle
-        </Button>
+        <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <AlertTriangle className="h-8 w-8 text-amber-500 mb-4" />
+            <p className="text-base font-medium text-foreground mb-1">
+              Este rol ya fue revisado
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Estado actual:{" "}
+              <Badge
+                variant={STATUS_SEVERITY[role.status] || "secondary"}
+                className="capitalize cursor-pointer"
+              >
+                {STATUS_LABELS[role.status] || role.status}
+              </Badge>
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="cursor-pointer"
+              onClick={() => navigate(`/rest-roles/${id}`)}
+            >
+              Ver detalle
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -152,236 +194,252 @@ export function RestRoleReviewPage() {
   return (
     <div className="space-y-6 max-w-[1080px] animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="cursor-pointer"
-            onClick={() => navigate("/rest-roles")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              Revisar Rol de Descanso
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {role.plant_name || role.plant_id} — Semana {role.week} /{" "}
-              {role.year}
-            </p>
-          </div>
-        </div>
-        <Badge
-          variant={statusVariantMap[role.status] || "secondary"}
-          className="capitalize cursor-pointer text-sm px-3 py-1"
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="cursor-pointer"
+          onClick={() => navigate("/rest-roles")}
         >
-          {STATUS_LABELS[role.status as RestRoleStatus] || role.status}
-        </Badge>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Revisar rol de descanso
+            </h1>
+            <Badge
+              variant={STATUS_SEVERITY[role.status] || "secondary"}
+              className="capitalize cursor-pointer"
+            >
+              {STATUS_LABELS[role.status] || role.status}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {role.plant_name || role.plant_id} —{" "}
+            {role.shift_name || role.shift_id} · Semana {role.week}, {role.year}
+          </p>
+        </div>
       </div>
 
-      {/* Info card */}
+      {/* Server error */}
+      {serverError && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          <span>{serverError}</span>
+        </div>
+      )}
+
+      {/* ── General Info (read-only) ──────────────────────────────────────── */}
       <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
         <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
           <CardTitle className="flex items-center gap-2 text-sm font-medium">
-            <CalendarDays className="h-4 w-4 text-primary" />
-            Información General
+            <CalendarCheck className="h-4 w-4 text-primary" />
+            Información general
           </CardTitle>
         </CardHeader>
         <CardContent className="p-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <Building2 className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Planta</p>
-                <p className="text-sm font-medium text-foreground">
-                  {role.plant_name || role.plant_id}
-                </p>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Planta</p>
+              <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                {role.plant_name || role.plant_id}
+              </p>
             </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <Clock className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Turno</p>
-                <p className="text-sm font-medium text-foreground">
-                  {role.shift_name || role.shift_id}
-                </p>
-              </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Turno</p>
+              <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                {role.shift_name || role.shift_id}
+              </p>
             </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <UserCheck className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Jefe Directo</p>
-                <p className="text-sm font-medium text-foreground">
-                  {role.supervisor_name || role.supervisor_id?.name || "-"}
-                </p>
-              </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Semana / Año</p>
+              <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                Semana {role.week}, {role.year}
+              </p>
             </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <Calendar className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Año</p>
-                <p className="text-sm font-medium text-foreground">
-                  {role.year}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-                <Hash className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Semana</p>
-                <p className="text-sm font-medium text-foreground">
-                  {role.week}
-                </p>
-              </div>
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Supervisor</p>
+              <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                {role.supervisor_name || role.supervisor_id}
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Days card */}
+      {/* ── Day Assignments (read-only) ───────────────────────────────────── */}
       <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
         <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
           <CardTitle className="flex items-center gap-2 text-sm font-medium">
-            <Users className="h-4 w-4 text-primary" />
-            Empleados por Día
+            <User className="h-4 w-4 text-primary" />
+            Asignación de empleados por día
           </CardTitle>
         </CardHeader>
         <CardContent className="p-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {role.days?.map((day) => (
-              <Card
-                key={day.day_name}
-                className={`border-border/50 bg-card shadow-[var(--shadow-1)] ${
-                  day.employees?.length > 0
-                    ? "border-l-[3px] border-l-primary"
-                    : ""
-                }`}
-              >
-                <CardContent className="p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                      {DAY_NAMES_MAP[day.day_name] || day.day_name}
-                    </span>
-                    <Badge
-                      variant={
-                        day.employees?.length > 0 ? "secondary" : "outline"
-                      }
-                      className="text-[10px] cursor-pointer"
-                    >
-                      {day.employees?.length || 0}
-                    </Badge>
-                  </div>
-
-                  {day.employees?.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {day.employees.map((emp) => (
-                        <Badge
-                          key={emp.number}
-                          variant="outline"
-                          className="text-[10px] cursor-pointer"
-                        >
-                          {emp.full_name || emp.number}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-[10px] text-muted-foreground italic">
+          {role.days.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">
+              No hay empleados asignados.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {role.days.map((day) => (
+                <div
+                  key={day.day_name}
+                  className="rounded-xl border border-border/50 bg-card shadow-[var(--shadow-1)] p-4"
+                >
+                  <p className="text-sm font-medium text-foreground mb-2">
+                    {DAY_NAMES_MAP[day.day_name] || day.day_name}
+                  </p>
+                  {day.employees.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
                       Sin empleados asignados
                     </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {day.employees.map((emp) => (
+                        <span
+                          key={emp.number}
+                          className="inline-flex items-center gap-1 rounded-md bg-primary/10 text-primary text-xs px-2 py-1"
+                        >
+                          {emp.number} - {emp.full_name}
+                        </span>
+                      ))}
+                    </div>
                   )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Review form */}
+      {/* ── Review Form ───────────────────────────────────────────────────── */}
       <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
         <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
           <CardTitle className="flex items-center gap-2 text-sm font-medium">
-            <CheckCircle2 className="h-4 w-4 text-primary" />
-            Decisión de Revisión
+            <ClipboardCheck className="h-4 w-4 text-primary" />
+            Decisión de revisión
           </CardTitle>
         </CardHeader>
         <CardContent className="p-5 space-y-4">
-          {/* Error */}
-          {error && (
-            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
-              <p className="text-sm text-destructive">{error}</p>
-            </div>
-          )}
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="review_notes" className="text-sm font-medium">
-              Notas de revisión
-            </Label>
+          <div>
+            <Label htmlFor="review-notes">Notas (opcional)</Label>
             <Textarea
-              id="review_notes"
-              placeholder="Agrega comentarios sobre tu decisión (opcional)..."
-              value={reviewNotes}
-              onChange={(e) => setReviewNotes(e.target.value)}
+              id="review-notes"
+              placeholder="Agrega comentarios sobre tu decisión..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="resize-none"
             />
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-2">
+          <div className="flex items-center gap-3 pt-2">
+            <Button
+              variant="teal"
+              size="sm"
+              className="cursor-pointer gap-1.5"
+              onClick={() => setAcceptDialogOpen(true)}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Aceptar
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="cursor-pointer gap-1.5"
+              onClick={() => setRejectDialogOpen(true)}
+            >
+              <XCircle className="h-4 w-4" />
+              Rechazar
+            </Button>
             <Button
               variant="outline"
+              size="sm"
               className="cursor-pointer"
               onClick={() => navigate("/rest-roles")}
+            >
+              Cancelar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Accept confirmation dialog */}
+      <Dialog open={acceptDialogOpen} onOpenChange={setAcceptDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+              <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+            </div>
+            <DialogTitle className="text-center">
+              ¿Aceptar rol de descanso?
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              El rol de descanso será marcado como aceptado y no podrá ser
+              modificado.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-center">
+            <Button
+              variant="outline"
+              onClick={() => setAcceptDialogOpen(false)}
+              className="cursor-pointer"
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="teal"
+              onClick={handleAccept}
+              className="cursor-pointer"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Procesando..." : "Confirmar aceptación"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject confirmation dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+              <XCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <DialogTitle className="text-center">
+              ¿Rechazar rol de descanso?
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              El rol de descanso será marcado como rechazado. El creador podrá
+              modificarlo y enviarlo nuevamente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-center">
+            <Button
+              variant="outline"
+              onClick={() => setRejectDialogOpen(false)}
+              className="cursor-pointer"
               disabled={isSubmitting}
             >
               Cancelar
             </Button>
             <Button
               variant="destructive"
-              className="cursor-pointer gap-2"
-              onClick={() => handleReview("RECHAZADA")}
+              onClick={handleReject}
+              className="cursor-pointer"
               disabled={isSubmitting}
             >
-              {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <XCircle className="h-4 w-4" />
-              )}
-              Rechazar
+              {isSubmitting ? "Procesando..." : "Confirmar rechazo"}
             </Button>
-            <Button
-              variant="teal"
-              className="cursor-pointer gap-2"
-              onClick={() => handleReview("ACEPTADA")}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4" />
-              )}
-              Aceptar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

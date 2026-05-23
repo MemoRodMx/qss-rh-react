@@ -4,8 +4,8 @@ import type {
   RestRole,
   Supervisor,
   SupervisorPlant,
-  Shift,
-  EmployeeSuggestion,
+  EmployeeSearchResult,
+  ShiftOption,
 } from "../types";
 
 export const restRoleService = {
@@ -47,7 +47,7 @@ export const restRoleService = {
 
   async review(
     id: string,
-    payload: { action: string; review_notes?: string },
+    payload: { status: string; notes?: string },
   ): Promise<void> {
     await api.patch(`/rest-roles/${id}/review`, payload);
   },
@@ -60,65 +60,49 @@ export const restRoleService = {
     const { data } = await api.get("/direct-supervisors", {
       params: { limit: 100 },
     });
-    return data?.data ?? data ?? [];
+    return Array.isArray(data) ? data : (data?.data ?? []);
   },
 
   async getSupervisorPlants(supervisorId: string): Promise<SupervisorPlant[]> {
     const { data } = await api.get(
       `/direct-supervisors/${supervisorId}/plants`,
     );
-    return data ?? [];
+    return Array.isArray(data) ? data : (data?.data ?? []);
   },
 
-  async listShifts(): Promise<Shift[]> {
+  async listShifts(): Promise<ShiftOption[]> {
     const { data } = await api.get("/shifts-and-schedules/list");
-    return data?.data ?? data ?? [];
+    return Array.isArray(data) ? data : (data?.data ?? []);
   },
 
   async searchEmployees(
     query: string,
-    options?: {
-      position_ids?: string;
-      plant_id?: string;
-      shift_id?: string;
-    },
-  ): Promise<EmployeeSuggestion[]> {
-    const params: Record<string, unknown> = { q: query };
-    if (options?.position_ids) params.position_ids = options.position_ids;
-    if (options?.plant_id) params.plant_id = options.plant_id;
-    if (options?.shift_id) params.shift_id = options.shift_id;
+    params?: { plant_id?: string; shift_id?: string; position_ids?: string[] },
+  ): Promise<EmployeeSearchResult[]> {
+    const searchParams: Record<string, unknown> = { q: query };
+    if (params?.plant_id) searchParams.plant_id = params.plant_id;
+    if (params?.shift_id) searchParams.shift_id = params.shift_id;
+    if (params?.position_ids?.length) {
+      searchParams.position_ids = params.position_ids.join(",");
+    }
 
-    const { data } = await api.get("/employees/search", { params });
-    return (data ?? []).map(
-      (emp: { employee_number: string; fullname: string }) => ({
-        employee_number: emp.employee_number,
-        label: `${emp.employee_number} - ${emp.fullname}`,
-      }),
-    );
+    const { data } = await api.get("/employees/search", {
+      params: searchParams,
+    });
+    return Array.isArray(data) ? data : (data?.data ?? []);
   },
 
   async resolveEmployeeNumbers(
-    employeeNumbers: string[],
-  ): Promise<EmployeeSuggestion[]> {
-    if (!employeeNumbers.length) return [];
-
+    numbers: string[],
+  ): Promise<Array<{ employee_number: string; fullname: string }>> {
     const { data } = await api.post("/employees/resolve-numbers", {
-      employee_numbers: employeeNumbers,
+      employee_numbers: numbers,
     });
-    return (data ?? []).map(
-      (emp: { employee_number: string; fullname: string }) => ({
-        employee_number: emp.employee_number,
-        label: `${emp.employee_number} - ${emp.fullname}`,
-      }),
-    );
+    return Array.isArray(data) ? data : (data?.data ?? []);
   },
 
   async getConfiguredPositionIds(): Promise<string[]> {
-    try {
-      const { data } = await api.get("/settings/rest-role-positions");
-      return Array.isArray(data) ? data : [];
-    } catch {
-      return [];
-    }
+    const { data } = await api.get("/settings/rest-role-positions");
+    return Array.isArray(data) ? data : (data?.position_ids ?? []);
   },
 };

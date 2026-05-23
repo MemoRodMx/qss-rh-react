@@ -8,37 +8,30 @@ interface UseRestRolesReturn {
   total: number;
   page: number;
   totalPages: number;
-  limit: number;
   search: string;
   setSearch: (value: string) => void;
   setPage: (page: number) => void;
-  setLimit: (limit: number) => void;
   refresh: () => void;
   deleteRole: (id: string) => Promise<void>;
 }
 
-export function useRestRoles(initialLimit = 10): UseRestRolesReturn {
+export function useRestRoles(limit = 10): UseRestRolesReturn {
   const [roles, setRoles] = useState<RestRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [limit, setLimit] = useState(initialLimit);
   const [search, setSearch] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fetchIdRef = useRef(0);
 
   const fetchData = useCallback(
-    async (pageNum: number, searchTerm: string, limitNum: number) => {
+    async (pageNum: number, searchTerm: string) => {
       const id = ++fetchIdRef.current;
       setIsLoading(true);
 
       try {
-        const result = await restRoleService.list(
-          pageNum,
-          limitNum,
-          searchTerm,
-        );
+        const result = await restRoleService.list(pageNum, limit, searchTerm);
         if (id === fetchIdRef.current) {
           setRoles(result.data);
           setTotal(result.total);
@@ -56,50 +49,40 @@ export function useRestRoles(initialLimit = 10): UseRestRolesReturn {
         }
       }
     },
-    [],
+    [limit],
   );
 
-  // Search with debounce
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(() => {
-      fetchData(1, search, limit);
+      fetchData(1, search);
     }, 300);
 
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [search, limit, fetchData]);
+  }, [search, fetchData]);
 
   const goToPage = useCallback(
     (newPage: number) => {
       setPage(newPage);
-      fetchData(newPage, search, limit);
-    },
-    [search, limit, fetchData],
-  );
-
-  const changeLimit = useCallback(
-    (newLimit: number) => {
-      setLimit(newLimit);
-      // Reset to page 1 when changing limit
-      fetchData(1, search, newLimit);
+      fetchData(newPage, search);
     },
     [search, fetchData],
   );
 
   const refresh = useCallback(() => {
-    fetchData(page, search, limit);
-  }, [page, search, limit, fetchData]);
+    fetchData(page, search);
+  }, [page, search, fetchData]);
 
   const deleteRole = useCallback(
     async (id: string) => {
       await restRoleService.delete(id);
       const newPage = roles.length === 1 && page > 1 ? page - 1 : page;
-      fetchData(newPage, search, limit);
+      fetchData(newPage, search);
     },
-    [page, search, limit, roles.length, fetchData],
+    [page, search, roles.length, fetchData],
   );
 
   return {
@@ -108,11 +91,9 @@ export function useRestRoles(initialLimit = 10): UseRestRolesReturn {
     total,
     page,
     totalPages,
-    limit,
     search,
     setSearch,
     setPage: goToPage,
-    setLimit: changeLimit,
     refresh,
     deleteRole,
   };
