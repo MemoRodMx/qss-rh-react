@@ -18,6 +18,7 @@ import {
   Clock,
   CalendarCheck,
   Users,
+  UserCog,
 } from "lucide-react";
 
 import { useAuth } from "@/features/auth/context/AuthContext";
@@ -52,6 +53,7 @@ const navItems = [
   { to: "/rest-roles", label: "Roles de Descanso", icon: CalendarCheck },
   { to: "/vacation-requests", label: "Vacaciones", icon: CalendarDays },
   { to: "/attendance", label: "Asistencia", icon: Calendar },
+  { to: "/users", label: "Usuarios", icon: UserCog },
   { to: "/reports", label: "Reportes", icon: FileText },
   { to: "/settings", label: "Configuración", icon: Settings },
 ];

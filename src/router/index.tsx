@@ -27,6 +27,8 @@ import { VacationRequestReviewPage } from "@/features/vacation-requests/pages/Va
 import { AttendanceRecordsPage } from "@/features/attendance/pages/AttendanceRecordsPage";
 import { AttendanceRecordDetailPage } from "@/features/attendance/pages/AttendanceRecordDetailPage";
 import { AttendanceRecordFormPage } from "@/features/attendance/pages/AttendanceRecordFormPage";
+import { UsersPage } from "@/features/users/pages/UsersPage";
+import { UserFormPage } from "@/features/users/pages/UserFormPage";
 
 export const router = createBrowserRouter([
   {
@@ -86,6 +88,9 @@ export const router = createBrowserRouter([
             path: "vacation-requests/:id/review",
             element: <VacationRequestReviewPage />,
           },
+          { path: "users", element: <UsersPage /> },
+          { path: "users/new", element: <UserFormPage /> },
+          { path: "users/:id/edit", element: <UserFormPage /> },
           { path: "attendance", element: <AttendanceRecordsPage /> },
           { path: "attendance/new", element: <AttendanceRecordFormPage /> },
           { path: "attendance/:id", element: <AttendanceRecordDetailPage /> },
