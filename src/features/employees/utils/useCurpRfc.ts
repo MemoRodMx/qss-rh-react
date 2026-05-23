@@ -68,13 +68,16 @@ function getVowels(str: string): string {
 }
 
 function getConsonants(str: string): string {
+  // Internal consonants (not the first letter)
   return str.slice(1).replace(/[^BCDFGHJKLMNÑPQRSTVWXYZ]/g, "");
 }
 
+/** Returns the first internal vowel of a string (after the first character). */
 function firstInternalVowel(str: string): string {
   return getVowels(str.slice(1))[0] ?? "X";
 }
 
+/** Returns the first internal consonant of a string (after the first char). */
 function firstInternalConsonant(str: string): string {
   return getConsonants(str)[0] ?? "X";
 }
@@ -87,13 +90,13 @@ export function generateCurpBase(
   name: string | null | undefined,
   surname: string | null | undefined,
   lastname: string | null | undefined,
-  birthDate: string | null | undefined,
+  birthDate: Date | string | null | undefined,
   genre: string | null | undefined,
   birthStateCode: string | null | undefined,
 ): string | null {
   if (!name || !surname || !birthDate || !genre || !birthStateCode) return null;
 
-  const n = removeAccents(name.trim()).replace(/\s+.*/g, "");
+  const n = removeAccents(name.trim()).replace(/\s+.*/g, ""); // only first given name
   const ap = removeAccents(surname.trim());
   const am = lastname ? removeAccents(lastname.trim()) : "";
 
@@ -105,17 +108,24 @@ export function generateCurpBase(
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
 
+  // Positions 1-4: first letter of paternal surname + first internal vowel of paternal surname
+  //                + first letter of maternal surname (or X) + first letter of name
   const p1 = ap[0] ?? "X";
   const p2 = firstInternalVowel(ap);
   const p3 = am[0] ?? "X";
   const p4 = n[0] ?? "X";
 
+  // Positions 5-10: birth date AAMMDD
   const p5to10 = `${yy}${mm}${dd}`;
 
+  // Position 11: sex
   const p11 = sexCode;
 
+  // Positions 12-13: state code
   const p12to13 = stateCode;
 
+  // Positions 14-16: first internal consonant of paternal surname,
+  //                   maternal surname, name
   const p14 = firstInternalConsonant(ap);
   const p15 = am ? firstInternalConsonant(am) : "X";
   const p16 = firstInternalConsonant(n);
@@ -131,7 +141,7 @@ export function generateRfcBase(
   name: string | null | undefined,
   surname: string | null | undefined,
   lastname: string | null | undefined,
-  birthDate: string | null | undefined,
+  birthDate: Date | string | null | undefined,
 ): string | null {
   if (!name || !surname || !birthDate) return null;
 
@@ -144,11 +154,14 @@ export function generateRfcBase(
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
 
+  // RFC positions 1-4: first letter of paternal surname + first internal vowel
+  //                     of paternal surname + first letter of maternal surname + first letter of name
   const p1 = ap[0] ?? "X";
   const p2 = firstInternalVowel(ap);
   const p3 = am ? am[0] : "X";
   const p4 = n[0] ?? "X";
 
+  // Positions 5-10: AAMMDD
   const p5to10 = `${yy}${mm}${dd}`;
 
   return `${p1}${p2}${p3}${p4}${p5to10}`.toUpperCase();
@@ -158,7 +171,7 @@ export function generateRfcBase(
 export function curpMissingFields(
   name: string | null | undefined,
   surname: string | null | undefined,
-  birthDate: string | null | undefined,
+  birthDate: Date | string | null | undefined,
   genre: string | null | undefined,
   birthStateCode: string | null | undefined,
 ): string[] {
@@ -176,7 +189,7 @@ export function rfcMissingFields(
   name: string | null | undefined,
   surname: string | null | undefined,
   lastname: string | null | undefined,
-  birthDate: string | null | undefined,
+  birthDate: Date | string | null | undefined,
 ): string[] {
   const missing: string[] = [];
   if (!name) missing.push("nombre");

@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
-  Users,
   Building2,
   Calendar,
   FileText,
@@ -17,6 +16,8 @@ import {
   MapPin,
   CalendarDays,
   Clock,
+  CalendarCheck,
+  Users,
 } from "lucide-react";
 
 import { useAuth } from "@/features/auth/context/AuthContext";
@@ -48,6 +49,7 @@ const navItems = [
   { to: "/employees", label: "Empleados", icon: Users },
   { to: "/customers", label: "Clientes", icon: Building2 },
   { to: "/companies", label: "Empresas", icon: Building2 },
+  { to: "/rest-roles", label: "Roles de Descanso", icon: CalendarCheck },
   { to: "/attendance", label: "Asistencia", icon: Calendar },
   { to: "/reports", label: "Reportes", icon: FileText },
   { to: "/settings", label: "Configuración", icon: Settings },

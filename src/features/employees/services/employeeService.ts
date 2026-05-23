@@ -1,33 +1,23 @@
 import api from "@/lib/api";
-import type { PaginatedResponse } from "@/lib/types";
-import type { Employee, SelectOption, SupervisorOption } from "../types";
-
-interface RawSupervisor {
-  _id: string;
-  employee_number: string;
-  name: string;
-}
-
-interface RawState {
-  code: string;
-  name: string;
-}
-
-interface RawCatalogItem {
-  code: string;
-  name: string;
-}
+import type {
+  Employee,
+  EmployeeListResponse,
+  CatalogOption,
+  SupervisorOption,
+  BankOption,
+} from "../types";
 
 export const employeeService = {
+  // ── CRUD ──────────────────────────────────────────────────────────────────
   async list(
     page = 1,
-    limit = 20,
+    limit = 10,
     search?: string,
-  ): Promise<PaginatedResponse<Employee>> {
+  ): Promise<EmployeeListResponse> {
     const params: Record<string, unknown> = { page, limit };
     if (search?.trim()) params.search = search.trim();
 
-    const { data } = await api.get<PaginatedResponse<Employee>>("/employees", {
+    const { data } = await api.get<EmployeeListResponse>("/employees", {
       params,
     });
     return data;
@@ -38,101 +28,120 @@ export const employeeService = {
     return data;
   },
 
-  async create(payload: Record<string, unknown>): Promise<{ status: number }> {
-    const { status } = await api.post("/employees", payload);
-    return { status };
+  async create(
+    payload: Record<string, unknown>,
+  ): Promise<{ status: number; _id?: string }> {
+    const { data } = await api.post("/employees", payload);
+    return data;
   },
 
   async update(
     id: string,
     payload: Record<string, unknown>,
-  ): Promise<{ status: number }> {
-    const { status } = await api.patch(`/employees/${id}`, payload);
-    return { status };
+  ): Promise<{ status: number; supervisor_name_updated?: boolean }> {
+    const { data } = await api.patch(`/employees/${id}`, payload);
+    return data;
   },
 
   async delete(id: string): Promise<void> {
     await api.delete(`/employees/${id}`);
   },
 
-  async getNextEmployeeNumber(): Promise<string> {
+  async getNextNumber(): Promise<string> {
     const { data } = await api.get<{ next_number: string }>(
       "/employees/next-number",
     );
     return data.next_number;
   },
 
-  async listCustomers(): Promise<SelectOption[]> {
+  // ── Customers ─────────────────────────────────────────────────────────────
+  async listCustomers(): Promise<Array<{ code: string; name: string }>> {
     const { data } = await api.get("/customers/list");
-    return Array.isArray(data) ? data : (data?.data ?? []);
+    return Array.isArray(data) ? data : [];
   },
 
-  async listPlants(customerId?: string): Promise<SelectOption[]> {
+  // ── Plants ────────────────────────────────────────────────────────────────
+  async listPlants(
+    customerId?: string,
+  ): Promise<Array<{ code: string; name: string }>> {
     if (!customerId) return [];
     const { data } = await api.get("/plants/by-customer", {
       params: { customer_id: customerId },
     });
-    return Array.isArray(data) ? data : (data?.data ?? []);
+    return Array.isArray(data) ? data : [];
   },
 
-  async listPositions(): Promise<SelectOption[]> {
+  // ── Positions ─────────────────────────────────────────────────────────────
+  async listPositions(): Promise<
+    Array<{ code: string; name: string; description?: string }>
+  > {
     const { data } = await api.get("/positions");
-    return Array.isArray(data) ? data : (data?.data ?? []);
+    const raw = data?.data ?? [];
+    return raw.map(
+      (p: { code: string; name?: string; description?: string }) => ({
+        code: p.code,
+        name: p.name ?? p.description ?? "",
+        description: p.description ?? p.name ?? "",
+      }),
+    );
   },
 
-  async listAreas(): Promise<SelectOption[]> {
-    const { data } = await api.get("/areas/list");
-    return Array.isArray(data) ? data : (data?.data ?? []);
-  },
-
-  async listShifts(): Promise<SelectOption[]> {
+  // ── Shifts ────────────────────────────────────────────────────────────────
+  async listShifts(): Promise<Array<{ code: string; name: string }>> {
     const { data } = await api.get("/shifts-and-schedules/list");
-    return Array.isArray(data) ? data : (data?.data ?? []);
+    const raw = Array.isArray(data) ? data : (data?.data ?? []);
+    return raw.map((s: { code?: string; name: string }) => ({
+      ...s,
+      code: s.code?.toLowerCase?.() ?? s.code,
+    }));
   },
 
-  async listSchedules(shiftName?: string): Promise<SelectOption[]> {
-    if (!shiftName) return [];
+  // ── Schedules ─────────────────────────────────────────────────────────────
+  async listSchedules(
+    shiftName: string,
+  ): Promise<Array<{ code: string; label: string }>> {
     const { data } = await api.get(
       `/shifts-and-schedules/schedules-by-shift/${shiftName}`,
     );
-    return Array.isArray(data) ? data : (data?.data ?? []);
+    return data?.data ?? [];
   },
 
+  // ── Supervisors ───────────────────────────────────────────────────────────
   async listSupervisors(
-    searchTerm?: string,
+    search: string,
     plantCode?: string,
     shiftCode?: string,
   ): Promise<SupervisorOption[]> {
-    const params: Record<string, unknown> = {};
-    if (searchTerm?.trim()) params.search = searchTerm.trim();
-    if (plantCode) params.plant_code = plantCode;
-    if (shiftCode) params.shift_code = shiftCode;
-    params.limit = 10;
-
+    const query: Record<string, unknown> = { search, limit: 10 };
     const url = plantCode
       ? "/direct-supervisors/by-plant"
       : "/direct-supervisors";
-    const { data } = await api.get(url, { params });
-    // /direct-supervisors returns { data: [...] }, /direct-supervisors/by-plant returns array
-    const list: RawSupervisor[] = plantCode
+
+    if (plantCode) {
+      query.plant_code = plantCode;
+      if (shiftCode) query.shift_code = shiftCode;
+    }
+
+    const { data } = await api.get(url, { params: query });
+    const list = plantCode
       ? Array.isArray(data)
         ? data
         : []
       : data?.data || [];
-    return list.map((s) => ({
-      _id: s._id,
-      employee_number: s.employee_number,
-      name: s.name,
-      label: `${s.employee_number} - ${s.name}`,
-    }));
+
+    return list.map(
+      (s: { _id: string; employee_number: string; name: string }) => ({
+        _id: s._id,
+        employee_number: s.employee_number,
+        name: s.name,
+        label: `${s.employee_number} - ${s.name}`,
+      }),
+    );
   },
 
   async getSupervisorById(id: string): Promise<SupervisorOption | null> {
     try {
-      const { data } = await api.get<RawSupervisor>(
-        `/direct-supervisors/${id}`,
-      );
-      if (!data) return null;
+      const { data } = await api.get(`/direct-supervisors/${id}`);
       return {
         _id: data._id,
         employee_number: data.employee_number,
@@ -144,31 +153,60 @@ export const employeeService = {
     }
   },
 
-  async listStates(): Promise<SelectOption[]> {
+  // ── States ────────────────────────────────────────────────────────────────
+  async listStates(): Promise<CatalogOption[]> {
     const { data } = await api.get("/catalogs/states", {
       params: { limit: 50 },
     });
-    return ((data?.data ?? []) as RawState[]).map((s) => ({
-      code: s.code,
-      name: s.name,
-    }));
+    return (data?.data ?? [])
+      .map((s: { code: string; name: string }) => ({
+        code: s.code,
+        name: s.name,
+      }))
+      .sort((a: { name: string }, b: { name: string }) =>
+        a.name.localeCompare(b.name, "es"),
+      );
   },
 
-  async listMunicipalities(stateCode: string): Promise<SelectOption[]> {
+  // ── Municipalities ────────────────────────────────────────────────────────
+  async listMunicipalities(stateCode: string): Promise<CatalogOption[]> {
     const { data } = await api.get(`/catalogs/municipalities/${stateCode}`);
-    return ((Array.isArray(data) ? data : []) as RawCatalogItem[])
-      .map((m) => ({ code: m.code, name: m.name }))
-      .sort((a, b) => a.name.localeCompare(b.name, "es"));
+    return (Array.isArray(data) ? data : [])
+      .map((m: { code: string; name: string }) => ({
+        code: m.code,
+        name: m.name,
+      }))
+      .sort((a: { name: string }, b: { name: string }) =>
+        a.name.localeCompare(b.name, "es"),
+      );
   },
 
-  async listColonies(zipcode: string): Promise<SelectOption[]> {
+  // ── Colonies ──────────────────────────────────────────────────────────────
+  async listColonies(zipcode: string): Promise<CatalogOption[]> {
     const { data } = await api.get(`/catalogs/colonies/${zipcode}`);
-    return ((Array.isArray(data) ? data : []) as RawCatalogItem[])
-      .map((c) => ({ code: c.code, name: c.name }))
-      .sort((a, b) => a.name.localeCompare(b.name, "es"));
+    return (Array.isArray(data) ? data : [])
+      .map((c: { code: string; name: string }) => ({
+        code: c.code,
+        name: c.name,
+      }))
+      .sort((a: { name: string }, b: { name: string }) =>
+        a.name.localeCompare(b.name, "es"),
+      );
   },
 
-  async listBanks(): Promise<SelectOption[]> {
+  // ── Areas ─────────────────────────────────────────────────────────────────
+  async listAreas(): Promise<CatalogOption[]> {
+    const { data } = await api.get("/areas/list");
+    return (Array.isArray(data) ? data : []).map(
+      (a: { code: string; name: string }) => ({
+        code: a.code,
+        name: a.name,
+      }),
+    );
+  },
+
+  // ── Banks ─────────────────────────────────────────────────────────────────
+  async listBanks(): Promise<BankOption[]> {
     const { data } = await api.get("/banks/list");
     return Array.isArray(data) ? data : [];
   },

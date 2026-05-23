@@ -19,3 +19,9 @@ export function formatCurrency(amount: number): string {
     currency: "MXN",
   }).format(amount);
 }
+
+export function formatEmployeeNumber(num?: string | number | null): string {
+  if (!num) return "#00000";
+  const str = String(num).replace(/^#/, "");
+  return `#${str.padStart(5, "0")}`;
+}

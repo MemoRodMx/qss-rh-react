@@ -1,166 +1,231 @@
-export interface WorkLocation {
-  customer_id?: string;
-  plant_id?: string;
-  area_code?: string;
-  position_code?: string;
-  shift_id?: string;
-  schedule_id?: string;
-  direct_supervisor_id?: string;
-}
-
-export interface Salary {
-  salary_type?: string;
-  zone?: string;
-  payment_way?: string;
-  daily_salary?: number;
-  weekly_salary?: number;
-  monthly_salary?: number;
-  attendance_bonus?: number;
-  variable_salary?: number;
-  integrated_factor?: number;
-  day_per_month?: number;
-  last_salary_modification?: string | null;
-}
-
-export interface Bank {
-  bank_id?: string;
-  account_number?: string;
-  card_number?: string;
-  clabe?: string;
-}
-
-export interface Address {
-  street?: string;
-  exterior_number?: string;
-  internal_number?: string;
-  country?: string;
-  state?: string;
-  city?: string;
-  zipcode?: string;
-  colony?: string;
-}
-
-export interface PersonalData {
-  mobile_phone_number?: string;
-  landline_phone_number?: string;
-  emergency_phone_number?: string;
-  schooling?: string;
-  relationship?: string;
-  house_owner?: boolean;
-}
-
+// ── Employee entity (matches API response) ──────────────────────────────────
 export interface Employee {
   _id: string;
+  customer_id: string;
   employee_number: string;
   status: string;
   name: string;
   surname: string;
   lastname: string;
   fullname?: string;
+  birth_date: string | null;
+  resident: boolean;
+  birth_place: string;
+  genre: string;
+  rfc: string;
+  curp: string;
+  nss: string;
+  hire_date: string | null;
+  seniority: number;
+  contract_type: string;
+  sat_zip_code: string;
+  email: string;
+  marital_status: string;
+  work_location?: EmployeeWorkLocation;
+  salary?: EmployeeSalary;
+  bank?: EmployeeBank;
+  address?: EmployeeAddress;
+  personal_data?: EmployeePersonalData;
   position_name?: string;
   plant_name?: string;
   shift_name?: string;
-  rfc?: string;
-  curp?: string;
-  nss?: string;
-  genre?: string;
-  birth_date?: string;
-  birth_place?: string;
-  resident?: boolean;
-  email?: string;
-  hire_date?: string;
-  seniority?: string;
-  contract_type?: string;
-  sat_zip_code?: string;
-  marital_status?: string;
-  customer_id?: string;
-  work_location?: WorkLocation;
-  salary?: Salary;
-  bank?: Bank;
-  address?: Address;
-  personal_data?: PersonalData;
-  company_id?: string;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
+export interface EmployeeWorkLocation {
+  plant_id: string;
+  position_id: string;
+  shift_id: string;
+  schedule_id: string;
+  direct_supervisor_id: string;
+  area_id: string;
+}
+
+export interface EmployeeSalary {
+  salary_type: string;
+  daily_salary: number | null;
+  attendance_bonus: number | null;
+  zone: string;
+  payment_way: string;
+  last_salary_modification: string | null;
+  integrated_factor: number | null;
+  day_per_month: number | null;
+  variable_salary: number | null;
+  weekly_salary: number | null;
+  monthly_salary: number | null;
+}
+
+export interface EmployeeBank {
+  bank_id: string;
+  account_number: string;
+  card_number: string;
+  clabe: string;
+}
+
+export interface EmployeeAddress {
+  street: string;
+  exterior_number: string;
+  internal_number: string;
+  colony: string;
+  city: string;
+  state: string;
+  zipcode: string;
+  country: string;
+}
+
+export interface EmployeePersonalData {
+  house_owner: boolean;
+  schooling: string;
+  landline_phone_number: string;
+  mobile_phone_number: string;
+  emergency_phone_number: string;
+  relationship: string;
+}
+
+// ── Form values (flat structure for react-hook-form) ────────────────────────
 export interface EmployeeFormValues {
+  customer_id: string;
+  employee_number?: string;
   name: string;
   surname: string;
   lastname: string;
   rfc: string;
   curp: string;
-  nss: string;
+  resident: boolean;
   genre: string;
   birth_date: string;
   birth_place: string;
-  resident: boolean;
-  email: string;
+  nss: string;
+  status: string;
+  seniority: number;
   hire_date: string;
   contract_type: string;
   sat_zip_code: string;
+  email: string;
   marital_status: string;
-  status: string;
-  // Work location
-  "work_location.customer_id": string;
-  "work_location.plant_id": string;
-  "work_location.area_code": string;
-  "work_location.position_code": string;
-  "work_location.shift_id": string;
-  "work_location.schedule_id": string;
-  "work_location.direct_supervisor_id": string;
-  // Salary
-  "salary.salary_type": string;
-  "salary.zone": string;
-  "salary.payment_way": string;
-  "salary.daily_salary": number;
-  "salary.weekly_salary": number;
-  "salary.monthly_salary": number;
-  "salary.attendance_bonus": number;
-  "salary.variable_salary": number;
-  "salary.integrated_factor": number;
-  "salary.day_per_month": number;
-  "salary.last_salary_modification": string | null;
-  // Bank
-  "bank.bank_id": string;
-  "bank.account_number": string;
-  "bank.card_number": string;
-  "bank.clabe": string;
-  // Address
-  "address.street": string;
-  "address.exterior_number": string;
-  "address.internal_number": string;
-  "address.country": string;
-  "address.state": string;
-  "address.city": string;
-  "address.zipcode": string;
-  "address.colony": string;
-  // Personal data
-  "personal_data.mobile_phone_number": string;
-  "personal_data.landline_phone_number": string;
-  "personal_data.emergency_phone_number": string;
-  "personal_data.schooling": string;
-  "personal_data.relationship": string;
-  "personal_data.house_owner": boolean;
+
+  // Work location (nested)
+  work_location_plant_id: string;
+  work_location_position_id: string;
+  work_location_shift_id: string;
+  work_location_schedule_id: string;
+  work_location_direct_supervisor_id: string;
+  work_location_area_id: string;
+
+  // Salary (nested)
+  salary_salary_type: string;
+  salary_daily_salary: string;
+  salary_attendance_bonus: string;
+  salary_zone: string;
+  salary_payment_way: string;
+  salary_last_salary_modification: string;
+  salary_integrated_factor: string;
+  salary_day_per_month: string;
+  salary_variable_salary: string;
+  salary_weekly_salary: string;
+  salary_monthly_salary: string;
+
+  // Bank (nested)
+  bank_bank_id: string;
+  bank_account_number: string;
+  bank_card_number: string;
+  bank_clabe: string;
+
+  // Address (nested)
+  address_street: string;
+  address_exterior_number: string;
+  address_internal_number: string;
+  address_colony: string;
+  address_city: string;
+  address_state: string;
+  address_zipcode: string;
+  address_country: string;
+
+  // Personal data (nested)
+  personal_data_house_owner: boolean;
+  personal_data_schooling: string;
+  personal_data_landline_phone_number: string;
+  personal_data_mobile_phone_number: string;
+  personal_data_emergency_phone_number: string;
+  personal_data_relationship: string;
 }
 
-/**
- * Flexible option type for API selects.
- * - Customers: { _id, legal_name }
- * - Banks: { _id, name }
- * - Plants, Areas, Positions, Shifts, Schedules, States, Municipalities, Colonies: { code, name }
- */
-export interface SelectOption {
-  _id?: string;
-  name?: string;
-  code?: string;
-  label?: string;
-  legal_name?: string;
+// ── Catalog options ─────────────────────────────────────────────────────────
+export interface CatalogOption {
+  code: string;
+  name: string;
 }
 
 export interface SupervisorOption {
   _id: string;
-  label: string;
   employee_number: string;
-  name?: string;
+  name: string;
+  label: string;
 }
+
+export interface BankOption {
+  _id: string;
+  name: string;
+}
+
+// ── Employee list response ──────────────────────────────────────────────────
+export interface EmployeeListResponse {
+  data: Employee[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
+
+// ── Constants ───────────────────────────────────────────────────────────────
+export const MARITAL_STATUS_OPTIONS = [
+  { value: "CASADO", label: "Casado" },
+  { value: "SOLTERO", label: "Soltero" },
+  { value: "DIVORCIADO", label: "Divorciado" },
+  { value: "VIUDO", label: "Viudo" },
+] as const;
+
+export const GENRE_OPTIONS = [
+  { value: "M", label: "Masculino" },
+  { value: "F", label: "Femenino" },
+] as const;
+
+export const STATUS_OPTIONS = [
+  { value: "ACTIVO", label: "Activo" },
+  { value: "INACTIVO", label: "Inactivo" },
+  { value: "SUSPENDIDO", label: "Suspendido" },
+  { value: "BAJA", label: "Baja" },
+] as const;
+
+export const CONTRACT_TYPE_OPTIONS = [
+  { value: "TEMPORAL", label: "Temporal" },
+  { value: "INDEFINIDO", label: "Indefinido" },
+  { value: "PRUEBA", label: "Prueba" },
+  { value: "OBRA", label: "Obra determinada" },
+] as const;
+
+export const SALARY_TYPE_OPTIONS = [
+  { value: "FIJO", label: "Fijo" },
+  { value: "VARIABLE", label: "Variable" },
+  { value: "MIXTO", label: "Mixto" },
+] as const;
+
+export const ZONE_OPTIONS = [
+  { value: "FRONTERIZA", label: "Fronteriza" },
+  { value: "NO_FRONTERIZA", label: "No fronteriza" },
+] as const;
+
+export const PAYMENT_WAY_OPTIONS = [
+  { value: "EFECTIVO", label: "Efectivo" },
+  { value: "TRANSFERENCIA", label: "Transferencia" },
+  { value: "CHEQUE", label: "Cheque" },
+  { value: "TARJETA", label: "Tarjeta" },
+] as const;
+
+export const SCHOOLING_OPTIONS = [
+  { value: "PRIMARIA", label: "Primaria" },
+  { value: "SECUNDARIA", label: "Secundaria" },
+  { value: "PREPARATORIA", label: "Preparatoria" },
+  { value: "UNIVERSIDAD", label: "Universidad" },
+  { value: "POSGRADO", label: "Posgrado" },
+  { value: "NINGUNO", label: "Ninguno" },
+] as const;

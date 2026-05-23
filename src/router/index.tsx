@@ -4,8 +4,6 @@ import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { ProtectedRoute } from "@/features/auth/components/ProtectedRoute";
 import { GuestRoute } from "@/features/auth/components/GuestRoute";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
-import { EmployeesPage } from "@/features/employees/pages/EmployeesPage";
-import { EmployeeFormPage } from "@/features/employees/pages/EmployeeFormPage";
 import { CustomersPage } from "@/features/customers/pages/CustomersPage";
 import { CustomerFormPage } from "@/features/customers/pages/CustomerFormPage";
 import { CompaniesPage } from "@/features/companies/pages/CompaniesPage";
@@ -17,6 +15,12 @@ import { ColoniesPage } from "@/features/catalogs/pages/ColoniesPage";
 import { PublicHolidaysPage } from "@/features/catalogs/pages/PublicHolidaysPage";
 import { PayrollCalendarsPage } from "@/features/catalogs/pages/PayrollCalendarsPage";
 import { ShiftsSchedulesPage } from "@/features/catalogs/pages/ShiftsSchedulesPage";
+import { RestRolesPage } from "@/features/rest-roles/pages/RestRolesPage";
+import { RestRoleFormPage } from "@/features/rest-roles/pages/RestRoleFormPage";
+import { RestRoleDetailPage } from "@/features/rest-roles/pages/RestRoleDetailPage";
+import { RestRoleReviewPage } from "@/features/rest-roles/pages/RestRoleReviewPage";
+import { EmployeesPage } from "@/features/employees/pages/EmployeesPage";
+import { EmployeeFormPage } from "@/features/employees/pages/EmployeeFormPage";
 
 export const router = createBrowserRouter([
   {
@@ -36,9 +40,6 @@ export const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { index: true, element: <DashboardPage /> },
-          { path: "employees", element: <EmployeesPage /> },
-          { path: "employees/new", element: <EmployeeFormPage /> },
-          { path: "employees/:id/edit", element: <EmployeeFormPage /> },
           { path: "customers", element: <CustomersPage /> },
           { path: "customers/new", element: <CustomerFormPage /> },
           { path: "customers/:id/edit", element: <CustomerFormPage /> },
@@ -58,6 +59,14 @@ export const router = createBrowserRouter([
             path: "catalogs/shifts-schedules",
             element: <ShiftsSchedulesPage />,
           },
+          { path: "rest-roles", element: <RestRolesPage /> },
+          { path: "rest-roles/new", element: <RestRoleFormPage /> },
+          { path: "rest-roles/:id/edit", element: <RestRoleFormPage /> },
+          { path: "rest-roles/:id/detail", element: <RestRoleDetailPage /> },
+          { path: "rest-roles/:id/review", element: <RestRoleReviewPage /> },
+          { path: "employees", element: <EmployeesPage /> },
+          { path: "employees/new", element: <EmployeeFormPage /> },
+          { path: "employees/:id/edit", element: <EmployeeFormPage /> },
           { path: "*", element: <Navigate to="/" replace /> },
         ],
       },
