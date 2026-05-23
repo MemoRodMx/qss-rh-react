@@ -340,7 +340,7 @@ export function RestRoleReviewPage() {
 
           <div className="flex items-center gap-3 pt-2">
             <Button
-              variant="teal"
+              variant="default"
               size="sm"
               className="cursor-pointer gap-1.5"
               onClick={() => setAcceptDialogOpen(true)}
@@ -394,7 +394,7 @@ export function RestRoleReviewPage() {
               Cancelar
             </Button>
             <Button
-              variant="teal"
+              variant="default"
               onClick={handleAccept}
               className="cursor-pointer"
               disabled={isSubmitting}

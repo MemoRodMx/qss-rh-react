@@ -313,3 +313,13 @@
     linear-gradient(90deg, hsl(var(--border) / 0.15) 1px, transparent 1px);
   background-size: 40px 40px;
 }
+
+/* ============================================
+   Primary Action Button (Nuevo / Agregar / Crear)
+   Apply to primary CTA buttons across all pages.
+   Change this class to update all at once.
+   ============================================ */
+.btn-primary-action {
+  @apply cursor-pointer gap-1.5;
+}
+

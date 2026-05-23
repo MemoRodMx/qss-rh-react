@@ -50,6 +50,7 @@ const navItems = [
   { to: "/customers", label: "Clientes", icon: Building2 },
   { to: "/companies", label: "Empresas", icon: Building2 },
   { to: "/rest-roles", label: "Roles de Descanso", icon: CalendarCheck },
+  { to: "/vacation-requests", label: "Vacaciones", icon: CalendarDays },
   { to: "/attendance", label: "Asistencia", icon: Calendar },
   { to: "/reports", label: "Reportes", icon: FileText },
   { to: "/settings", label: "Configuración", icon: Settings },

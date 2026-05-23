@@ -160,7 +160,7 @@ export function LoginPage() {
               {/* Submit button */}
               <Button
                 type="submit"
-                variant="teal"
+                variant="default"
                 size="lg"
                 className="w-full cursor-pointer"
                 disabled={isLoading}

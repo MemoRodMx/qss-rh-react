@@ -831,7 +831,7 @@ export function CustomerFormPage() {
                             <Button
                               key={shift.code ?? shiftIdx}
                               type="button"
-                              variant={hasCoverage ? "teal" : "outline"}
+                              variant={hasCoverage ? "default" : "outline"}
                               size="sm"
                               className="cursor-pointer text-xs"
                               onClick={() => {
@@ -948,7 +948,7 @@ export function CustomerFormPage() {
         <div className="flex items-center gap-3 pt-4 border-t border-border/40 mt-6">
           <Button
             type="submit"
-            variant="teal"
+            variant="default"
             size="sm"
             className="cursor-pointer gap-1.5"
             disabled={isSubmitting}

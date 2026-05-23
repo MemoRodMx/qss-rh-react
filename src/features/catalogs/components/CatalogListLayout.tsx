@@ -84,9 +84,9 @@ export function CatalogListLayout({
         </div>
         {createLabel && onCreateClick && (
           <Button
-            variant="teal"
+            variant="default"
             size="sm"
-            className="cursor-pointer gap-1.5"
+            className="btn-primary-action"
             onClick={onCreateClick}
           >
             <Plus className="h-4 w-4" />
@@ -167,7 +167,7 @@ export function CatalogListLayout({
               </Button>
             ) : createLabel && onCreateClick ? (
               <Button
-                variant="teal"
+                variant="default"
                 size="sm"
                 className="cursor-pointer gap-1.5"
                 onClick={onCreateClick}

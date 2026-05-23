@@ -465,7 +465,7 @@ export function PayrollCalendarsPage() {
             <div className="flex items-center gap-3 pt-4 border-t border-border/40">
               <Button
                 type="submit"
-                variant="teal"
+                variant="default"
                 size="sm"
                 className="cursor-pointer gap-1.5"
                 disabled={isSubmitting}

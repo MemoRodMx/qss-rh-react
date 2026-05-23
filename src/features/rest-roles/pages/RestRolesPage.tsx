@@ -97,9 +97,9 @@ export function RestRolesPage() {
           </p>
         </div>
         <Button
-          variant="teal"
+          variant="default"
           size="sm"
-          className="cursor-pointer gap-1.5"
+          className="btn-primary-action"
           onClick={() => navigate("/rest-roles/new")}
         >
           <Plus className="h-4 w-4" />
@@ -169,7 +169,7 @@ export function RestRolesPage() {
             </p>
             {!search ? (
               <Button
-                variant="teal"
+                variant="default"
                 size="sm"
                 className="cursor-pointer gap-1.5"
                 onClick={() => navigate("/rest-roles/new")}

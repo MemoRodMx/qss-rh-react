@@ -21,6 +21,12 @@ import { RestRolesPage } from "@/features/rest-roles/pages/RestRolesPage";
 import { RestRoleFormPage } from "@/features/rest-roles/pages/RestRoleFormPage";
 import { RestRoleDetailPage } from "@/features/rest-roles/pages/RestRoleDetailPage";
 import { RestRoleReviewPage } from "@/features/rest-roles/pages/RestRoleReviewPage";
+import { VacationRequestsPage } from "@/features/vacation-requests/pages/VacationRequestsPage";
+import { VacationRequestFormPage } from "@/features/vacation-requests/pages/VacationRequestFormPage";
+import { VacationRequestReviewPage } from "@/features/vacation-requests/pages/VacationRequestReviewPage";
+import { AttendanceRecordsPage } from "@/features/attendance/pages/AttendanceRecordsPage";
+import { AttendanceRecordDetailPage } from "@/features/attendance/pages/AttendanceRecordDetailPage";
+import { AttendanceRecordFormPage } from "@/features/attendance/pages/AttendanceRecordFormPage";
 
 export const router = createBrowserRouter([
   {
@@ -67,6 +73,26 @@ export const router = createBrowserRouter([
           { path: "rest-roles/:id", element: <RestRoleDetailPage /> },
           { path: "rest-roles/:id/edit", element: <RestRoleFormPage /> },
           { path: "rest-roles/:id/review", element: <RestRoleReviewPage /> },
+          { path: "vacation-requests", element: <VacationRequestsPage /> },
+          {
+            path: "vacation-requests/new",
+            element: <VacationRequestFormPage />,
+          },
+          {
+            path: "vacation-requests/:id/edit",
+            element: <VacationRequestFormPage />,
+          },
+          {
+            path: "vacation-requests/:id/review",
+            element: <VacationRequestReviewPage />,
+          },
+          { path: "attendance", element: <AttendanceRecordsPage /> },
+          { path: "attendance/new", element: <AttendanceRecordFormPage /> },
+          { path: "attendance/:id", element: <AttendanceRecordDetailPage /> },
+          {
+            path: "attendance/:id/edit",
+            element: <AttendanceRecordFormPage />,
+          },
           { path: "*", element: <Navigate to="/" replace /> },
         ],
       },

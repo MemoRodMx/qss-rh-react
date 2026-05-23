@@ -182,7 +182,7 @@ export function RestRoleDetailPage() {
           )}
           {role.status === "PENDIENTE DE REVISION" && (
             <Button
-              variant="teal"
+              variant="default"
               size="sm"
               className="cursor-pointer gap-1.5"
               onClick={() => navigate(`/rest-roles/${id}/review`)}
