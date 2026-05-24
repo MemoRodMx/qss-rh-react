@@ -1,12 +1,6 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
 import type { EmployeeFormShellProps } from "../EmployeeFormShell";
 
 type Props = Pick<
@@ -37,7 +31,9 @@ export function AddressTab({
   colonies,
 }: Props) {
   const watchedState = watch("address_state");
+  const watchedCity = watch("address_city");
   const watchedZipcode = watch("address_zipcode");
+  const watchedColony = watch("address_colony");
 
   return (
     <div className="space-y-8">
@@ -46,20 +42,23 @@ export function AddressTab({
         <SectionTitle>Calle y número</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
-            <Label htmlFor="address_street">Calle</Label>
-            <Input id="address_street" {...register("address_street")} />
+            <FloatLabelInput
+              id="address_street"
+              label="Calle"
+              {...register("address_street")}
+            />
           </div>
           <div>
-            <Label htmlFor="address_exterior_number">Núm. exterior</Label>
-            <Input
+            <FloatLabelInput
               id="address_exterior_number"
+              label="Núm. exterior"
               {...register("address_exterior_number")}
             />
           </div>
           <div>
-            <Label htmlFor="address_internal_number">Núm. interior</Label>
-            <Input
+            <FloatLabelInput
               id="address_internal_number"
+              label="Núm. interior"
               {...register("address_internal_number")}
             />
           </div>
@@ -71,69 +70,53 @@ export function AddressTab({
         <SectionTitle>Estado, ciudad y colonia</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
-            <Label htmlFor="address_state">Estado</Label>
-            <Select
+            <FloatLabelSelect
+              id="address_state"
+              label="Estado"
               value={watchedState}
+              hasValue={!!watchedState}
               onValueChange={(val) => {
                 setValue("address_state", val ?? "");
                 setValue("address_city", "");
               }}
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const state = states.find((s) => s.code === value);
+                return state?.name ?? value;
+              }}
             >
-              <SelectTrigger id="address_state">
-                <SelectValue placeholder="Seleccionar estado">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar estado";
-                    const state = states.find((s) => s.code === value);
-                    return state?.name ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {states.map((s) => (
-                  <SelectItem key={s.code} value={s.code}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {states.map((s) => (
+                <SelectItem key={s.code} value={s.code}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
           <div>
-            <Label htmlFor="address_city">Ciudad / Municipio</Label>
-            <Select
-              value={watch("address_city")}
-              onValueChange={(val) => setValue("address_city", val ?? "")}
+            <FloatLabelSelect
+              id="address_city"
+              label="Ciudad / Municipio"
+              value={watchedCity}
+              hasValue={!!watchedCity}
               disabled={!watchedState || municipalities.length === 0}
+              onValueChange={(val) => setValue("address_city", val ?? "")}
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const mun = municipalities.find((m) => m.code === value);
+                return mun?.name ?? value;
+              }}
             >
-              <SelectTrigger id="address_city">
-                <SelectValue
-                  placeholder={
-                    !watchedState
-                      ? "Primero selecciona un estado"
-                      : municipalities.length === 0
-                        ? "Sin municipios"
-                        : "Seleccionar municipio"
-                  }
-                >
-                  {(value: string | null) => {
-                    if (!value) return null;
-                    const mun = municipalities.find((m) => m.code === value);
-                    return mun?.name ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {municipalities.map((m) => (
-                  <SelectItem key={m.code} value={m.code}>
-                    {m.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {municipalities.map((m) => (
+                <SelectItem key={m.code} value={m.code}>
+                  {m.name}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
           <div>
-            <Label htmlFor="address_zipcode">Código Postal</Label>
-            <Input
+            <FloatLabelInput
               id="address_zipcode"
+              label="Código Postal"
               {...register("address_zipcode")}
               maxLength={5}
             />
@@ -141,48 +124,35 @@ export function AddressTab({
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="address_colony">Colonia</Label>
-            <Select
-              value={watch("address_colony")}
-              onValueChange={(val) => setValue("address_colony", val ?? "")}
+            <FloatLabelSelect
+              id="address_colony"
+              label="Colonia"
+              value={watchedColony}
+              hasValue={!!watchedColony}
               disabled={
                 !watchedZipcode ||
                 watchedZipcode.length < 5 ||
                 colonies.length === 0
               }
+              onValueChange={(val) => setValue("address_colony", val ?? "")}
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const colony = colonies.find((c) => c.code === value);
+                return colony?.name ?? value;
+              }}
             >
-              <SelectTrigger id="address_colony">
-                <SelectValue
-                  placeholder={
-                    !watchedZipcode || watchedZipcode.length < 5
-                      ? "Primero ingresa un CP de 5 dígitos"
-                      : colonies.length === 0
-                        ? "Sin colonias"
-                        : "Seleccionar colonia"
-                  }
-                >
-                  {(value: string | null) => {
-                    if (!value) return null;
-                    const colony = colonies.find((c) => c.code === value);
-                    return colony?.name ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {colonies.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {colonies.map((c) => (
+                <SelectItem key={c.code} value={c.code}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
           <div>
-            <Label htmlFor="address_country">País</Label>
-            <Input
+            <FloatLabelInput
               id="address_country"
+              label="País"
               {...register("address_country")}
-              placeholder="México"
             />
           </div>
         </div>

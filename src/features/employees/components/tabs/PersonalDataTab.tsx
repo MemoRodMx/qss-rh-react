@@ -1,13 +1,7 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
 import { SCHOOLING_OPTIONS } from "../../types";
 import type { EmployeeFormShellProps } from "../EmployeeFormShell";
 
@@ -25,6 +19,8 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function PersonalDataTab({ register, setValue, watch }: Props) {
+  const watchedSchooling = watch("personal_data_schooling");
+
   return (
     <div className="space-y-8">
       {/* ── Teléfonos de contacto ────────────────────────────────────────── */}
@@ -32,40 +28,32 @@ export function PersonalDataTab({ register, setValue, watch }: Props) {
         <SectionTitle>Teléfonos de contacto</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <Label htmlFor="personal_data_landline_phone_number">
-              Teléfono fijo
-            </Label>
-            <Input
+            <FloatLabelInput
               id="personal_data_landline_phone_number"
+              label="Teléfono fijo"
               {...register("personal_data_landline_phone_number")}
             />
           </div>
           <div>
-            <Label htmlFor="personal_data_mobile_phone_number">
-              Teléfono móvil
-            </Label>
-            <Input
+            <FloatLabelInput
               id="personal_data_mobile_phone_number"
+              label="Teléfono móvil"
               {...register("personal_data_mobile_phone_number")}
             />
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="personal_data_emergency_phone_number">
-              Teléfono de emergencia
-            </Label>
-            <Input
+            <FloatLabelInput
               id="personal_data_emergency_phone_number"
+              label="Teléfono de emergencia"
               {...register("personal_data_emergency_phone_number")}
             />
           </div>
           <div>
-            <Label htmlFor="personal_data_relationship">
-              Parentesco (emergencia)
-            </Label>
-            <Input
+            <FloatLabelInput
               id="personal_data_relationship"
+              label="Parentesco (emergencia)"
               {...register("personal_data_relationship")}
             />
           </div>
@@ -77,32 +65,28 @@ export function PersonalDataTab({ register, setValue, watch }: Props) {
         <SectionTitle>Información adicional</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="personal_data_schooling">Escolaridad</Label>
-            <Select
-              value={watch("personal_data_schooling")}
+            <FloatLabelSelect
+              id="personal_data_schooling"
+              label="Escolaridad"
+              value={watchedSchooling}
+              hasValue={!!watchedSchooling}
               onValueChange={(val) =>
                 setValue("personal_data_schooling", val ?? "")
               }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                return (
+                  SCHOOLING_OPTIONS.find((s) => s.value === value)?.label ??
+                  value
+                );
+              }}
             >
-              <SelectTrigger id="personal_data_schooling">
-                <SelectValue placeholder="Seleccionar">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar";
-                    const opt = SCHOOLING_OPTIONS.find(
-                      (s) => s.value === value,
-                    );
-                    return opt?.label ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {SCHOOLING_OPTIONS.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {SCHOOLING_OPTIONS.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
           <div className="flex items-end pb-2">
             <label className="flex items-center gap-2 cursor-pointer">

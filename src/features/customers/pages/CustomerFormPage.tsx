@@ -8,16 +8,11 @@ import type { SelectOption, OptimalContracted, Coverage } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
 import {
   ArrowLeft,
   Save,
@@ -211,6 +206,8 @@ export function CustomerFormPage() {
   });
 
   const watchedStatus = watch("status");
+  const watchedCompanyId = watch("company_id");
+  const watchedAreaCode = watch("area_code");
 
   // ── Load auxiliary data ───────────────────────────────────────────────────
   const loadAuxData = useCallback(async (customerId?: string) => {
@@ -401,16 +398,6 @@ export function CustomerFormPage() {
     }
   };
 
-  // ── Render field error ────────────────────────────────────────────────────
-  const renderFieldError = (fieldName: string) => {
-    const error = getNestedError(
-      errors as unknown as Record<string, unknown>,
-      fieldName,
-    );
-    if (!error) return null;
-    return <p className="mt-1 text-xs text-destructive">{error.message}</p>;
-  };
-
   // ── Loading state ─────────────────────────────────────────────────────────
   if (isLoadingRecord) {
     return (
@@ -510,148 +497,122 @@ export function CustomerFormPage() {
             <CardContent className="p-5 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">
-                  <Label htmlFor="legal_name">Razón social</Label>
-                  <Input
+                  <FloatLabelInput
                     id="legal_name"
+                    label="Razón social"
                     {...register("legal_name")}
-                    className={errors.legal_name ? "border-destructive" : ""}
+                    error={errors.legal_name?.message}
                   />
-                  {renderFieldError("legal_name")}
                 </div>
                 <div>
-                  <Label htmlFor="rfc">RFC</Label>
-                  <Input
+                  <FloatLabelInput
                     id="rfc"
+                    label="RFC"
                     {...register("rfc")}
-                    className={`uppercase ${errors.rfc ? "border-destructive" : ""}`}
+                    className="uppercase"
                     style={{ textTransform: "uppercase" }}
                   />
-                  {renderFieldError("rfc")}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="company_id">Empresa</Label>
-                  <Select
-                    value={watch("company_id")}
+                  <FloatLabelSelect
+                    id="company_id"
+                    label="Empresa"
+                    value={watchedCompanyId}
+                    hasValue={!!watchedCompanyId}
                     onValueChange={(val) =>
                       setValue("company_id", val ?? "", {
                         shouldValidate: true,
                       })
                     }
+                    valueRenderer={(value) => {
+                      if (!value) return "";
+                      return (
+                        companies.find((c) => c._id === value)?.name ?? value
+                      );
+                    }}
+                    error={errors.company_id?.message}
                   >
-                    <SelectTrigger
-                      id="company_id"
-                      className={errors.company_id ? "border-destructive" : ""}
-                    >
-                      <SelectValue placeholder="Seleccionar empresa">
-                        {(value: string | null) => {
-                          if (!value) return "Seleccionar empresa";
-                          const company = companies.find(
-                            (c) => c._id === value,
-                          );
-                          return company?.name ?? value;
-                        }}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {companies.map((c) => (
-                        <SelectItem key={c._id} value={c._id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {renderFieldError("company_id")}
+                    {companies.map((c) => (
+                      <SelectItem key={c._id} value={c._id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </FloatLabelSelect>
                 </div>
                 <div>
-                  <Label htmlFor="area_code">Área</Label>
-                  <Select
-                    value={watch("area_code")}
+                  <FloatLabelSelect
+                    id="area_code"
+                    label="Área"
+                    value={watchedAreaCode}
+                    hasValue={!!watchedAreaCode}
                     onValueChange={(val) =>
                       setValue("area_code", val ?? "", { shouldValidate: true })
                     }
+                    valueRenderer={(value) => {
+                      if (!value) return "";
+                      return (
+                        areas.find((a) => (a.code ?? a._id) === value)?.name ??
+                        value
+                      );
+                    }}
+                    error={errors.area_code?.message}
                   >
-                    <SelectTrigger
-                      id="area_code"
-                      className={errors.area_code ? "border-destructive" : ""}
-                    >
-                      <SelectValue placeholder="Seleccionar área">
-                        {(value: string | null) => {
-                          if (!value) return "Seleccionar área";
-                          const area = areas.find(
-                            (a) => (a.code ?? a._id) === value,
-                          );
-                          return area?.name ?? value;
-                        }}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {areas.map((a) => (
-                        <SelectItem key={a._id} value={a.code ?? a._id}>
-                          {a.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {renderFieldError("area_code")}
+                    {areas.map((a) => (
+                      <SelectItem key={a._id} value={a.code ?? a._id}>
+                        {a.name}
+                      </SelectItem>
+                    ))}
+                  </FloatLabelSelect>
                 </div>
                 <div>
-                  <Label htmlFor="status">Estado</Label>
-                  <Select
+                  <FloatLabelSelect
+                    id="status"
+                    label="Estado"
                     value={watchedStatus}
+                    hasValue={!!watchedStatus}
                     onValueChange={(val) =>
-                      setValue("status", val ?? "", {
-                        shouldValidate: true,
-                      })
+                      setValue("status", val ?? "", { shouldValidate: true })
                     }
+                    valueRenderer={(value) => {
+                      if (!value) return "";
+                      const labels: Record<string, string> = {
+                        ACTIVE: "Activo",
+                        INACTIVE: "Inactivo",
+                      };
+                      return labels[value] ?? value;
+                    }}
+                    error={errors.status?.message}
                   >
-                    <SelectTrigger
-                      id="status"
-                      className={errors.status ? "border-destructive" : ""}
-                    >
-                      <SelectValue placeholder="Seleccionar">
-                        {(value: string | null) => {
-                          if (!value) return "Seleccionar";
-                          const labels: Record<string, string> = {
-                            ACTIVE: "Activo",
-                            INACTIVE: "Inactivo",
-                          };
-                          return labels[value] ?? value;
-                        }}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ACTIVE">Activo</SelectItem>
-                      <SelectItem value="INACTIVE">Inactivo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {renderFieldError("status")}
+                    <SelectItem value="ACTIVE">Activo</SelectItem>
+                    <SelectItem value="INACTIVE">Inactivo</SelectItem>
+                  </FloatLabelSelect>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="contract_date">Fecha de contrato</Label>
-                  <Input
+                  <FloatLabelInput
                     id="contract_date"
+                    label="Fecha de contrato"
                     type="date"
                     {...register("contract_date")}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="left_date">Fecha de baja</Label>
-                  <Input
+                  <FloatLabelInput
                     id="left_date"
+                    label="Fecha de baja"
                     type="date"
                     {...register("left_date")}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="readmission_date">Fecha de readmisión</Label>
-                  <Input
+                  <FloatLabelInput
                     id="readmission_date"
+                    label="Fecha de readmisión"
                     type="date"
                     {...register("readmission_date")}
                   />
@@ -673,33 +634,51 @@ export function CustomerFormPage() {
             <CardContent className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">
-                  <Label htmlFor="addr_street">Calle</Label>
-                  <Input id="addr_street" {...register("addr_street")} />
+                  <FloatLabelInput
+                    id="addr_street"
+                    label="Calle"
+                    {...register("addr_street")}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="addr_number">Núm. Exterior</Label>
-                  <Input id="addr_number" {...register("addr_number")} />
+                  <FloatLabelInput
+                    id="addr_number"
+                    label="Núm. Exterior"
+                    {...register("addr_number")}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="addr_interior">Núm. Interior</Label>
-                  <Input id="addr_interior" {...register("addr_interior")} />
+                  <FloatLabelInput
+                    id="addr_interior"
+                    label="Núm. Interior"
+                    {...register("addr_interior")}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="addr_colony">Colonia</Label>
-                  <Input id="addr_colony" {...register("addr_colony")} />
+                  <FloatLabelInput
+                    id="addr_colony"
+                    label="Colonia"
+                    {...register("addr_colony")}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="addr_city">Ciudad</Label>
-                  <Input id="addr_city" {...register("addr_city")} />
+                  <FloatLabelInput
+                    id="addr_city"
+                    label="Ciudad"
+                    {...register("addr_city")}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="addr_state">Estado</Label>
-                  <Input id="addr_state" {...register("addr_state")} />
+                  <FloatLabelInput
+                    id="addr_state"
+                    label="Estado"
+                    {...register("addr_state")}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="addr_zipcode">Código Postal</Label>
-                  <Input
+                  <FloatLabelInput
                     id="addr_zipcode"
+                    label="Código Postal"
                     {...register("addr_zipcode")}
                     maxLength={5}
                   />
@@ -753,37 +732,31 @@ export function CustomerFormPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="md:col-span-2">
-                      <Label>Puesto</Label>
-                      <Select
+                      <FloatLabelSelect
+                        label="Puesto"
                         value={oc.position}
+                        hasValue={!!oc.position}
                         onValueChange={(val) =>
                           updateOptimalContracted(ocIndex, "position", val)
                         }
+                        valueRenderer={(value) => {
+                          if (!value) return "";
+                          return (
+                            positions.find((p) => (p.code ?? p._id) === value)
+                              ?.name ?? value
+                          );
+                        }}
                       >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Seleccionar puesto">
-                            {(value: string | null) => {
-                              if (!value) return "Seleccionar puesto";
-                              return (
-                                positions.find(
-                                  (p) => (p.code ?? p._id) === value,
-                                )?.name ?? value
-                              );
-                            }}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          {positions.map((p) => (
-                            <SelectItem key={p._id} value={p.code ?? p._id}>
-                              {p.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        {positions.map((p) => (
+                          <SelectItem key={p._id} value={p.code ?? p._id}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </FloatLabelSelect>
                     </div>
                     <div>
-                      <Label>Salario ($)</Label>
-                      <Input
+                      <FloatLabelInput
+                        label="Salario ($)"
                         type="number"
                         min={0}
                         step={0.01}
@@ -798,8 +771,8 @@ export function CustomerFormPage() {
                       />
                     </div>
                     <div>
-                      <Label>Bono ($)</Label>
-                      <Input
+                      <FloatLabelInput
+                        label="Bono ($)"
                         type="number"
                         min={0}
                         step={0.01}

@@ -7,16 +7,11 @@ import { EmployeeAutocomplete } from "./EmployeeAutocomplete";
 import type { EmployeeSuggestion, PlantOption, ShiftOption } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { SelectItem } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
+import { FloatLabelTextarea } from "@/components/ui/float-label-textarea";
 import {
   ArrowLeft,
   Save,
@@ -252,13 +247,6 @@ export function VacationRequestFormShell({
     }
   };
 
-  // ── Render field error ────────────────────────────────────────────────────
-  const renderFieldError = (fieldName: keyof FormValues) => {
-    const error = errors[fieldName];
-    if (!error) return null;
-    return <p className="mt-1 text-xs text-destructive">{error.message}</p>;
-  };
-
   // ── Build plant options ───────────────────────────────────────────────────
   const plantOptions = plants.map((p) => ({
     label: p.name,
@@ -332,66 +320,58 @@ export function VacationRequestFormShell({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Plant */}
               <div>
-                <Label htmlFor="plant_id">
-                  Planta <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={watch("plant_id")}
+                <FloatLabelSelect
+                  id="plant_id"
+                  label="Planta"
+                  value={watchedPlantId}
+                  hasValue={!!watchedPlantId}
+                  error={errors.plant_id?.message}
                   onValueChange={(val) => {
                     setValue("plant_id", val ?? "", { shouldValidate: true });
                     setCurrentPlantCode(val ?? "");
                   }}
+                  valueRenderer={(value) => {
+                    if (!value) return "";
+                    return (
+                      plantOptions.find((o) => o.value === value)?.label ??
+                      value
+                    );
+                  }}
                 >
-                  <SelectTrigger
-                    id="plant_id"
-                    className={`min-w-[200px] ${errors.plant_id ? "border-destructive" : ""}`}
-                  >
-                    <span className="flex flex-1 text-left">
-                      {plantOptions.find((o) => o.value === watch("plant_id"))
-                        ?.label || "Seleccionar planta"}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {plantOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {renderFieldError("plant_id")}
+                  {plantOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </FloatLabelSelect>
               </div>
 
               {/* Shift */}
               <div>
-                <Label htmlFor="shift_id">
-                  Turno <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={watch("shift_id")}
+                <FloatLabelSelect
+                  id="shift_id"
+                  label="Turno"
+                  value={watchedShiftId}
+                  hasValue={!!watchedShiftId}
+                  error={errors.shift_id?.message}
                   onValueChange={(val) => {
                     setValue("shift_id", val ?? "", { shouldValidate: true });
                     setCurrentShiftCode(val ?? "");
                   }}
+                  valueRenderer={(value) => {
+                    if (!value) return "";
+                    return (
+                      shiftOptions.find((o) => o.value === value)?.label ??
+                      value
+                    );
+                  }}
                 >
-                  <SelectTrigger
-                    id="shift_id"
-                    className={`min-w-[200px] ${errors.shift_id ? "border-destructive" : ""}`}
-                  >
-                    <span className="flex flex-1 text-left">
-                      {shiftOptions.find((o) => o.value === watch("shift_id"))
-                        ?.label || "Seleccionar turno"}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {shiftOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {renderFieldError("shift_id")}
+                  {shiftOptions.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </FloatLabelSelect>
               </div>
             </div>
           </CardContent>
@@ -407,9 +387,6 @@ export function VacationRequestFormShell({
           </CardHeader>
           <CardContent className="p-5">
             <div className="max-w-md">
-              <Label className="mb-2 block">
-                Empleado <span className="text-destructive">*</span>
-              </Label>
               <EmployeeAutocomplete
                 value={selectedEmployee}
                 onChange={(emp) => {
@@ -440,18 +417,15 @@ export function VacationRequestFormShell({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Exercise */}
               <div>
-                <Label htmlFor="exercise">
-                  Ejercicio (año) <span className="text-destructive">*</span>
-                </Label>
-                <Input
+                <FloatLabelInput
                   id="exercise"
+                  label="Ejercicio (año)"
                   type="number"
                   min={2020}
                   max={2100}
+                  error={errors.exercise?.message}
                   {...register("exercise")}
-                  className={errors.exercise ? "border-destructive" : ""}
                 />
-                {renderFieldError("exercise")}
               </div>
 
               {/* Worked vacations */}
@@ -590,15 +564,13 @@ export function VacationRequestFormShell({
           </CardHeader>
           <CardContent className="p-5">
             <div>
-              <Label htmlFor="notes">Notas (opcional)</Label>
-              <Textarea
+              <FloatLabelTextarea
                 id="notes"
+                label="Notas (opcional)"
                 rows={3}
-                placeholder="Añade comentarios sobre la solicitud..."
+                error={errors.notes?.message}
                 {...register("notes")}
-                className={errors.notes ? "border-destructive" : ""}
               />
-              {renderFieldError("notes")}
             </div>
           </CardContent>
         </Card>

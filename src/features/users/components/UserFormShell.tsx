@@ -1,17 +1,11 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
 import {
   ArrowLeft,
   Save,
@@ -172,52 +166,26 @@ export function UserFormShell({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Username */}
                 <div>
-                  <Label
-                    htmlFor="username"
-                    className="text-xs font-medium text-foreground"
-                  >
-                    Nombre de Usuario{" "}
-                    <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
+                  <FloatLabelInput
                     id="username"
+                    label="Nombre de Usuario"
+                    error={errors.username?.message}
                     {...register("username")}
-                    placeholder="ej. juan.perez"
-                    className={`mt-1 ${errors.username ? "border-destructive" : ""}`}
                   />
-                  {errors.username && (
-                    <p className="text-xs text-destructive mt-1">
-                      {errors.username.message}
-                    </p>
-                  )}
                 </div>
 
                 {/* Password */}
                 <div>
-                  <Label
-                    htmlFor="password"
-                    className="text-xs font-medium text-foreground"
-                  >
-                    Contraseña{" "}
-                    {!isEditMode && <span className="text-destructive">*</span>}
-                    {isEditMode && (
-                      <span className="text-muted-foreground font-normal">
-                        (dejar vacío para no cambiar)
-                      </span>
-                    )}
-                  </Label>
-                  <Input
+                  <FloatLabelInput
                     id="password"
                     type="password"
+                    label="Contraseña"
+                    error={errors.password?.message}
                     {...register("password")}
-                    placeholder={
-                      isEditMode ? "••••••••" : "Mínimo 8 caracteres"
-                    }
-                    className={`mt-1 ${errors.password ? "border-destructive" : ""}`}
                   />
-                  {errors.password && (
-                    <p className="text-xs text-destructive mt-1">
-                      {errors.password.message}
+                  {isEditMode && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Dejar vacío para no cambiar
                     </p>
                   )}
                 </div>
@@ -226,38 +194,28 @@ export function UserFormShell({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Role */}
                 <div>
-                  <Label
-                    htmlFor="role"
-                    className="text-xs font-medium text-foreground"
-                  >
-                    Rol <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={(watch("role") as string) || undefined}
+                  <FloatLabelSelect
+                    id="role"
+                    label="Rol"
+                    value={(watch("role") as string) || ""}
+                    hasValue={!!(watch("role") as string)}
+                    error={errors.role?.message}
                     onValueChange={handleRoleChange}
+                    valueRenderer={(value) => {
+                      if (!value) return "";
+                      const role = roleOptions.find((r) => r.value === value);
+                      return role?.label ?? value;
+                    }}
                   >
-                    <SelectTrigger
-                      id="role"
-                      className={`mt-1 min-w-[180px] ${errors.role ? "border-destructive" : ""}`}
-                    >
-                      <SelectValue placeholder="Seleccionar rol..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roleOptions.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          <span className="flex items-center gap-2">
-                            {ROLE_ICONS[role.value]}
-                            <span>{role.label}</span>
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.role && (
-                    <p className="text-xs text-destructive mt-1">
-                      {errors.role.message}
-                    </p>
-                  )}
+                    {roleOptions.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        <span className="flex items-center gap-2">
+                          {ROLE_ICONS[role.value]}
+                          <span>{role.label}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </FloatLabelSelect>
                 </div>
 
                 {/* Employee search */}

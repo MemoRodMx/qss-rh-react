@@ -9,15 +9,10 @@ import { DayAssignmentField } from "../components/DayAssignmentField";
 import type { Supervisor, SupervisorPlant, ShiftOption } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
 import {
   Dialog,
   DialogContent,
@@ -116,6 +111,7 @@ export function RestRoleFormPage() {
 
   const watchedSupervisorId = watch("supervisor_id");
   const watchedPlantId = watch("plant_id");
+  const watchedShiftId = watch("shift_id");
 
   // ── Load auxiliary data ───────────────────────────────────────────────────
   const loadAuxData = useCallback(async () => {
@@ -296,13 +292,6 @@ export function RestRoleFormPage() {
     }
   };
 
-  // ── Render field error ────────────────────────────────────────────────────
-  const renderFieldError = (fieldName: keyof FormValues) => {
-    const error = errors[fieldName];
-    if (!error) return null;
-    return <p className="mt-1 text-xs text-destructive">{error.message}</p>;
-  };
-
   // ── Loading state ─────────────────────────────────────────────────────────
   if (isLoadingRecord) {
     return (
@@ -368,140 +357,119 @@ export function RestRoleFormPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Supervisor */}
               <div>
-                <Label htmlFor="supervisor_id">
-                  Jefe directo <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={watch("supervisor_id")}
+                <FloatLabelSelect
+                  id="supervisor_id"
+                  label="Jefe directo"
+                  value={watchedSupervisorId}
+                  hasValue={!!watchedSupervisorId}
+                  error={errors.supervisor_id?.message}
                   onValueChange={(val) =>
                     handleFieldChange("supervisor_id", val ?? "")
                   }
+                  valueRenderer={(value) => {
+                    if (!value) return "";
+                    return (
+                      supervisors.find((s) => s._id === value)?.name ?? value
+                    );
+                  }}
                 >
-                  <SelectTrigger
-                    id="supervisor_id"
-                    className={`min-w-[200px] ${errors.supervisor_id ? "border-destructive" : ""}`}
-                  >
-                    <span className="flex flex-1 text-left">
-                      {supervisors.find((s) => s._id === watch("supervisor_id"))
-                        ?.name || "Seleccionar supervisor"}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {supervisors.map((s) => (
-                      <SelectItem key={s._id} value={s._id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {renderFieldError("supervisor_id")}
+                  {supervisors.map((s) => (
+                    <SelectItem key={s._id} value={s._id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </FloatLabelSelect>
               </div>
 
               {/* Plant */}
               <div>
-                <Label htmlFor="plant_id">
-                  Planta <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={watch("plant_id")}
+                <FloatLabelSelect
+                  id="plant_id"
+                  label="Planta"
+                  value={watchedPlantId}
+                  hasValue={!!watchedPlantId}
+                  error={errors.plant_id?.message}
+                  disabled={!watchedSupervisorId}
                   onValueChange={(val) =>
                     handleFieldChange("plant_id", val ?? "")
                   }
-                  disabled={!watchedSupervisorId}
+                  valueRenderer={(value) => {
+                    if (!value) return "";
+                    return (
+                      supervisorPlants.find((p) => p.plant_id === value)
+                        ?.plant_name ?? value
+                    );
+                  }}
                 >
-                  <SelectTrigger
-                    id="plant_id"
-                    className={`min-w-[200px] ${errors.plant_id ? "border-destructive" : ""}`}
-                  >
-                    <span className="flex flex-1 text-left">
-                      {supervisorPlants.find(
-                        (p) => p.plant_id === watch("plant_id"),
-                      )?.plant_name || "Seleccionar planta"}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {supervisorPlants.map((p) => (
-                      <SelectItem key={p.plant_id} value={p.plant_id}>
-                        {p.plant_name || p.plant_id}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {renderFieldError("plant_id")}
+                  {supervisorPlants.map((p) => (
+                    <SelectItem key={p.plant_id} value={p.plant_id}>
+                      {p.plant_name || p.plant_id}
+                    </SelectItem>
+                  ))}
+                </FloatLabelSelect>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Shift */}
               <div>
-                <Label htmlFor="shift_id">
-                  Turno <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={watch("shift_id")}
+                <FloatLabelSelect
+                  id="shift_id"
+                  label="Turno"
+                  value={watchedShiftId}
+                  hasValue={!!watchedShiftId}
+                  error={errors.shift_id?.message}
+                  disabled={!watchedPlantId || isShiftLocked}
                   onValueChange={(val) =>
                     handleFieldChange("shift_id", val ?? "")
                   }
-                  disabled={!watchedPlantId || isShiftLocked}
+                  valueRenderer={(value) => {
+                    if (!value) return "";
+                    return (
+                      shifts.find((s) => (s.code ?? s._id) === value)?.name ??
+                      value
+                    );
+                  }}
                 >
-                  <SelectTrigger
-                    id="shift_id"
-                    className={`min-w-[200px] ${errors.shift_id ? "border-destructive" : ""}`}
-                  >
-                    <span className="flex flex-1 text-left">
-                      {shifts.find(
-                        (s) => (s.code ?? s._id) === watch("shift_id"),
-                      )?.name || "Seleccionar turno"}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {shifts.map((s) => (
-                      <SelectItem key={s._id} value={s.code ?? s._id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {shifts.map((s) => (
+                    <SelectItem key={s._id} value={s.code ?? s._id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+                </FloatLabelSelect>
                 {isShiftLocked && (
                   <p className="mt-1 text-xs text-muted-foreground">
                     Turno asignado por la planta
                   </p>
                 )}
-                {renderFieldError("shift_id")}
               </div>
 
               {/* Year */}
               <div>
-                <Label htmlFor="year">
-                  Año <span className="text-destructive">*</span>
-                </Label>
-                <Input
+                <FloatLabelInput
                   id="year"
+                  label="Año"
                   type="number"
                   min={2020}
                   max={2100}
-                  {...register("year")}
-                  className={errors.year ? "border-destructive" : ""}
                   disabled={isEditMode}
+                  error={errors.year?.message}
+                  {...register("year")}
                 />
-                {renderFieldError("year")}
               </div>
 
               {/* Week */}
               <div>
-                <Label htmlFor="week">
-                  Semana <span className="text-destructive">*</span>
-                </Label>
-                <Input
+                <FloatLabelInput
                   id="week"
+                  label="Semana"
                   type="number"
                   min={1}
                   max={53}
-                  {...register("week")}
-                  className={errors.week ? "border-destructive" : ""}
                   disabled={isEditMode}
+                  error={errors.week?.message}
+                  {...register("week")}
                 />
-                {renderFieldError("week")}
               </div>
             </div>
           </CardContent>

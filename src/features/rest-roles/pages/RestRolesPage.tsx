@@ -30,15 +30,6 @@ import {
   ClipboardCheck,
 } from "lucide-react";
 
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "—";
-  const date = new Date(dateStr);
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = date.toLocaleString("es-MX", { month: "short" });
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
 export function RestRolesPage() {
   const navigate = useNavigate();
   const {

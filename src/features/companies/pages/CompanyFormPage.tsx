@@ -6,17 +6,11 @@ import { z } from "zod";
 import { companyService, type PlantOption } from "../services/companyService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
 import {
   ArrowLeft,
   Save,
@@ -345,13 +339,6 @@ export function CompanyFormPage() {
     }
   };
 
-  // ── Render helpers ────────────────────────────────────────────────────────
-  const renderFieldError = (fieldName: string) => {
-    const error = getNestedError(errors, fieldName);
-    if (!error) return null;
-    return <p className="mt-1 text-xs text-destructive">{error.message}</p>;
-  };
-
   // ── Loading state ─────────────────────────────────────────────────────────
   if (isLoadingRecord) {
     return (
@@ -444,59 +431,46 @@ export function CompanyFormPage() {
             <CardContent className="p-5 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">
-                  <Label htmlFor="legal_name">Razón social</Label>
-                  <Input
+                  <FloatLabelInput
                     id="legal_name"
+                    label="Razón social"
+                    error={errors.legal_name?.message}
                     {...register("legal_name")}
-                    className={errors.legal_name ? "border-destructive" : ""}
                   />
-                  {renderFieldError("legal_name")}
                 </div>
                 <div>
-                  <Label htmlFor="rfc">RFC</Label>
-                  <Input
+                  <FloatLabelInput
                     id="rfc"
-                    {...register("rfc")}
-                    className={`uppercase ${errors.rfc ? "border-destructive" : ""}`}
+                    label="RFC"
+                    error={errors.rfc?.message}
+                    className="uppercase"
                     style={{ textTransform: "uppercase" }}
+                    {...register("rfc")}
                   />
-                  {renderFieldError("rfc")}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="patronal_registration">
-                    Registro patronal
-                  </Label>
-                  <Input
+                  <FloatLabelInput
                     id="patronal_registration"
+                    label="Registro patronal"
+                    error={errors.patronal_registration?.message}
                     {...register("patronal_registration")}
-                    className={
-                      errors.patronal_registration ? "border-destructive" : ""
-                    }
                   />
-                  {renderFieldError("patronal_registration")}
                 </div>
                 <div>
-                  <Label htmlFor="legal_representative">
-                    Representante legal
-                  </Label>
-                  <Input
+                  <FloatLabelInput
                     id="legal_representative"
+                    label="Representante legal"
+                    error={errors.legal_representative?.message}
                     {...register("legal_representative")}
-                    className={
-                      errors.legal_representative ? "border-destructive" : ""
-                    }
                   />
-                  {renderFieldError("legal_representative")}
                 </div>
                 <div>
-                  <Label htmlFor="fiscal_reg_number">
-                    Número registro fiscalía
-                  </Label>
-                  <Input
+                  <FloatLabelInput
                     id="fiscal_reg_number"
+                    label="Número registro fiscalía"
                     {...register("fiscal_reg_number")}
                   />
                 </div>
@@ -504,36 +478,29 @@ export function CompanyFormPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="status">Estado</Label>
-                  <Select
+                  <FloatLabelSelect
+                    id="status"
+                    label="Estado"
                     value={watchedStatus}
+                    hasValue={!!watchedStatus}
+                    error={errors.status?.message}
                     onValueChange={(val) =>
                       setValue("status", val as "ACTIVE" | "INACTIVE", {
                         shouldValidate: true,
                       })
                     }
+                    valueRenderer={(value) => {
+                      if (!value) return "";
+                      const labels: Record<string, string> = {
+                        ACTIVE: "Activo",
+                        INACTIVE: "Inactivo",
+                      };
+                      return labels[value] ?? value;
+                    }}
                   >
-                    <SelectTrigger
-                      id="status"
-                      className={errors.status ? "border-destructive" : ""}
-                    >
-                      <SelectValue placeholder="Seleccionar">
-                        {(value: string | null) => {
-                          if (!value) return "Seleccionar";
-                          const labels: Record<string, string> = {
-                            ACTIVE: "Activo",
-                            INACTIVE: "Inactivo",
-                          };
-                          return labels[value] ?? value;
-                        }}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ACTIVE">Activo</SelectItem>
-                      <SelectItem value="INACTIVE">Inactivo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {renderFieldError("status")}
+                    <SelectItem value="ACTIVE">Activo</SelectItem>
+                    <SelectItem value="INACTIVE">Inactivo</SelectItem>
+                  </FloatLabelSelect>
                 </div>
               </div>
             </CardContent>
@@ -570,45 +537,25 @@ export function CompanyFormPage() {
                       </p>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <Label
-                            htmlFor={`${doc.key}_document_number`}
-                            className="text-xs"
-                          >
-                            Número
-                          </Label>
-                          <Input
+                          <FloatLabelInput
                             id={`${doc.key}_document_number`}
+                            label="Número"
+                            error={numError?.message}
                             {...register(
                               `documents.${doc.key}.document_number`,
                             )}
-                            className={numError ? "border-destructive" : ""}
                           />
-                          {numError && (
-                            <p className="mt-1 text-xs text-destructive">
-                              {numError.message}
-                            </p>
-                          )}
                         </div>
                         <div>
-                          <Label
-                            htmlFor={`${doc.key}_expiration_date`}
-                            className="text-xs"
-                          >
-                            Vencimiento
-                          </Label>
-                          <Input
+                          <FloatLabelInput
                             id={`${doc.key}_expiration_date`}
+                            label="Vencimiento"
                             type="date"
+                            error={dateError?.message}
                             {...register(
                               `documents.${doc.key}.expiration_date`,
                             )}
-                            className={dateError ? "border-destructive" : ""}
                           />
-                          {dateError && (
-                            <p className="mt-1 text-xs text-destructive">
-                              {dateError.message}
-                            </p>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -631,41 +578,53 @@ export function CompanyFormPage() {
             <CardContent className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">
-                  <Label htmlFor="address.street">Calle</Label>
-                  <Input id="address.street" {...register("address.street")} />
+                  <FloatLabelInput
+                    id="address.street"
+                    label="Calle"
+                    {...register("address.street")}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="address.ext_number">Núm. Exterior</Label>
-                  <Input
+                  <FloatLabelInput
                     id="address.ext_number"
+                    label="Núm. Exterior"
                     {...register("address.ext_number")}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="address.int_number">Núm. Interior</Label>
-                  <Input
+                  <FloatLabelInput
                     id="address.int_number"
+                    label="Núm. Interior"
                     {...register("address.int_number")}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="address.colony">Colonia</Label>
-                  <Input id="address.colony" {...register("address.colony")} />
+                  <FloatLabelInput
+                    id="address.colony"
+                    label="Colonia"
+                    {...register("address.colony")}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="address.city">Ciudad</Label>
-                  <Input id="address.city" {...register("address.city")} />
+                  <FloatLabelInput
+                    id="address.city"
+                    label="Ciudad"
+                    {...register("address.city")}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="address.state">Estado</Label>
-                  <Input id="address.state" {...register("address.state")} />
+                  <FloatLabelInput
+                    id="address.state"
+                    label="Estado"
+                    {...register("address.state")}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="address.zipcode">Código Postal</Label>
-                  <Input
+                  <FloatLabelInput
                     id="address.zipcode"
-                    {...register("address.zipcode")}
+                    label="Código Postal"
                     maxLength={5}
+                    {...register("address.zipcode")}
                   />
                 </div>
               </div>

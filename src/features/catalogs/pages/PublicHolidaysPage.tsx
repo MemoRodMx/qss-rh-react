@@ -11,8 +11,7 @@ import {
 } from "../components/CatalogListLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
 import {
   Dialog,
   DialogContent,
@@ -181,12 +180,6 @@ export function PublicHolidaysPage() {
     }
   };
 
-  const renderFieldError = (fieldName: string) => {
-    const error = getNestedError(errors, fieldName);
-    if (!error) return null;
-    return <p className="mt-1 text-xs text-destructive">{error.message}</p>;
-  };
-
   return (
     <>
       <CatalogListLayout
@@ -345,35 +338,32 @@ export function PublicHolidaysPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <Label htmlFor="year">Año</Label>
-              <Input
+              <FloatLabelInput
                 id="year"
+                label="Año"
                 type="number"
+                error={getNestedError(errors, "year")?.message}
                 {...register("year")}
-                className={errors.year ? "border-destructive" : ""}
               />
-              {renderFieldError("year")}
             </div>
 
             <div>
-              <Label htmlFor="date">Fecha</Label>
-              <Input
+              <FloatLabelInput
                 id="date"
+                label="Fecha"
                 type="date"
+                error={getNestedError(errors, "date")?.message}
                 {...register("date")}
-                className={errors.date ? "border-destructive" : ""}
               />
-              {renderFieldError("date")}
             </div>
 
             <div>
-              <Label htmlFor="description">Descripción</Label>
-              <Input
+              <FloatLabelInput
                 id="description"
+                label="Descripción"
+                error={getNestedError(errors, "description")?.message}
                 {...register("description")}
-                className={errors.description ? "border-destructive" : ""}
               />
-              {renderFieldError("description")}
             </div>
 
             <div className="flex items-center gap-3 pt-4 border-t border-border/40">

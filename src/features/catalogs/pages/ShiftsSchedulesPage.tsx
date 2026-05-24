@@ -11,15 +11,9 @@ import {
 } from "../components/CatalogListLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
 import {
   Dialog,
   DialogContent,
@@ -213,12 +207,6 @@ export function ShiftsSchedulesPage() {
     }
   };
 
-  const renderFieldError = (fieldName: string) => {
-    const error = getNestedError(errors, fieldName);
-    if (!error) return null;
-    return <p className="mt-1 text-xs text-destructive">{error.message}</p>;
-  };
-
   const getCustomerName = (customerId: string | null | undefined) => {
     if (!customerId) return "-";
     const customer = customers.find((c) => c.code === customerId);
@@ -388,91 +376,77 @@ export function ShiftsSchedulesPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <Label htmlFor="customer_id">Cliente</Label>
-              <Select
+              <FloatLabelSelect
+                id="customer_id"
+                label="Cliente"
                 value={watchedCustomerId}
-                onValueChange={(val: string | null) => {
+                hasValue={!!watchedCustomerId}
+                error={getNestedError(errors, "customer_id")?.message}
+                onValueChange={(val) => {
                   if (val) {
                     setValue("customer_id", val, { shouldValidate: true });
                   }
                 }}
+                valueRenderer={(value) => {
+                  if (!value) return "";
+                  return customers.find((c) => c.code === value)?.name ?? value;
+                }}
               >
-                <SelectTrigger
-                  id="customer_id"
-                  className={errors.customer_id ? "border-destructive" : ""}
-                >
-                  <SelectValue placeholder="Seleccionar cliente">
-                    {(value: string | null) => {
-                      if (!value) return "Seleccionar cliente";
-                      const customer = customers.find((c) => c.code === value);
-                      return customer?.name ?? value;
-                    }}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.code} value={customer.code}>
-                      {customer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {renderFieldError("customer_id")}
+                {customers.map((customer) => (
+                  <SelectItem key={customer.code} value={customer.code}>
+                    {customer.name}
+                  </SelectItem>
+                ))}
+              </FloatLabelSelect>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="code">Código</Label>
-                <Input
+                <FloatLabelInput
                   id="code"
+                  label="Código"
+                  error={getNestedError(errors, "code")?.message}
                   {...register("code")}
-                  className={errors.code ? "border-destructive" : ""}
                 />
-                {renderFieldError("code")}
               </div>
               <div>
-                <Label htmlFor="shift">Turno</Label>
-                <Input
+                <FloatLabelInput
                   id="shift"
+                  label="Turno"
+                  error={getNestedError(errors, "shift")?.message}
                   {...register("shift")}
-                  className={errors.shift ? "border-destructive" : ""}
                 />
-                {renderFieldError("shift")}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="schedule">Horario</Label>
-                <Input
+                <FloatLabelInput
                   id="schedule"
-                  placeholder="Ej: 08:00 - 18:00"
+                  label="Horario"
+                  error={getNestedError(errors, "schedule")?.message}
                   {...register("schedule")}
-                  className={errors.schedule ? "border-destructive" : ""}
                 />
-                {renderFieldError("schedule")}
               </div>
               <div>
-                <Label htmlFor="hours_per_shift">Horas por turno</Label>
-                <Input
+                <FloatLabelInput
                   id="hours_per_shift"
+                  label="Horas por turno"
                   type="number"
                   step="0.5"
+                  error={getNestedError(errors, "hours_per_shift")?.message}
                   {...register("hours_per_shift")}
-                  className={errors.hours_per_shift ? "border-destructive" : ""}
                 />
-                {renderFieldError("hours_per_shift")}
               </div>
             </div>
 
             <div>
-              <Label htmlFor="description">Descripción</Label>
-              <Input
+              <FloatLabelInput
                 id="description"
+                label="Descripción"
+                error={getNestedError(errors, "description")?.message}
                 {...register("description")}
-                className={errors.description ? "border-destructive" : ""}
               />
-              {renderFieldError("description")}
             </div>
 
             <div className="flex items-center gap-3 pt-4 border-t border-border/40">

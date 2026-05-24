@@ -1,12 +1,6 @@
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
 import {
   SALARY_TYPE_OPTIONS,
   ZONE_OPTIONS,
@@ -28,6 +22,10 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function SalaryTab({ register, setValue, watch }: Props) {
+  const watchedSalaryType = watch("salary_salary_type");
+  const watchedZone = watch("salary_zone");
+  const watchedPaymentWay = watch("salary_payment_way");
+
   return (
     <div className="space-y-8">
       {/* ── Clasificación salarial ───────────────────────────────────────── */}
@@ -35,80 +33,69 @@ export function SalaryTab({ register, setValue, watch }: Props) {
         <SectionTitle>Clasificación salarial</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="salary_salary_type">Tipo de salario</Label>
-            <Select
-              value={watch("salary_salary_type")}
+            <FloatLabelSelect
+              id="salary_salary_type"
+              label="Tipo de salario"
+              value={watchedSalaryType}
+              hasValue={!!watchedSalaryType}
               onValueChange={(val) => setValue("salary_salary_type", val ?? "")}
+              valueRenderer={(value) => {
+                if (!value) return "";
+                return (
+                  SALARY_TYPE_OPTIONS.find((s) => s.value === value)?.label ??
+                  value
+                );
+              }}
             >
-              <SelectTrigger id="salary_salary_type">
-                <SelectValue placeholder="Seleccionar">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar";
-                    const opt = SALARY_TYPE_OPTIONS.find(
-                      (s) => s.value === value,
-                    );
-                    return opt?.label ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {SALARY_TYPE_OPTIONS.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {SALARY_TYPE_OPTIONS.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
           <div>
-            <Label htmlFor="salary_zone">Zona</Label>
-            <Select
-              value={watch("salary_zone")}
+            <FloatLabelSelect
+              id="salary_zone"
+              label="Zona"
+              value={watchedZone}
+              hasValue={!!watchedZone}
               onValueChange={(val) => setValue("salary_zone", val ?? "")}
+              valueRenderer={(value) => {
+                if (!value) return "";
+                return (
+                  ZONE_OPTIONS.find((z) => z.value === value)?.label ?? value
+                );
+              }}
             >
-              <SelectTrigger id="salary_zone">
-                <SelectValue placeholder="Seleccionar">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar";
-                    const opt = ZONE_OPTIONS.find((z) => z.value === value);
-                    return opt?.label ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {ZONE_OPTIONS.map((z) => (
-                  <SelectItem key={z.value} value={z.value}>
-                    {z.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {ZONE_OPTIONS.map((z) => (
+                <SelectItem key={z.value} value={z.value}>
+                  {z.label}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
           <div>
-            <Label htmlFor="salary_payment_way">Forma de pago</Label>
-            <Select
-              value={watch("salary_payment_way")}
+            <FloatLabelSelect
+              id="salary_payment_way"
+              label="Forma de pago"
+              value={watchedPaymentWay}
+              hasValue={!!watchedPaymentWay}
               onValueChange={(val) => setValue("salary_payment_way", val ?? "")}
+              valueRenderer={(value) => {
+                if (!value) return "";
+                return (
+                  PAYMENT_WAY_OPTIONS.find((p) => p.value === value)?.label ??
+                  value
+                );
+              }}
             >
-              <SelectTrigger id="salary_payment_way">
-                <SelectValue placeholder="Seleccionar">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar";
-                    const opt = PAYMENT_WAY_OPTIONS.find(
-                      (p) => p.value === value,
-                    );
-                    return opt?.label ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {PAYMENT_WAY_OPTIONS.map((p) => (
-                  <SelectItem key={p.value} value={p.value}>
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {PAYMENT_WAY_OPTIONS.map((p) => (
+                <SelectItem key={p.value} value={p.value}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
         </div>
       </div>
@@ -118,9 +105,9 @@ export function SalaryTab({ register, setValue, watch }: Props) {
         <SectionTitle>Importes</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
-            <Label htmlFor="salary_daily_salary">Salario diario ($)</Label>
-            <Input
+            <FloatLabelInput
               id="salary_daily_salary"
+              label="Salario diario ($)"
               type="number"
               step="0.01"
               min="0"
@@ -128,9 +115,9 @@ export function SalaryTab({ register, setValue, watch }: Props) {
             />
           </div>
           <div>
-            <Label htmlFor="salary_weekly_salary">Salario semanal ($)</Label>
-            <Input
+            <FloatLabelInput
               id="salary_weekly_salary"
+              label="Salario semanal ($)"
               {...register("salary_weekly_salary")}
               readOnly
               className="bg-muted/30"
@@ -140,9 +127,9 @@ export function SalaryTab({ register, setValue, watch }: Props) {
             </p>
           </div>
           <div>
-            <Label htmlFor="salary_monthly_salary">Salario mensual ($)</Label>
-            <Input
+            <FloatLabelInput
               id="salary_monthly_salary"
+              label="Salario mensual ($)"
               {...register("salary_monthly_salary")}
               readOnly
               className="bg-muted/30"
@@ -154,9 +141,9 @@ export function SalaryTab({ register, setValue, watch }: Props) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
-            <Label htmlFor="salary_day_per_month">Días por mes</Label>
-            <Input
+            <FloatLabelInput
               id="salary_day_per_month"
+              label="Días por mes"
               type="number"
               step="0.01"
               min="0"
@@ -164,11 +151,9 @@ export function SalaryTab({ register, setValue, watch }: Props) {
             />
           </div>
           <div>
-            <Label htmlFor="salary_integrated_factor">
-              Factor de integración
-            </Label>
-            <Input
+            <FloatLabelInput
               id="salary_integrated_factor"
+              label="Factor de integración"
               type="number"
               step="0.0001"
               min="0"
@@ -176,11 +161,9 @@ export function SalaryTab({ register, setValue, watch }: Props) {
             />
           </div>
           <div>
-            <Label htmlFor="salary_attendance_bonus">
-              Bono de asistencia ($)
-            </Label>
-            <Input
+            <FloatLabelInput
               id="salary_attendance_bonus"
+              label="Bono de asistencia ($)"
               type="number"
               step="0.01"
               min="0"
@@ -190,9 +173,9 @@ export function SalaryTab({ register, setValue, watch }: Props) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="salary_variable_salary">Salario variable ($)</Label>
-            <Input
+            <FloatLabelInput
               id="salary_variable_salary"
+              label="Salario variable ($)"
               type="number"
               step="0.01"
               min="0"
@@ -200,11 +183,9 @@ export function SalaryTab({ register, setValue, watch }: Props) {
             />
           </div>
           <div>
-            <Label htmlFor="salary_last_salary_modification">
-              Última modificación salarial
-            </Label>
-            <Input
+            <FloatLabelInput
               id="salary_last_salary_modification"
+              label="Última modificación salarial"
               type="date"
               {...register("salary_last_salary_modification")}
             />

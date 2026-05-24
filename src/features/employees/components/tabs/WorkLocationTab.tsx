@@ -1,14 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
 import { getNestedError } from "../../hooks/useEmployeeForm";
 import { employeeService } from "../../services/employeeService";
 import type { EmployeeFormShellProps } from "../EmployeeFormShell";
@@ -16,7 +10,6 @@ import type { SupervisorOption } from "../../types";
 
 type Props = Pick<
   EmployeeFormShellProps,
-  | "register"
   | "setValue"
   | "watch"
   | "errors"
@@ -38,7 +31,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function WorkLocationTab({
-  register,
   setValue,
   watch,
   errors,
@@ -62,6 +54,9 @@ export function WorkLocationTab({
 
   const watchedPlantId = watch("work_location_plant_id");
   const watchedShiftId = watch("work_location_shift_id");
+  const watchedPositionId = watch("work_location_position_id");
+  const watchedScheduleId = watch("work_location_schedule_id");
+  const watchedAreaId = watch("work_location_area_id");
 
   // Supervisor search with debounce
   useEffect(() => {
@@ -121,12 +116,6 @@ export function WorkLocationTab({
     setShowSupervisorDropdown(false);
   };
 
-  const renderFieldError = (fieldName: string) => {
-    const error = getNestedError(errorsRecord, fieldName);
-    if (!error) return null;
-    return <p className="mt-1 text-xs text-destructive">{error.message}</p>;
-  };
-
   return (
     <div className="space-y-8">
       {/* ── Ubicación de trabajo ─────────────────────────────────────────── */}
@@ -135,169 +124,140 @@ export function WorkLocationTab({
         {/* Row 1: Plant + Position */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <Label htmlFor="work_location_plant_id">Planta</Label>
-            <Select
-              value={watch("work_location_plant_id")}
+            <FloatLabelSelect
+              id="work_location_plant_id"
+              label="Planta"
+              value={watchedPlantId}
+              hasValue={!!watchedPlantId}
               onValueChange={(val) =>
                 setValue("work_location_plant_id", val ?? "")
               }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const plant = plants.find((p) => p.code === value);
+                return plant?.name ?? value;
+              }}
             >
-              <SelectTrigger id="work_location_plant_id">
-                <SelectValue placeholder="Seleccionar planta">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar planta";
-                    const plant = plants.find((p) => p.code === value);
-                    return plant?.name ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {plants.map((p) => (
-                  <SelectItem key={p.code} value={p.code}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {plants.map((p) => (
+                <SelectItem key={p.code} value={p.code}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
           <div>
-            <Label htmlFor="work_location_position_id">Puesto</Label>
-            <Select
-              value={watch("work_location_position_id")}
+            <FloatLabelSelect
+              id="work_location_position_id"
+              label="Puesto"
+              value={watchedPositionId}
+              hasValue={!!watchedPositionId}
               onValueChange={(val) =>
                 setValue("work_location_position_id", val ?? "")
               }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const pos = positions.find((p) => p.code === value);
+                return pos?.name ?? value;
+              }}
             >
-              <SelectTrigger id="work_location_position_id">
-                <SelectValue placeholder="Seleccionar puesto">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar puesto";
-                    const pos = positions.find((p) => p.code === value);
-                    return pos?.name ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {positions.map((p) => (
-                  <SelectItem key={p.code} value={p.code}>
-                    {p.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {positions.map((p) => (
+                <SelectItem key={p.code} value={p.code}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
         </div>
 
         {/* Row 2: Shift + Schedule */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <Label htmlFor="work_location_shift_id">Turno</Label>
-            <Select
-              value={watch("work_location_shift_id")}
+            <FloatLabelSelect
+              id="work_location_shift_id"
+              label="Turno"
+              value={watchedShiftId}
+              hasValue={!!watchedShiftId}
               onValueChange={(val) => {
                 setValue("work_location_shift_id", val ?? "");
                 setValue("work_location_schedule_id", "");
               }}
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const shift = shifts.find(
+                  (s) => s.code?.toLowerCase() === value.toLowerCase(),
+                );
+                return shift?.name ?? value;
+              }}
             >
-              <SelectTrigger id="work_location_shift_id">
-                <SelectValue placeholder="Seleccionar turno">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar turno";
-                    const shift = shifts.find(
-                      (s) => s.code?.toLowerCase() === value.toLowerCase(),
-                    );
-                    return shift?.name ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {shifts.map((s) => (
-                  <SelectItem key={s.code} value={s.code}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {shifts.map((s) => (
+                <SelectItem key={s.code} value={s.code}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
           <div>
-            <Label htmlFor="work_location_schedule_id">Horario</Label>
-            <Select
-              value={watch("work_location_schedule_id")}
+            <FloatLabelSelect
+              id="work_location_schedule_id"
+              label="Horario"
+              value={watchedScheduleId}
+              hasValue={!!watchedScheduleId}
+              disabled={!watchedShiftId || schedules.length === 0}
               onValueChange={(val) =>
                 setValue("work_location_schedule_id", val ?? "")
               }
-              disabled={!watchedShiftId || schedules.length === 0}
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const schedule = schedules.find((s) => s.code === value);
+                return schedule?.label ?? value;
+              }}
             >
-              <SelectTrigger id="work_location_schedule_id">
-                <SelectValue
-                  placeholder={
-                    !watchedShiftId
-                      ? "Primero selecciona un turno"
-                      : schedules.length === 0
-                        ? "Sin horarios disponibles"
-                        : "Seleccionar horario"
-                  }
-                >
-                  {(value: string | null) => {
-                    if (!value) return null;
-                    const schedule = schedules.find((s) => s.code === value);
-                    return schedule?.label ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {schedules.map((s) => (
-                  <SelectItem key={s.code} value={s.code}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {schedules.map((s) => (
+                <SelectItem key={s.code} value={s.code}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
         </div>
 
         {/* Row 3: Area */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <Label htmlFor="work_location_area_id">Área</Label>
-            <Select
-              value={watch("work_location_area_id")}
+            <FloatLabelSelect
+              id="work_location_area_id"
+              label="Área"
+              value={watchedAreaId}
+              hasValue={!!watchedAreaId}
               onValueChange={(val) =>
                 setValue("work_location_area_id", val ?? "")
               }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const area = areas.find((a) => a.code === value);
+                return area?.name ?? value;
+              }}
             >
-              <SelectTrigger id="work_location_area_id">
-                <SelectValue placeholder="Seleccionar área">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar área";
-                    const area = areas.find((a) => a.code === value);
-                    return area?.name ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {areas.map((a) => (
-                  <SelectItem key={a.code} value={a.code}>
-                    {a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {areas.map((a) => (
+                <SelectItem key={a.code} value={a.code}>
+                  {a.name}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
         </div>
 
         {/* Row 4: Supervisor (autocomplete) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative" ref={dropdownRef}>
-            <Label htmlFor="supervisor_search">Supervisor directo</Label>
-            <Input
+            <FloatLabelInput
               id="supervisor_search"
+              label="Supervisor directo"
               value={supervisorSearch}
               onChange={(e) => {
                 setSupervisorSearch(e.target.value);
                 if (supervisor) clearSupervisor();
               }}
-              placeholder="Buscar supervisor por nombre o número..."
             />
             {isSearchingSupervisor && (
               <p className="mt-1 text-xs text-muted-foreground">Buscando...</p>
@@ -335,7 +295,17 @@ export function WorkLocationTab({
                 </Button>
               </div>
             )}
-            {renderFieldError("work_location_direct_supervisor_id")}
+            {getNestedError(errorsRecord, "work_location_direct_supervisor_id")
+              ?.message && (
+              <p className="mt-1 text-xs text-destructive">
+                {
+                  getNestedError(
+                    errorsRecord,
+                    "work_location_direct_supervisor_id",
+                  )?.message
+                }
+              </p>
+            )}
           </div>
         </div>
       </div>

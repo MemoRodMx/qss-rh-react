@@ -1,13 +1,8 @@
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
 import { getNestedError } from "../../hooks/useEmployeeForm";
 import {
   MARITAL_STATUS_OPTIONS,
@@ -40,11 +35,15 @@ export function GeneralInfoTab({
 }: Props) {
   const errorsRecord = errors as unknown as Record<string, unknown>;
 
-  const renderFieldError = (fieldName: string) => {
-    const error = getNestedError(errorsRecord, fieldName);
-    if (!error) return null;
-    return <p className="mt-1 text-xs text-destructive">{error.message}</p>;
-  };
+  const watchedGenre = watch("genre");
+  const watchedBirthPlace = watch("birth_place");
+  const watchedCustomerId = watch("customer_id");
+  const watchedStatus = watch("status");
+  const watchedContractType = watch("contract_type");
+  const watchedMaritalStatus = watch("marital_status");
+
+  const getError = (fieldName: string) =>
+    getNestedError(errorsRecord, fieldName)?.message;
 
   return (
     <div className="space-y-8">
@@ -69,26 +68,27 @@ export function GeneralInfoTab({
         <SectionTitle>Nombre completo</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="name">Nombre(s)</Label>
-            <Input
+            <FloatLabelInput
               id="name"
+              label="Nombre(s)"
               {...register("name")}
-              className={errorsRecord.name ? "border-destructive" : ""}
+              error={getError("name")}
             />
-            {renderFieldError("name")}
           </div>
           <div>
-            <Label htmlFor="surname">Apellido paterno</Label>
-            <Input
+            <FloatLabelInput
               id="surname"
+              label="Apellido paterno"
               {...register("surname")}
-              className={errorsRecord.surname ? "border-destructive" : ""}
+              error={getError("surname")}
             />
-            {renderFieldError("surname")}
           </div>
           <div>
-            <Label htmlFor="lastname">Apellido materno</Label>
-            <Input id="lastname" {...register("lastname")} />
+            <FloatLabelInput
+              id="lastname"
+              label="Apellido materno"
+              {...register("lastname")}
+            />
           </div>
         </div>
       </div>
@@ -98,64 +98,58 @@ export function GeneralInfoTab({
         <SectionTitle>Datos de nacimiento y género</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="genre">Género</Label>
-            <Select
-              value={watch("genre")}
+            <FloatLabelSelect
+              id="genre"
+              label="Género"
+              value={watchedGenre}
+              hasValue={!!watchedGenre}
               onValueChange={(val) =>
                 setValue("genre", val ?? "", { shouldValidate: true })
               }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                return (
+                  GENRE_OPTIONS.find((g) => g.value === value)?.label ?? value
+                );
+              }}
+              error={getError("genre")}
             >
-              <SelectTrigger
-                id="genre"
-                className={errorsRecord.genre ? "border-destructive" : ""}
-              >
-                <SelectValue placeholder="Seleccionar">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar";
-                    const opt = GENRE_OPTIONS.find((g) => g.value === value);
-                    return opt?.label ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {GENRE_OPTIONS.map((g) => (
-                  <SelectItem key={g.value} value={g.value}>
-                    {g.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {renderFieldError("genre")}
+              {GENRE_OPTIONS.map((g) => (
+                <SelectItem key={g.value} value={g.value}>
+                  {g.label}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
           <div>
-            <Label htmlFor="birth_date">Fecha de nacimiento</Label>
-            <Input id="birth_date" type="date" {...register("birth_date")} />
+            <FloatLabelInput
+              id="birth_date"
+              label="Fecha de nacimiento"
+              type="date"
+              {...register("birth_date")}
+            />
           </div>
           <div>
-            <Label htmlFor="birth_place">Lugar de nacimiento</Label>
-            <Select
-              value={watch("birth_place")}
+            <FloatLabelSelect
+              id="birth_place"
+              label="Lugar de nacimiento"
+              value={watchedBirthPlace}
+              hasValue={!!watchedBirthPlace}
               onValueChange={(val) =>
                 setValue("birth_place", val ?? "", { shouldValidate: true })
               }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const state = states.find((s) => s.code === value);
+                return state?.name ?? value;
+              }}
             >
-              <SelectTrigger id="birth_place">
-                <SelectValue placeholder="Seleccionar estado">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar estado";
-                    const state = states.find((s) => s.code === value);
-                    return state?.name ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {states.map((s) => (
-                  <SelectItem key={s.code} value={s.code}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {states.map((s) => (
+                <SelectItem key={s.code} value={s.code}>
+                  {s.name}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
         </div>
       </div>
@@ -165,28 +159,27 @@ export function GeneralInfoTab({
         <SectionTitle>Identificación fiscal y seguridad social</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="rfc">RFC</Label>
-            <Input
+            <FloatLabelInput
               id="rfc"
+              label="RFC"
               {...register("rfc")}
-              className={`uppercase ${errorsRecord.rfc ? "border-destructive" : ""}`}
+              className="uppercase"
               style={{ textTransform: "uppercase" }}
+              error={getError("rfc")}
             />
-            {renderFieldError("rfc")}
           </div>
           <div>
-            <Label htmlFor="curp">CURP</Label>
-            <Input
+            <FloatLabelInput
               id="curp"
+              label="CURP"
               {...register("curp")}
-              className={`uppercase ${errorsRecord.curp ? "border-destructive" : ""}`}
+              className="uppercase"
               style={{ textTransform: "uppercase" }}
+              error={getError("curp")}
             />
-            {renderFieldError("curp")}
           </div>
           <div>
-            <Label htmlFor="nss">NSS</Label>
-            <Input id="nss" {...register("nss")} />
+            <FloatLabelInput id="nss" label="NSS" {...register("nss")} />
           </div>
         </div>
       </div>
@@ -202,12 +195,12 @@ export function GeneralInfoTab({
               setValue("resident", checked === true)
             }
           />
-          <Label
+          <label
             htmlFor="resident"
             className="cursor-pointer text-sm font-normal"
           >
             Residente en México
-          </Label>
+          </label>
         </div>
       </div>
 
@@ -216,34 +209,27 @@ export function GeneralInfoTab({
         <SectionTitle>Cliente</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="customer_id">Cliente</Label>
-            <Select
-              value={watch("customer_id")}
+            <FloatLabelSelect
+              id="customer_id"
+              label="Cliente"
+              value={watchedCustomerId}
+              hasValue={!!watchedCustomerId}
               onValueChange={(val) =>
                 setValue("customer_id", val ?? "", { shouldValidate: true })
               }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const customer = customers.find((c) => c.code === value);
+                return customer?.name ?? value;
+              }}
+              error={getError("customer_id")}
             >
-              <SelectTrigger
-                id="customer_id"
-                className={errorsRecord.customer_id ? "border-destructive" : ""}
-              >
-                <SelectValue placeholder="Seleccionar cliente">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar cliente";
-                    const customer = customers.find((c) => c.code === value);
-                    return customer?.name ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {customers.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {renderFieldError("customer_id")}
+              {customers.map((c) => (
+                <SelectItem key={c.code} value={c.code}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
         </div>
       </div>
@@ -253,127 +239,111 @@ export function GeneralInfoTab({
         <SectionTitle>Contratación</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="status">Estatus</Label>
-            <Select
-              value={watch("status")}
+            <FloatLabelSelect
+              id="status"
+              label="Estatus"
+              value={watchedStatus}
+              hasValue={!!watchedStatus}
               onValueChange={(val) =>
                 setValue("status", val ?? "", { shouldValidate: true })
               }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                return (
+                  STATUS_OPTIONS.find((s) => s.value === value)?.label ?? value
+                );
+              }}
+              error={getError("status")}
             >
-              <SelectTrigger
-                id="status"
-                className={errorsRecord.status ? "border-destructive" : ""}
-              >
-                <SelectValue placeholder="Seleccionar">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar";
-                    const opt = STATUS_OPTIONS.find((s) => s.value === value);
-                    return opt?.label ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {renderFieldError("status")}
+              {STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
           <div>
-            <Label htmlFor="hire_date">Fecha de alta</Label>
-            <Input id="hire_date" type="date" {...register("hire_date")} />
+            <FloatLabelInput
+              id="hire_date"
+              label="Fecha de alta"
+              type="date"
+              {...register("hire_date")}
+            />
           </div>
           <div>
-            <Label htmlFor="seniority">Antigüedad (años)</Label>
-            <Input
+            <FloatLabelInput
               id="seniority"
+              label="Antigüedad (años)"
               {...register("seniority", { valueAsNumber: true })}
               readOnly
               className="bg-muted/30"
             />
           </div>
           <div>
-            <Label htmlFor="contract_type">Tipo de contrato</Label>
-            <Select
-              value={watch("contract_type")}
+            <FloatLabelSelect
+              id="contract_type"
+              label="Tipo de contrato"
+              value={watchedContractType}
+              hasValue={!!watchedContractType}
               onValueChange={(val) =>
                 setValue("contract_type", val ?? "", { shouldValidate: true })
               }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                return (
+                  CONTRACT_TYPE_OPTIONS.find((c) => c.value === value)?.label ??
+                  value
+                );
+              }}
+              error={getError("contract_type")}
             >
-              <SelectTrigger
-                id="contract_type"
-                className={
-                  errorsRecord.contract_type ? "border-destructive" : ""
-                }
-              >
-                <SelectValue placeholder="Seleccionar">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar";
-                    const opt = CONTRACT_TYPE_OPTIONS.find(
-                      (c) => c.value === value,
-                    );
-                    return opt?.label ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {CONTRACT_TYPE_OPTIONS.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {renderFieldError("contract_type")}
+              {CONTRACT_TYPE_OPTIONS.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
           <div>
-            <Label htmlFor="email">Correo electrónico</Label>
-            <Input id="email" type="email" {...register("email")} />
+            <FloatLabelInput
+              id="email"
+              label="Correo electrónico"
+              type="email"
+              {...register("email")}
+            />
           </div>
           <div>
-            <Label htmlFor="sat_zip_code">C.P. SAT</Label>
-            <Input
+            <FloatLabelInput
               id="sat_zip_code"
+              label="C.P. SAT"
               {...register("sat_zip_code")}
               maxLength={5}
             />
           </div>
           <div>
-            <Label htmlFor="marital_status">Estado civil</Label>
-            <Select
-              value={watch("marital_status")}
+            <FloatLabelSelect
+              id="marital_status"
+              label="Estado civil"
+              value={watchedMaritalStatus}
+              hasValue={!!watchedMaritalStatus}
               onValueChange={(val) =>
                 setValue("marital_status", val ?? "", { shouldValidate: true })
               }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                return (
+                  MARITAL_STATUS_OPTIONS.find((m) => m.value === value)
+                    ?.label ?? value
+                );
+              }}
+              error={getError("marital_status")}
             >
-              <SelectTrigger
-                id="marital_status"
-                className={
-                  errorsRecord.marital_status ? "border-destructive" : ""
-                }
-              >
-                <SelectValue placeholder="Seleccionar">
-                  {(value: string | null) => {
-                    if (!value) return "Seleccionar";
-                    const opt = MARITAL_STATUS_OPTIONS.find(
-                      (m) => m.value === value,
-                    );
-                    return opt?.label ?? value;
-                  }}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {MARITAL_STATUS_OPTIONS.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {renderFieldError("marital_status")}
+              {MARITAL_STATUS_OPTIONS.map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
           </div>
         </div>
       </div>

@@ -5,15 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SelectItem } from "@/components/ui/select";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
+import { FloatLabelSelect } from "@/components/ui/float-label-select";
+import { FloatLabelTextarea } from "@/components/ui/float-label-textarea";
 import {
   Card,
   CardContent,
@@ -385,125 +380,91 @@ export function AttendanceFormShell({
           {isEdit && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-lg bg-muted/30 border border-border/40">
               <div>
-                <Label className="text-xs text-muted-foreground">
-                  Supervisor
-                </Label>
+                <p className="text-xs text-muted-foreground">Supervisor</p>
                 <p className="text-sm font-medium">{readonlySupervisor}</p>
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Fecha</Label>
+                <p className="text-xs text-muted-foreground">Fecha</p>
                 <p className="text-sm font-medium">{readonlyDate}</p>
               </div>
             </div>
           )}
 
           {/* Supervisor Select */}
-          <div className="space-y-2">
-            <Label htmlFor="supervisor_id">
-              Supervisor <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              disabled={isLoadingSupervisors || isEdit}
+          <div>
+            <FloatLabelSelect
+              id="supervisor_id"
+              label="Supervisor"
               value={supervisorId}
+              hasValue={!!supervisorId}
+              error={errors.supervisor_id?.message}
+              disabled={isLoadingSupervisors || isEdit}
               onValueChange={(val) => {
-                setValue("supervisor_id", val, { shouldValidate: true });
+                setValue("supervisor_id", val ?? "", { shouldValidate: true });
+              }}
+              valueRenderer={(value) => {
+                if (!value) return "";
+                return supervisors.find((s) => s._id === value)?.name ?? value;
               }}
             >
-              <SelectTrigger
-                id="supervisor_id"
-                className="min-w-[200px]"
-                aria-invalid={!!errors.supervisor_id}
-              >
-                <SelectValue placeholder="Seleccionar supervisor..." />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingSupervisors ? (
-                  <div className="flex items-center justify-center py-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </div>
-                ) : (
-                  supervisors.map((sup) => (
-                    <SelectItem key={sup._id} value={sup._id}>
-                      {sup.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-            {errors.supervisor_id && (
-              <p className="text-xs text-destructive">
-                {errors.supervisor_id.message}
-              </p>
-            )}
+              {isLoadingSupervisors ? (
+                <div className="flex items-center justify-center py-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : (
+                supervisors.map((sup) => (
+                  <SelectItem key={sup._id} value={sup._id}>
+                    {sup.name}
+                  </SelectItem>
+                ))
+              )}
+            </FloatLabelSelect>
           </div>
 
           {/* Date */}
-          <div className="space-y-2">
-            <Label htmlFor="date">
-              Fecha <span className="text-destructive">*</span>
-            </Label>
-            <Input
+          <div>
+            <FloatLabelInput
               id="date"
+              label="Fecha"
               type="date"
               disabled={isEdit}
-              className="min-w-[200px]"
-              aria-invalid={!!errors.date}
+              error={errors.date?.message}
               {...register("date")}
             />
-            {errors.date && (
-              <p className="text-xs text-destructive">{errors.date.message}</p>
-            )}
           </div>
 
           {/* Plant Select */}
-          <div className="space-y-2">
-            <Label htmlFor="plant_id">
-              Planta <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              disabled={!supervisorId || isLoadingPlants || isEdit}
+          <div>
+            <FloatLabelSelect
+              id="plant_id"
+              label="Planta"
               value={plantId}
+              hasValue={!!plantId}
+              error={errors.plant_id?.message}
+              disabled={!supervisorId || isLoadingPlants || isEdit}
               onValueChange={(val) => {
-                setValue("plant_id", val, { shouldValidate: true });
-                // Find and store the full plant object
+                setValue("plant_id", val ?? "", { shouldValidate: true });
                 const plant = plants.find((p) => p.plant_id === val) ?? null;
                 setSelectedPlantObj(plant);
               }}
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const plant = plants.find((p) => p.plant_id === value);
+                return plant?.plant_name || plant?.plant_code || value;
+              }}
             >
-              <SelectTrigger
-                id="plant_id"
-                className="min-w-[200px]"
-                aria-invalid={!!errors.plant_id}
-              >
-                <SelectValue
-                  placeholder={
-                    isLoadingPlants
-                      ? "Cargando plantas..."
-                      : supervisorId
-                        ? "Seleccionar planta..."
-                        : "Primero seleccione un supervisor"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {isLoadingPlants ? (
-                  <div className="flex items-center justify-center py-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </div>
-                ) : (
-                  plants.map((plant) => (
-                    <SelectItem key={plant.plant_id} value={plant.plant_id}>
-                      {plant.plant_name || plant.plant_code || plant.plant_id}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-            {errors.plant_id && (
-              <p className="text-xs text-destructive">
-                {errors.plant_id.message}
-              </p>
-            )}
+              {isLoadingPlants ? (
+                <div className="flex items-center justify-center py-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : (
+                plants.map((plant) => (
+                  <SelectItem key={plant.plant_id} value={plant.plant_id}>
+                    {plant.plant_name || plant.plant_code || plant.plant_id}
+                  </SelectItem>
+                ))
+              )}
+            </FloatLabelSelect>
           </div>
         </CardContent>
       </Card>
@@ -547,9 +508,7 @@ export function AttendanceFormShell({
         <CardContent className="pt-6 space-y-4">
           {/* Loan employee search */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">
-              Préstamo de Personal Temporal
-            </Label>
+            <p className="text-sm font-medium">Préstamo de Personal Temporal</p>
             <LoanEmployeeSearch
               entriesList={employees}
               onAdd={addLoanEmployee}
@@ -647,17 +606,12 @@ export function AttendanceFormShell({
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
-          <Textarea
-            placeholder="Observaciones (opcional)..."
-            className="min-h-[80px]"
-            aria-invalid={!!errors.notes}
+          <FloatLabelTextarea
+            id="notes"
+            label="Observaciones (opcional)"
+            error={errors.notes?.message}
             {...register("notes")}
           />
-          {errors.notes && (
-            <p className="text-xs text-destructive mt-1">
-              {errors.notes.message}
-            </p>
-          )}
         </CardContent>
       </Card>
 

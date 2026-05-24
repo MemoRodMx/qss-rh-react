@@ -11,8 +11,7 @@ import {
 } from "../components/CatalogListLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FloatLabelInput } from "@/components/ui/float-label-input";
 import {
   Dialog,
   DialogContent,
@@ -207,12 +206,6 @@ export function PayrollCalendarsPage() {
     }
   };
 
-  const renderFieldError = (fieldName: string) => {
-    const error = getNestedError(errors, fieldName);
-    if (!error) return null;
-    return <p className="mt-1 text-xs text-destructive">{error.message}</p>;
-  };
-
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("es-MX", {
       day: "2-digit",
@@ -387,78 +380,70 @@ export function PayrollCalendarsPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="year">Año</Label>
-                <Input
+                <FloatLabelInput
                   id="year"
+                  label="Año"
                   type="number"
+                  error={getNestedError(errors, "year")?.message}
                   {...register("year")}
-                  className={errors.year ? "border-destructive" : ""}
                 />
-                {renderFieldError("year")}
               </div>
               <div>
-                <Label htmlFor="week">Semana</Label>
-                <Input
+                <FloatLabelInput
                   id="week"
+                  label="Semana"
                   type="number"
                   min={1}
                   max={53}
+                  error={getNestedError(errors, "week")?.message}
                   {...register("week")}
-                  className={errors.week ? "border-destructive" : ""}
                 />
-                {renderFieldError("week")}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="init_date">Fecha de inicio</Label>
-                <Input
+                <FloatLabelInput
                   id="init_date"
+                  label="Fecha de inicio"
                   type="date"
+                  error={getNestedError(errors, "init_date")?.message}
                   {...register("init_date")}
-                  className={errors.init_date ? "border-destructive" : ""}
                 />
-                {renderFieldError("init_date")}
               </div>
               <div>
-                <Label htmlFor="end_date">Fecha de fin</Label>
-                <Input
+                <FloatLabelInput
                   id="end_date"
+                  label="Fecha de fin"
                   type="date"
+                  error={getNestedError(errors, "end_date")?.message}
                   {...register("end_date")}
-                  className={errors.end_date ? "border-destructive" : ""}
                 />
-                {renderFieldError("end_date")}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="accounting_month">Mes contable</Label>
-                <Input
+                <FloatLabelInput
                   id="accounting_month"
+                  label="Mes contable"
                   type="number"
                   min={1}
                   max={12}
+                  error={getNestedError(errors, "accounting_month")?.message}
                   {...register("accounting_month")}
-                  className={
-                    errors.accounting_month ? "border-destructive" : ""
-                  }
                 />
-                {renderFieldError("accounting_month")}
               </div>
               <div>
-                <Label htmlFor="imss_month">Mes IMSS</Label>
-                <Input
+                <FloatLabelInput
                   id="imss_month"
+                  label="Mes IMSS"
                   type="number"
                   min={1}
                   max={12}
+                  error={getNestedError(errors, "imss_month")?.message}
                   {...register("imss_month")}
-                  className={errors.imss_month ? "border-destructive" : ""}
                 />
-                {renderFieldError("imss_month")}
               </div>
             </div>
 
