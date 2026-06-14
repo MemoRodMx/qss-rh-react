@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { restRoleService } from "../services/restRoleService";
 import type {
   OptimalContractedRow,
@@ -62,6 +62,8 @@ export function useRestRole() {
   const [assignmentErrors, setAssignmentErrors] = useState<
     Record<string, Record<string, string>>
   >({});
+  const [recorridoAreaCodes, setRecorridoAreaCodes] = useState<string[]>([]);
+  const [areaIdByCode, setAreaIdByCode] = useState<Record<string, string>>({});
 
   const validAssignmentValues = ((): Set<string> => {
     const set = new Set<string>(["DS", ...areaCodes, ...allShiftCodes]);
@@ -74,6 +76,25 @@ export function useRestRole() {
     }
     return set;
   })();
+
+  const recorridoAreaIds = useMemo(
+    () => new Set(recorridoAreaCodes.map((code) => areaIdByCode[code]).filter(Boolean)),
+    [recorridoAreaCodes, areaIdByCode],
+  );
+
+  const sortedEmployees = useMemo(() => {
+    if (recorridoAreaIds.size === 0) return employees;
+    const normal: EmployeeAssignment[] = [];
+    const recorrido: EmployeeAssignment[] = [];
+    for (const emp of employees) {
+      if (emp.area_id && recorridoAreaIds.has(emp.area_id)) {
+        recorrido.push(emp);
+      } else {
+        normal.push(emp);
+      }
+    }
+    return [...normal, ...recorrido];
+  }, [employees, recorridoAreaIds]);
 
   const validValuesInfo = ((): string[] => {
     const items = ["DS (descanso)"];
@@ -301,7 +322,7 @@ export function useRestRole() {
     }
   };
 
-  // Load catalogs (areas + shifts + company)
+  // Load catalogs (areas + shifts + company + settings)
   const loadCatalogs = useCallback(async () => {
     try {
       const [areasRes, shiftsRes, companyRes] = await Promise.all([
@@ -316,7 +337,28 @@ export function useRestRole() {
         : companyRes.data?.data ?? [];
       setAreaCodes(areas.map((a: { code: string }) => a.code));
       setAllShiftCodes(shifts.map((s: { code: string }) => s.code));
-      if (companyList.length > 0) setCompanyId(companyList[0]._id);
+
+      const map: Record<string, string> = {};
+      for (const a of areas) {
+        if (a._id && a.code) map[a.code] = a._id;
+      }
+      setAreaIdByCode(map);
+
+      if (companyList.length > 0) {
+        const cId = companyList[0]._id;
+        setCompanyId(cId);
+
+        try {
+          const settingsRes = await api.get("/settings", {
+            params: { company_id: cId },
+          });
+          setRecorridoAreaCodes(
+            settingsRes.data?.recorrido_area_codes ?? [],
+          );
+        } catch {
+          // settings fetch is non-fatal
+        }
+      }
     } catch {
       // catalog load failure is non-fatal
     }
@@ -336,6 +378,7 @@ export function useRestRole() {
     descansos,
     setDescansos,
     employees,
+    sortedEmployees,
     assignments,
     observations,
     existingRoleId,
@@ -356,6 +399,8 @@ export function useRestRole() {
     validateAssignmentValues,
     clearAssignmentErrors,
     loadCatalogs,
+    recorridoAreaCodes,
+    recorridoAreaIds,
     getErrorMessage,
   };
 }

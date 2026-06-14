@@ -145,7 +145,7 @@ export default function RestRoleFormPage() {
           <AsignacionTab
             type={hook.type}
             shiftId={hook.shiftId}
-            employees={hook.employees}
+            employees={hook.sortedEmployees}
             optimoTotals={hook.optimoTotals}
             assignments={hook.assignments}
             observations={hook.observations}

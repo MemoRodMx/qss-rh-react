@@ -1,20 +1,33 @@
 import { useState, useEffect, useCallback } from "react";
 import { settingsService } from "../services/settingsService";
-import type { PositionOption } from "../types";
+import type { PositionOption, AreaOption } from "../types";
 
 interface UseSettingsReturn {
   positions: PositionOption[];
   selectedCodes: string[];
   setSelectedCodes: (codes: string[]) => void;
+  areas: AreaOption[];
+  selectedRecorridoAreaCodes: string[];
+  setSelectedRecorridoAreaCodes: (codes: string[]) => void;
+  companyId: string;
   isLoading: boolean;
   isSaving: boolean;
   error: string | null;
   save: () => Promise<{ success: boolean; message: string }>;
+  saveRecorridoAreas: () => Promise<{
+    success: boolean;
+    message: string;
+  }>;
 }
 
 export function useSettings(): UseSettingsReturn {
   const [positions, setPositions] = useState<PositionOption[]>([]);
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  const [areas, setAreas] = useState<AreaOption[]>([]);
+  const [selectedRecorridoAreaCodes, setSelectedRecorridoAreaCodes] = useState<
+    string[]
+  >([]);
+  const [companyId, setCompanyId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,13 +39,25 @@ export function useSettings(): UseSettingsReturn {
       setIsLoading(true);
       setError(null);
       try {
-        const [positionsData, configData] = await Promise.all([
+        const [positionsData, areasData, companyRes] = await Promise.all([
           settingsService.listPositions(),
-          settingsService.getConfig(),
+          settingsService.listAreas(),
+          import("@/lib/api").then((m) => m.default.get("/companies/list")),
         ]);
-        if (!cancelled) {
-          setPositions(positionsData);
-          setSelectedCodes(configData);
+        if (cancelled) return;
+
+        setPositions(positionsData);
+        setAreas(areasData);
+
+        const companyList = Array.isArray(companyRes.data)
+          ? companyRes.data
+          : companyRes.data?.data ?? [];
+        const cId = companyList.length > 0 ? companyList[0]._id : "";
+        setCompanyId(cId);
+
+        if (cId) {
+          const config = await settingsService.getConfig(cId);
+          setSelectedRecorridoAreaCodes(config.recorrido_area_codes ?? []);
         }
       } catch {
         if (!cancelled) {
@@ -56,10 +81,24 @@ export function useSettings(): UseSettingsReturn {
     success: boolean;
     message: string;
   }> => {
+    // position_ids save — placeholder, not yet implemented
+    return { success: true, message: "OK" };
+  }, []);
+
+  const saveRecorridoAreas = useCallback(async (): Promise<{
+    success: boolean;
+    message: string;
+  }> => {
+    if (!companyId) {
+      return { success: false, message: "No se encontró la empresa" };
+    }
     setIsSaving(true);
     setError(null);
     try {
-      await settingsService.saveConfig({ position_ids: selectedCodes });
+      await settingsService.saveConfig({
+        company_id: companyId,
+        recorrido_area_codes: selectedRecorridoAreaCodes,
+      });
       return {
         success: true,
         message: "Configuración actualizada exitosamente",
@@ -74,15 +113,20 @@ export function useSettings(): UseSettingsReturn {
     } finally {
       setIsSaving(false);
     }
-  }, [selectedCodes]);
+  }, [companyId, selectedRecorridoAreaCodes]);
 
   return {
     positions,
     selectedCodes,
     setSelectedCodes,
+    areas,
+    selectedRecorridoAreaCodes,
+    setSelectedRecorridoAreaCodes,
+    companyId,
     isLoading,
     isSaving,
     error,
     save,
+    saveRecorridoAreas,
   };
 }

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { DAYS, DAY_LABELS } from "../types";
 import type { EmployeeAssignment } from "../types";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Fragment } from "react";
 import api from "@/lib/api";
 
 interface AsignacionTabProps {
@@ -50,6 +50,27 @@ export function AsignacionTab({
         : employees.filter((e) => !e.is_supervisor),
     [employees, type],
   );
+
+  const groupedEmployees = useMemo(() => {
+    if (type === "fijo") return null;
+    const groups: { areaId: string; employees: EmployeeAssignment[] }[] =
+      [];
+    let currentGroup: {
+      areaId: string;
+      employees: EmployeeAssignment[];
+    } | null = null;
+    for (const emp of filteredEmployees) {
+      const areaId = emp.area_id || "__no_area__";
+      if (areaId !== currentGroup?.areaId) {
+        if (currentGroup) groups.push(currentGroup);
+        currentGroup = { areaId, employees: [emp] };
+      } else {
+        currentGroup.employees.push(emp);
+      }
+    }
+    if (currentGroup) groups.push(currentGroup);
+    return groups;
+  }, [type, filteredEmployees]);
 
   useEffect(() => {
     if (shiftId) {
@@ -124,61 +145,155 @@ export function AsignacionTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEmployees.map((emp, i) => (
-                  <TableRow
-                    key={emp.employee_id}
-                    className="animate-fade-in-up"
-                    style={{ animationDelay: `${i * 30}ms` }}
-                  >
-                    {type === "recorrido" && (
-                      <TableCell>{emp.area_name || "—"}</TableCell>
-                    )}
-                    {type === "fijo" && (
-                      <TableCell>{emp.position_name || "—"}</TableCell>
-                    )}
-                    <TableCell>
-                      {String(emp.employee_number).padStart(5, "0")}
-                    </TableCell>
-                    <TableCell>{emp.name}</TableCell>
-                    {DAYS.map((d) => (
-                      <TableCell key={d} className="p-1">
-                        <Input
-                          value={assignments[emp.employee_id]?.[d] || ""}
-                          onChange={(e) =>
-                            onAssignmentChange(
-                              emp.employee_id,
-                              d,
-                              e.target.value,
-                            )
-                          }
-                          className={`h-8 text-center uppercase text-xs ${
-                            assignmentErrors[emp.employee_id]?.[d]
-                              ? "border-red-500"
-                              : ""
-                          }`}
-                          maxLength={10}
-                        />
-                        {assignmentErrors[emp.employee_id]?.[d] && (
-                          <p className="text-red-500 text-[10px] mt-0.5 leading-tight">
-                            {assignmentErrors[emp.employee_id][d]}
-                          </p>
+                {groupedEmployees
+                  ? groupedEmployees.map((group, gi) => (
+                      <Fragment key={group.areaId}>
+                        {gi > 0 && (
+                          <TableRow className="bg-black/5 dark:bg-white/5">
+                            <TableCell colSpan={11} className="p-0 h-[10px]" />
+                          </TableRow>
                         )}
-                      </TableCell>
+                        {group.employees.map((emp, ei) => (
+                          <TableRow
+                            key={emp.employee_id}
+                            className="animate-fade-in-up"
+                            style={{
+                              animationDelay: `${(gi * group.employees.length + ei) * 30}ms`,
+                            }}
+                          >
+                            {type === "recorrido" && (
+                              <TableCell>
+                                {emp.area_code || "—"}
+                              </TableCell>
+                            )}
+                            {type === "fijo" && (
+                              <TableCell>
+                                {emp.position_name || "—"}
+                              </TableCell>
+                            )}
+                            <TableCell>
+                              {String(emp.employee_number).padStart(
+                                5,
+                                "0",
+                              )}
+                            </TableCell>
+                            <TableCell>{emp.name}</TableCell>
+                            {DAYS.map((d) => (
+                              <TableCell key={d} className="p-1">
+                                <Input
+                                  value={
+                                    assignments[emp.employee_id]?.[d] ||
+                                    ""
+                                  }
+                                  onChange={(e) =>
+                                    onAssignmentChange(
+                                      emp.employee_id,
+                                      d,
+                                      e.target.value,
+                                    )
+                                  }
+                                  className={`h-8 text-center uppercase text-xs ${
+                                    assignmentErrors[emp.employee_id]?.[d]
+                                      ? "border-red-500"
+                                      : ""
+                                  }`}
+                                  maxLength={10}
+                                />
+                                {assignmentErrors[emp.employee_id]?.[
+                                  d
+                                ] && (
+                                  <p className="text-red-500 text-[10px] mt-0.5 leading-tight">
+                                    {
+                                      assignmentErrors[emp.employee_id][
+                                        d
+                                      ]
+                                    }
+                                  </p>
+                                )}
+                              </TableCell>
+                            ))}
+                            <TableCell className="p-1">
+                              <Input
+                                value={
+                                  observations[emp.employee_id] || ""
+                                }
+                                onChange={(e) =>
+                                  onObservationChange(
+                                    emp.employee_id,
+                                    e.target.value,
+                                  )
+                                }
+                                className="h-8 text-xs"
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </Fragment>
+                    ))
+                  : filteredEmployees.map((emp, i) => (
+                      <TableRow
+                        key={emp.employee_id}
+                        className="animate-fade-in-up"
+                        style={{ animationDelay: `${i * 30}ms` }}
+                      >
+                        {type === "recorrido" && (
+                          <TableCell>
+                            {emp.area_name || "—"}
+                          </TableCell>
+                        )}
+                        {type === "fijo" && (
+                          <TableCell>
+                            {emp.position_name || "—"}
+                          </TableCell>
+                        )}
+                        <TableCell>
+                          {String(emp.employee_number).padStart(
+                            5,
+                            "0",
+                          )}
+                        </TableCell>
+                        <TableCell>{emp.name}</TableCell>
+                        {DAYS.map((d) => (
+                          <TableCell key={d} className="p-1">
+                            <Input
+                              value={
+                                assignments[emp.employee_id]?.[d] || ""
+                              }
+                              onChange={(e) =>
+                                onAssignmentChange(
+                                  emp.employee_id,
+                                  d,
+                                  e.target.value,
+                                )
+                              }
+                              className={`h-8 text-center uppercase text-xs ${
+                                assignmentErrors[emp.employee_id]?.[d]
+                                  ? "border-red-500"
+                                  : ""
+                              }`}
+                              maxLength={10}
+                            />
+                            {assignmentErrors[emp.employee_id]?.[d] && (
+                              <p className="text-red-500 text-[10px] mt-0.5 leading-tight">
+                                {assignmentErrors[emp.employee_id][d]}
+                              </p>
+                            )}
+                          </TableCell>
+                        ))}
+                        <TableCell className="p-1">
+                          <Input
+                            value={observations[emp.employee_id] || ""}
+                            onChange={(e) =>
+                              onObservationChange(
+                                emp.employee_id,
+                                e.target.value,
+                              )
+                            }
+                            className="h-8 text-xs"
+                          />
+                        </TableCell>
+                      </TableRow>
                     ))}
-                    <TableCell className="p-1">
-                      <Input
-                        value={observations[emp.employee_id] || ""}
-                        onChange={(e) =>
-                          onObservationChange(
-                            emp.employee_id,
-                            e.target.value,
-                          )
-                        }
-                        className="h-8 text-xs"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
               </TableBody>
               <TableFooter>
                 <TableRow className="bg-blue-50/50 dark:bg-blue-950/20 border-t-2 border-border/50">

@@ -1,9 +1,27 @@
 import api from "@/lib/api";
-import type { PositionOption } from "../types";
+import type { PositionOption, AreaOption, SettingsPayload } from "../types";
 
 export const settingsService = {
   async listPositions(): Promise<PositionOption[]> {
     const { data } = await api.get("/positions/list");
     return Array.isArray(data) ? data : (data?.data ?? []);
+  },
+
+  async listAreas(): Promise<AreaOption[]> {
+    const { data } = await api.get("/areas/list");
+    return Array.isArray(data) ? data : (data?.data ?? []);
+  },
+
+  async getConfig(
+    companyId: string,
+  ): Promise<{ recorrido_area_codes: string[] }> {
+    const { data } = await api.get("/settings", {
+      params: { company_id: companyId },
+    });
+    return data;
+  },
+
+  async saveConfig(payload: SettingsPayload): Promise<void> {
+    await api.put("/settings", payload);
   },
 };

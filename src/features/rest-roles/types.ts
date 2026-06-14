@@ -22,6 +22,7 @@ export interface EmployeeAssignment {
   employee_number: string;
   name: string;
   area_id?: string;
+  area_code?: string;
   area_name?: string;
   position_id?: string;
   position_name?: string;
