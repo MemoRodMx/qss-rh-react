@@ -223,6 +223,9 @@ export function useEmployeeForm() {
   // Supervisor
   const [supervisor, setSupervisor] = useState<SupervisorOption | null>(null);
 
+  // Prevent cascade clearing during initial record load
+  const isInitialLoadRef = useRef(isEditMode);
+
   // ── CURP / RFC auto-generation ────────────────────────────────────────────
   // Store the saved CURP/RFC so we can compare the generated base against them.
   // If the generated base matches the saved value's prefix, we keep the saved
@@ -312,21 +315,18 @@ export function useEmployeeForm() {
         customersData,
         positionsData,
         shiftsData,
-        areasData,
         banksData,
         statesData,
       ] = await Promise.all([
         employeeService.listCustomers(),
         employeeService.listPositions(),
         employeeService.listShifts(),
-        employeeService.listAreas(),
         employeeService.listBanks(),
         employeeService.listStates(),
       ]);
       setCustomers(customersData);
       setPositions(positionsData);
       setShifts(shiftsData);
-      setAreas(areasData);
       setBanks(banksData);
       setStates(statesData);
     } catch {
@@ -448,6 +448,8 @@ export function useEmployeeForm() {
           );
           if (!cancelled) setSupervisor(sup);
         }
+
+        if (!cancelled) isInitialLoadRef.current = false;
       } catch {
         setServerError("Error al cargar los datos del empleado");
       } finally {
@@ -465,11 +467,29 @@ export function useEmployeeForm() {
   useEffect(() => {
     if (!watchedCustomerId) {
       setPlants([]);
+      if (!isInitialLoadRef.current) {
+        setValue("work_location_plant_id", "");
+        setValue("work_location_area_id", "");
+        setValue("work_location_direct_supervisor_id", "");
+        setSupervisor(null);
+      }
       return;
     }
     employeeService
       .listPlants(watchedCustomerId)
       .then(setPlants)
+      .catch(() => {});
+  }, [watchedCustomerId, setValue]);
+
+  // ── Cascade: customer → areas ─────────────────────────────────────────────
+  useEffect(() => {
+    if (!watchedCustomerId) {
+      setAreas([]);
+      return;
+    }
+    employeeService
+      .listAreas(watchedCustomerId)
+      .then(setAreas)
       .catch(() => {});
   }, [watchedCustomerId]);
 

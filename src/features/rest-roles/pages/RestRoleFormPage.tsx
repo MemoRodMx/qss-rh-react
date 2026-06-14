@@ -1,569 +1,171 @@
-import { useEffect, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { restRoleService } from "../services/restRoleService";
-import { settingsService } from "@/features/settings/services/settingsService";
-import { DayAssignmentField } from "../components/DayAssignmentField";
-import type { Supervisor, SupervisorPlant, ShiftOption } from "../types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { SelectItem } from "@/components/ui/select";
-import { FloatLabelInput } from "@/components/ui/float-label-input";
-import { FloatLabelSelect } from "@/components/ui/float-label-select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  ArrowLeft,
-  Save,
-  CalendarCheck,
-  AlertTriangle,
-  User,
-} from "lucide-react";
+import { restRoleService } from "../services/restRoleService";
+import { OptimoTab } from "../components/OptimoTab";
+import { AsignacionTab } from "../components/AsignacionTab";
+import { useRestRole } from "../hooks/useRestRole";
 
-// ── Zod schema ──────────────────────────────────────────────────────────────
-const restRoleFormSchema = z.object({
-  supervisor_id: z.string().min(1, "El supervisor es obligatorio"),
-  plant_id: z.string().min(1, "La planta es obligatoria"),
-  shift_id: z.string().min(1, "El turno es obligatorio"),
-  year: z.coerce
-    .number()
-    .int("Debe ser un año válido")
-    .min(2020, "Año inválido")
-    .max(2100, "Año inválido"),
-  week: z.coerce
-    .number()
-    .int("Debe ser un número entero")
-    .min(1, "La semana debe estar entre 1 y 53")
-    .max(53, "La semana debe estar entre 1 y 53"),
-});
-
-type FormValues = z.infer<typeof restRoleFormSchema>;
-
-function getCurrentWeek(): number {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
-  const diff = now.getTime() - start.getTime();
-  const oneWeek = 604800000;
-  return Math.ceil((diff + start.getDay() * 86400000) / oneWeek);
-}
-
-// ── Component ───────────────────────────────────────────────────────────────
-export function RestRoleFormPage() {
+export default function RestRoleFormPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const isEditMode = !!id;
+  const isEdit = !!id;
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingRecord, setIsLoadingRecord] = useState(isEditMode);
+  const [activeTab, setActiveTab] = useState("optimo");
   const [serverError, setServerError] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(isEdit);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auxiliary data
-  const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
-  const [supervisorPlants, setSupervisorPlants] = useState<SupervisorPlant[]>(
-    [],
-  );
-  const [shifts, setShifts] = useState<ShiftOption[]>([]);
-  const [positionIds, setPositionIds] = useState<string[]>([]);
+  const hook = useRestRole();
 
-  // Day assignments (managed outside react-hook-form)
-  const [dayAssignments, setDayAssignments] = useState<
-    Record<string, string[]>
-  >({});
+  useEffect(() => {
+    hook.setBusinessUnit(hook.type.toUpperCase());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hook.type]);
 
-  // Confirmation dialog for changing supervisor/plant/shift with assigned employees
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingChange, setPendingChange] = useState<{
-    field: string;
-    value: string;
-  } | null>(null);
-
-  const hasAssignments = Object.values(dayAssignments).some(
-    (arr) => arr.length > 0,
-  );
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(restRoleFormSchema) as any,
-    defaultValues: {
-      supervisor_id: "",
-      plant_id: "",
-      shift_id: "",
-      year: new Date().getFullYear(),
-      week: getCurrentWeek(),
-    },
-  });
-
-  const watchedSupervisorId = watch("supervisor_id");
-  const watchedPlantId = watch("plant_id");
-  const watchedShiftId = watch("shift_id");
-
-  // ── Load auxiliary data ───────────────────────────────────────────────────
-  const loadAuxData = useCallback(async () => {
-    try {
-      const [supervisorsData, shiftsData, positionIdsData] = await Promise.all([
-        restRoleService.listSupervisors(),
-        restRoleService.listShifts(),
-        settingsService.getConfig(),
-      ]);
-      setSupervisors(supervisorsData);
-      setShifts(shiftsData);
-      setPositionIds(positionIdsData);
-    } catch {
-      setServerError("Error al cargar datos auxiliares");
-    }
+  useEffect(() => {
+    hook.loadCatalogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Load supervisor plants when supervisor changes ────────────────────────
+  // Load existing role for edit mode
   useEffect(() => {
-    if (!watchedSupervisorId) {
-      setSupervisorPlants([]);
-      return;
-    }
-
-    let cancelled = false;
-
-    async function loadPlants() {
-      try {
-        const plants =
-          await restRoleService.getSupervisorPlants(watchedSupervisorId);
-        if (!cancelled) {
-          setSupervisorPlants(plants);
-        }
-      } catch {
-        if (!cancelled) setSupervisorPlants([]);
+    if (!id) return;
+    restRoleService.getById(id).then((data) => {
+      hook.setType(data.type);
+      hook.setBusinessUnit(data.business_unit);
+      hook.loadRoleData(
+        data.direct_supervisor_id?._id || data.direct_supervisor_id,
+        data.shift_id?._id || data.shift_id,
+        data.type,
+      );
+      if (data.descansos) {
+        hook.setDescansos(data.descansos);
       }
-    }
+      setInitialLoading(false);
+    }).catch(() => setInitialLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
-    loadPlants();
-    return () => {
-      cancelled = true;
-    };
-  }, [watchedSupervisorId]);
-
-  // ── Auto-select plant/shift when supervisor has only one ──────────────────
-  useEffect(() => {
-    if (supervisorPlants.length === 1) {
-      const plant = supervisorPlants[0];
-      setValue("plant_id", plant.plant_id, { shouldValidate: true });
-
-      if (plant.shift_id) {
-        setValue("shift_id", plant.shift_id, { shouldValidate: true });
-      }
-    }
-  }, [supervisorPlants, setValue]);
-
-  // ── Load record for edit mode ─────────────────────────────────────────────
-  useEffect(() => {
-    if (!isEditMode) {
-      loadAuxData();
-      return;
-    }
-
-    let cancelled = false;
-
-    async function load() {
-      try {
-        await loadAuxData();
-
-        const role = await restRoleService.getById(id!);
-        if (cancelled) return;
-
-        reset({
-          supervisor_id: role.supervisor_id,
-          plant_id: role.plant_id,
-          shift_id: role.shift_id,
-          year: role.year,
-          week: role.week,
-        });
-
-        // Build day assignments from existing data
-        const days: Record<string, string[]> = {};
-        for (const day of role.days) {
-          days[day.day_name] = day.employee_numbers;
-        }
-        setDayAssignments(days);
-      } catch {
-        setServerError("Error al cargar los datos del rol de descanso");
-      } finally {
-        if (!cancelled) setIsLoadingRecord(false);
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [id, isEditMode, loadAuxData, reset]);
-
-  // ── Handle field change with confirmation if needed ───────────────────────
-  const handleFieldChange = (
-    field: "supervisor_id" | "plant_id" | "shift_id",
-    value: string,
-  ) => {
-    if (hasAssignments) {
-      setPendingChange({ field, value });
-      setConfirmDialogOpen(true);
-    } else {
-      setValue(field, value, { shouldValidate: true });
-      if (field === "supervisor_id" || field === "plant_id") {
-        setDayAssignments({});
-      }
-    }
-  };
-
-  const confirmFieldChange = () => {
-    if (!pendingChange) return;
-    setValue(
-      pendingChange.field as "supervisor_id" | "plant_id" | "shift_id",
-      pendingChange.value,
-      { shouldValidate: true },
-    );
-    if (
-      pendingChange.field === "supervisor_id" ||
-      pendingChange.field === "plant_id"
-    ) {
-      setDayAssignments({});
-    }
-    setConfirmDialogOpen(false);
-    setPendingChange(null);
-  };
-
-  // ── Submit ────────────────────────────────────────────────────────────────
-  const onSubmit = async (values: FormValues) => {
+  const handleSave = async () => {
     setServerError(null);
 
-    // Validate that at least one day has employees assigned
-    const hasAnyEmployee = Object.values(dayAssignments).some(
-      (arr) => arr.length > 0,
-    );
-    if (!hasAnyEmployee) {
-      setServerError(
-        "Debe asignar al menos un empleado a algún día de la semana",
-      );
+    if (!hook.supervisorId || !hook.shiftId) {
+      setActiveTab("optimo");
+      toast.error("Faltan datos", {
+        description: "Seleccione un jefe directo y un turno antes de guardar.",
+      });
+      return;
+    }
+
+    if (!hook.validateAssignmentValues()) {
+      setActiveTab("asignacion");
+      toast.error("Valores inválidos", {
+        description: "Corrija los valores marcados en rojo antes de guardar.",
+      });
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      const days = Object.entries(dayAssignments)
-        .filter(([, employees]) => employees.length > 0)
-        .map(([dayName, employeeNumbers]) => ({
-          day_name: dayName,
-          employee_numbers: employeeNumbers,
-        }));
-
-      const payload: Record<string, unknown> = {
-        ...values,
-        days,
-      };
-
-      if (isEditMode) {
-        await restRoleService.update(id!, payload);
-      } else {
-        await restRoleService.create(payload);
-      }
-
+      await hook.saveAsignacionTab();
+      hook.clearAssignmentErrors();
+      toast.success("Rol de descanso guardado", {
+        description: "El rol de descanso fue guardado correctamente.",
+      });
       navigate("/rest-roles");
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setServerError(
-        err?.response?.data?.message ||
-          "Ocurrió un error al guardar el rol de descanso",
-      );
+    } catch (err: unknown) {
+      setServerError(hook.getErrorMessage(err));
+      toast.error("Error al guardar", {
+        description: "Revise los errores mostrados en el formulario.",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ── Loading state ─────────────────────────────────────────────────────────
-  if (isLoadingRecord) {
+  if (initialLoading) {
     return (
-      <div className="space-y-6 max-w-[1080px] animate-fade-in">
-        <div className="flex items-center gap-3">
-          <Skeleton className="h-8 w-8 rounded-full" />
-          <Skeleton className="h-6 w-48" />
-        </div>
-        <Skeleton className="h-12 w-full rounded-xl" />
-        <Skeleton className="h-96 w-full rounded-xl" />
+      <div className="animate-fade-in max-w-[1400px]">
+        <div className="h-6 w-48 bg-muted/40 rounded animate-pulse mb-4" />
+        <div className="h-4 w-96 bg-muted/40 rounded animate-pulse" />
       </div>
     );
   }
 
-  // Find the selected plant to determine if shift is locked
-  const selectedPlant = supervisorPlants.find(
-    (sp) => sp.plant_id === watchedPlantId,
-  );
-  const isShiftLocked = !!selectedPlant?.shift_id;
-
   return (
-    <div className="space-y-6 max-w-[1080px] animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="cursor-pointer"
-          onClick={() => navigate("/rest-roles")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            {isEditMode ? "Modificar rol de descanso" : "Nuevo rol de descanso"}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {isEditMode
-              ? "Actualiza los datos del rol de descanso."
-              : "Completa los datos para crear un nuevo rol de descanso."}
-          </p>
-        </div>
+    <div className="space-y-6 animate-fade-in max-w-[1400px]">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {isEdit ? "Modificar rol de descanso" : "Agregar rol de descanso"}
+        </h1>
+        <p className="text-muted-foreground">
+          Gestión de roles de descanso y asignación de empleados
+        </p>
       </div>
 
-      {/* Server error */}
       {serverError && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>{serverError}</span>
+        <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
+          {serverError}
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        {/* ── General Info Card ────────────────────────────────────────────── */}
-        <Card className="border-border/40 bg-card shadow-[var(--shadow-2)] mb-6">
-          <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-            <CardTitle className="flex items-center gap-2 text-sm font-medium">
-              <CalendarCheck className="h-4 w-4 text-primary" />
-              Información general
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-5 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Supervisor */}
-              <div>
-                <FloatLabelSelect
-                  id="supervisor_id"
-                  label="Jefe directo"
-                  value={watchedSupervisorId}
-                  hasValue={!!watchedSupervisorId}
-                  error={errors.supervisor_id?.message}
-                  onValueChange={(val) =>
-                    handleFieldChange("supervisor_id", val ?? "")
-                  }
-                  valueRenderer={(value) => {
-                    if (!value) return "";
-                    return (
-                      supervisors.find((s) => s._id === value)?.name ?? value
-                    );
-                  }}
-                >
-                  {supervisors.map((s) => (
-                    <SelectItem key={s._id} value={s._id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </FloatLabelSelect>
-              </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList variant="line" className="mb-6">
+          <TabsTrigger value="optimo" className="cursor-pointer">
+            Óptimo del rol de descanso
+          </TabsTrigger>
+          <TabsTrigger value="asignacion" className="cursor-pointer">
+            Asignación de empleados
+          </TabsTrigger>
+        </TabsList>
 
-              {/* Plant */}
-              <div>
-                <FloatLabelSelect
-                  id="plant_id"
-                  label="Planta"
-                  value={watchedPlantId}
-                  hasValue={!!watchedPlantId}
-                  error={errors.plant_id?.message}
-                  disabled={!watchedSupervisorId}
-                  onValueChange={(val) =>
-                    handleFieldChange("plant_id", val ?? "")
-                  }
-                  valueRenderer={(value) => {
-                    if (!value) return "";
-                    return (
-                      supervisorPlants.find((p) => p.plant_id === value)
-                        ?.plant_name ?? value
-                    );
-                  }}
-                >
-                  {supervisorPlants.map((p) => (
-                    <SelectItem key={p.plant_id} value={p.plant_id}>
-                      {p.plant_name || p.plant_id}
-                    </SelectItem>
-                  ))}
-                </FloatLabelSelect>
-              </div>
-            </div>
+        <TabsContent value="optimo">
+          <OptimoTab
+            supervisorId={hook.supervisorId}
+            onSupervisorChange={hook.setSupervisor}
+            type={hook.type}
+            onTypeChange={(t) => hook.setType(t)}
+            businessUnit={hook.businessUnit}
+            onBusinessUnitChange={hook.setBusinessUnit}
+            shiftId={hook.shiftId}
+            onShiftChange={hook.setShiftId}
+            week={hook.week}
+            optimalRows={hook.optimalRows}
+            optimoTotals={hook.optimoTotals}
+            descansos={hook.descansos}
+            onDescansosChange={hook.setDescansos}
+            loading={hook.loading}
+          />
+        </TabsContent>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Shift */}
-              <div>
-                <FloatLabelSelect
-                  id="shift_id"
-                  label="Turno"
-                  value={watchedShiftId}
-                  hasValue={!!watchedShiftId}
-                  error={errors.shift_id?.message}
-                  disabled={!watchedPlantId || isShiftLocked}
-                  onValueChange={(val) =>
-                    handleFieldChange("shift_id", val ?? "")
-                  }
-                  valueRenderer={(value) => {
-                    if (!value) return "";
-                    return (
-                      shifts.find((s) => (s.code ?? s._id) === value)?.name ??
-                      value
-                    );
-                  }}
-                >
-                  {shifts.map((s) => (
-                    <SelectItem key={s._id} value={s.code ?? s._id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </FloatLabelSelect>
-                {isShiftLocked && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Turno asignado por la planta
-                  </p>
-                )}
-              </div>
+        <TabsContent value="asignacion">
+          <AsignacionTab
+            type={hook.type}
+            shiftId={hook.shiftId}
+            employees={hook.employees}
+            optimoTotals={hook.optimoTotals}
+            assignments={hook.assignments}
+            observations={hook.observations}
+            onAssignmentChange={hook.updateAssignment}
+            onObservationChange={hook.updateObservation}
+            supervisorId={hook.supervisorId}
+            assignmentErrors={hook.assignmentErrors}
+            validValuesInfo={hook.validValuesInfo}
+          />
+        </TabsContent>
+      </Tabs>
 
-              {/* Year */}
-              <div>
-                <FloatLabelInput
-                  id="year"
-                  label="Año"
-                  type="number"
-                  min={2020}
-                  max={2100}
-                  disabled={isEditMode}
-                  error={errors.year?.message}
-                  {...register("year")}
-                />
-              </div>
-
-              {/* Week */}
-              <div>
-                <FloatLabelInput
-                  id="week"
-                  label="Semana"
-                  type="number"
-                  min={1}
-                  max={53}
-                  disabled={isEditMode}
-                  error={errors.week?.message}
-                  {...register("week")}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ── Day Assignments Card ─────────────────────────────────────────── */}
-        <Card className="border-border/40 bg-card shadow-[var(--shadow-2)] mb-6">
-          <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-            <CardTitle className="flex items-center gap-2 text-sm font-medium">
-              <User className="h-4 w-4 text-primary" />
-              Asignación de empleados
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-5">
-            {!watchedPlantId ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                Selecciona un supervisor y una planta para comenzar a asignar
-                empleados.
-              </p>
-            ) : (
-              <DayAssignmentField
-                days={dayAssignments}
-                onChange={setDayAssignments}
-                plantId={watchedPlantId}
-                plantCode={selectedPlant?.plant_code ?? undefined}
-                shiftId={watch("shift_id")}
-                positionIds={positionIds}
-                disabled={isEditMode}
-              />
-            )}
-          </CardContent>
-        </Card>
-
-        {/* ── Action bar ───────────────────────────────────────────────────── */}
-        <div className="flex items-center gap-3 pt-4 border-t border-border/40 mt-6">
-          <Button
-            type="submit"
-            variant="default"
-            size="sm"
-            className="cursor-pointer gap-1.5"
-            disabled={isSubmitting}
-          >
-            <Save className="h-4 w-4" />
-            {isSubmitting ? "Guardando..." : "Guardar"}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="cursor-pointer"
-            onClick={() => navigate("/rest-roles")}
-          >
-            Cancelar
-          </Button>
-        </div>
-      </form>
-
-      {/* Confirmation dialog for changing field with assignments */}
-      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-              <AlertTriangle className="h-6 w-6 text-amber-600" />
-            </div>
-            <DialogTitle className="text-center">
-              ¿Cambiar selección?
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Ya has asignado empleados a algunos días. Si cambias esta
-              selección, se perderán las asignaciones actuales. ¿Deseas
-              continuar?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:justify-center">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setConfirmDialogOpen(false);
-                setPendingChange(null);
-              }}
-              className="cursor-pointer"
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmFieldChange}
-              className="cursor-pointer"
-            >
-              Continuar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <div className="flex justify-end gap-2">
+        <Button variant="outline" type="button" onClick={() => navigate("/rest-roles")}>
+          Cancelar
+        </Button>
+        <Button onClick={handleSave} disabled={isSubmitting}>
+          {isSubmitting ? "Guardando..." : "Guardar"}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -16,10 +16,12 @@ import {
   MapPin,
   CalendarDays,
   Clock,
-  CalendarCheck,
   Users,
   UserCog,
   Shield,
+  Warehouse,
+  Briefcase,
+  ListChecks,
 } from "lucide-react";
 
 import { useAuth } from "@/features/auth/context/AuthContext";
@@ -52,8 +54,8 @@ const navItems = [
   { to: "/employees", label: "Empleados", icon: Users },
   { to: "/customers", label: "Clientes", icon: Building2 },
   { to: "/companies", label: "Empresas", icon: Building2 },
-  { to: "/rest-roles", label: "Roles de Descanso", icon: CalendarCheck },
   { to: "/vacation-requests", label: "Vacaciones", icon: CalendarDays },
+  { to: "/rest-roles", label: "Roles de Descanso", icon: ListChecks },
   { to: "/attendance", label: "Asistencia", icon: Calendar },
   { to: "/users", label: "Usuarios", icon: UserCog },
   { to: "/audit-logs", label: "Auditoría", icon: Shield },
@@ -77,6 +79,9 @@ const catalogItems = [
     icon: CalendarDays,
   },
   { to: "/catalogs/shifts-schedules", label: "Turnos y Horarios", icon: Clock },
+  { to: "/catalogs/workday-types", label: "Tipos de Jornada", icon: Briefcase },
+  { to: "/catalogs/plants", label: "Plantas", icon: Warehouse },
+  { to: "/catalogs/direct-supervisors", label: "Jefes Directos", icon: UserCog },
 ];
 
 const roleConfig: Record<

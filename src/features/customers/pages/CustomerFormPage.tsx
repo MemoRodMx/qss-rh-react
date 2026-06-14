@@ -3,8 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { customerService } from "../services/customerService";
-import type { SelectOption, OptimalContracted, Coverage } from "../types";
+import { customerService, type PlantOption } from "../services/customerService";
+import type { SelectOption, OptimalContracted, Coverage, CsfData } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,12 +13,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SelectItem } from "@/components/ui/select";
 import { FloatLabelInput } from "@/components/ui/float-label-input";
 import { FloatLabelSelect } from "@/components/ui/float-label-select";
+import { CsfUploader } from "../components/CsfUploader";
 import {
   ArrowLeft,
   Save,
   Building2,
   MapPin,
   Briefcase,
+  Warehouse,
   AlertTriangle,
   Plus,
   Trash2,
@@ -46,7 +48,7 @@ const customerFormSchema = z.object({
 type FormValues = z.infer<typeof customerFormSchema>;
 
 // ── Tab configuration ───────────────────────────────────────────────────────
-type TabId = "general" | "address" | "optimal";
+type TabId = "general" | "address" | "optimal" | "plants";
 
 interface TabConfig {
   id: TabId;
@@ -58,6 +60,7 @@ const TABS: TabConfig[] = [
   { id: "general", label: "Datos generales", icon: Building2 },
   { id: "address", label: "Dirección", icon: MapPin },
   { id: "optimal", label: "Óptimo contratado", icon: Briefcase },
+  { id: "plants", label: "Plantas", icon: Warehouse },
 ];
 
 // ── Coverage day labels ─────────────────────────────────────────────────────
@@ -170,11 +173,16 @@ export function CustomerFormPage() {
   const [areas, setAreas] = useState<SelectOption[]>([]);
   const [positions, setPositions] = useState<SelectOption[]>([]);
   const [shifts, setShifts] = useState<SelectOption[]>([]);
+  const [workdayTypes, setWorkdayTypes] = useState<SelectOption[]>([]);
 
   // Optimal contracted state (managed outside react-hook-form)
   const [optimalContracted, setOptimalContracted] = useState<
     OptimalContracted[]
   >([]);
+
+  // Plants state (PickList)
+  const [availPlants, setAvailPlants] = useState<PlantOption[]>([]);
+  const [selPlants, setSelPlants] = useState<PlantOption[]>([]);
 
   const {
     register,
@@ -212,19 +220,34 @@ export function CustomerFormPage() {
   // ── Load auxiliary data ───────────────────────────────────────────────────
   const loadAuxData = useCallback(async (customerId?: string) => {
     try {
-      const [companiesData, areasData, positionsData, shiftsData] =
+      const [companiesData, areasData, positionsData, shiftsData, workdayTypesData] =
         await Promise.all([
           customerService.listCompanies(),
-          customerService.listAreas(),
+          customerService.listAreas(customerId),
           customerService.listPositions(customerId),
           customerService.listShifts(),
+          customerService.listWorkdayTypes(),
         ]);
       setCompanies(companiesData);
       setAreas(areasData);
       setPositions(positionsData);
       setShifts(shiftsData);
+      setWorkdayTypes(workdayTypesData);
     } catch {
       setServerError("Error al cargar datos auxiliares");
+    }
+  }, []);
+
+  // ── Load plants ───────────────────────────────────────────────────────────
+  const loadPlants = useCallback(async (customerId?: string) => {
+    try {
+      const [available, selected] =
+        await customerService.listPlants(customerId);
+      setAvailPlants(available);
+      setSelPlants(selected);
+    } catch {
+      setAvailPlants([]);
+      setSelPlants([]);
     }
   }, []);
 
@@ -232,6 +255,7 @@ export function CustomerFormPage() {
   useEffect(() => {
     if (!isEditMode) {
       loadAuxData();
+      loadPlants();
       return;
     }
 
@@ -240,6 +264,7 @@ export function CustomerFormPage() {
     async function load() {
       try {
         await loadAuxData(id);
+        await loadPlants(id);
 
         const customer = await customerService.getById(id!);
         if (cancelled) return;
@@ -277,7 +302,17 @@ export function CustomerFormPage() {
           status: customer.status ?? "",
         });
 
-        setOptimalContracted(customer.optimal_contracted ?? []);
+        const loadedOC = (customer.optimal_contracted ?? []).map((oc) => ({
+          ...oc,
+          coverage: oc.coverage.map((cov) => {
+            const { modality: legacyModalidad, ...rest } = cov as unknown as Record<string, unknown>;
+            return {
+              ...rest,
+              workday_type: ((legacyModalidad || cov.workday_type) as string)?.toUpperCase(),
+            } as Coverage;
+          }),
+        }));
+        setOptimalContracted(loadedOC);
       } catch {
         setServerError("Error al cargar los datos del cliente");
       } finally {
@@ -349,7 +384,7 @@ export function CustomerFormPage() {
     ocIndex: number,
     shiftCode: string,
     field: keyof Coverage,
-    value: number,
+    value: number | string,
   ) => {
     setOptimalContracted((prev) => {
       const updated = [...prev];
@@ -362,6 +397,46 @@ export function CustomerFormPage() {
       return updated;
     });
   };
+
+  // ── Toggle plant selection ────────────────────────────────────────────────
+  const togglePlant = (plantId: string) => {
+    const plant =
+      availPlants.find((p) => p._id === plantId) ||
+      selPlants.find((p) => p._id === plantId);
+    if (!plant) return;
+
+    if (selPlants.find((p) => p._id === plantId)) {
+      setSelPlants((prev) => prev.filter((p) => p._id !== plantId));
+      setAvailPlants((prev) => [...prev, plant]);
+    } else {
+      setAvailPlants((prev) => prev.filter((p) => p._id !== plantId));
+      setSelPlants((prev) => [...prev, plant]);
+    }
+  };
+
+  // ── CSF import handler ───────────────────────────────────────────────────
+  const handleCsfApply = useCallback(
+    (csfData: CsfData) => {
+      if (csfData.rfc) setValue("rfc", csfData.rfc, { shouldValidate: true });
+      if (csfData.legal_name)
+        setValue("legal_name", csfData.legal_name, { shouldValidate: true });
+      if (csfData.address.street)
+        setValue("addr_street", csfData.address.street);
+      if (csfData.address.number)
+        setValue("addr_number", csfData.address.number);
+      if (csfData.address.interior)
+        setValue("addr_interior", csfData.address.interior);
+      if (csfData.address.colony)
+        setValue("addr_colony", csfData.address.colony);
+      if (csfData.address.city)
+        setValue("addr_city", csfData.address.city);
+      if (csfData.address.state)
+        setValue("addr_state", csfData.address.state);
+      if (csfData.address.zipcode)
+        setValue("addr_zipcode", csfData.address.zipcode);
+    },
+    [setValue],
+  );
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const onSubmit = async (values: FormValues) => {
@@ -378,6 +453,7 @@ export function CustomerFormPage() {
       const payload: Record<string, unknown> = {
         ...values,
         optimal_contracted: optimalContractedPayload,
+        plants: selPlants.map((p) => ({ plant_id: p._id })),
       };
 
       if (isEditMode) {
@@ -445,6 +521,33 @@ export function CustomerFormPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)}>
+        {/* Razón social y RFC — siempre visibles */}
+        <div className="mb-6">
+          <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-[1080px]">
+                <div className="md:col-span-2">
+                  <FloatLabelInput
+                    id="legal_name"
+                    label="Razón social"
+                    {...register("legal_name")}
+                    error={errors.legal_name?.message}
+                  />
+                </div>
+                <div>
+                  <FloatLabelInput
+                    id="rfc"
+                    label="RFC"
+                    {...register("rfc")}
+                    className="uppercase"
+                    style={{ textTransform: "uppercase" }}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Tabs */}
         <div className="mb-6">
           <div className="flex border-b border-border">
@@ -495,25 +598,9 @@ export function CustomerFormPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-5 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-2">
-                  <FloatLabelInput
-                    id="legal_name"
-                    label="Razón social"
-                    {...register("legal_name")}
-                    error={errors.legal_name?.message}
-                  />
-                </div>
-                <div>
-                  <FloatLabelInput
-                    id="rfc"
-                    label="RFC"
-                    {...register("rfc")}
-                    className="uppercase"
-                    style={{ textTransform: "uppercase" }}
-                  />
-                </div>
-              </div>
+              {!isEditMode && (
+                <CsfUploader onApply={handleCsfApply} disabled={isSubmitting} />
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
@@ -553,16 +640,18 @@ export function CustomerFormPage() {
                     }
                     valueRenderer={(value) => {
                       if (!value) return "";
-                      return (
-                        areas.find((a) => (a.code ?? a._id) === value)?.name ??
-                        value
+                      const area = areas.find(
+                        (a) => (a.code ?? a._id) === value,
                       );
+                      return area
+                        ? `${area.code ?? area._id} - ${area.name}`
+                        : value;
                     }}
                     error={errors.area_code?.message}
                   >
                     {areas.map((a) => (
                       <SelectItem key={a._id} value={a.code ?? a._id}>
-                        {a.name}
+                        {a.code ?? a._id} - {a.name}
                       </SelectItem>
                     ))}
                   </FloatLabelSelect>
@@ -821,7 +910,7 @@ export function CustomerFormPage() {
                               }
                             >
                               {hasCoverage ? "✓ " : ""}
-                              {shift.name}
+                              {shift.code} - {shift.name}
                             </Button>
                           );
                         })}
@@ -842,8 +931,36 @@ export function CustomerFormPage() {
                               {covIndex + 1}
                             </span>
                             <p className="text-xs font-semibold text-foreground">
-                              Turno: {shiftName}
+                              Turno: {cov.shift} - {shiftName}
                             </p>
+                          </div>
+                          <div className="w-28">
+                            <FloatLabelSelect
+                              label="Tipo de jornada"
+                              value={cov.workday_type ?? ""}
+                              hasValue={!!cov.workday_type}
+                              onValueChange={(val) =>
+                                updateCoverage(
+                                  ocIndex,
+                                  cov.shift,
+                                  "workday_type" as keyof Coverage,
+                                  val ?? "",
+                                )
+                              }
+                              valueRenderer={(value) => {
+                                if (!value) return "";
+                                const v = String(value);
+                                return workdayTypes.find(
+                                  (w) => (w.code ?? "").toLowerCase() === v.toLowerCase(),
+                                )?.name ?? value;
+                              }}
+                            >
+                              {workdayTypes.map((wt) => (
+                                <SelectItem key={wt.code ?? wt._id} value={wt.code ?? ""}>
+                                  {wt.name || wt.code || ""}
+                                </SelectItem>
+                              ))}
+                            </FloatLabelSelect>
                           </div>
                           <div className="grid grid-cols-7 gap-2">
                             {DAY_LABELS.map((day) => (
@@ -866,34 +983,19 @@ export function CustomerFormPage() {
                                   className="h-7 text-xs text-center"
                                   title="Empleados por día"
                                 />
-                                <Input
-                                  type="number"
-                                  min={0}
-                                  value={
-                                    cov[`${day.key}_off` as keyof Coverage] ?? 0
-                                  }
-                                  onChange={(e) =>
-                                    updateCoverage(
-                                      ocIndex,
-                                      cov.shift,
-                                      `${day.key}_off` as keyof Coverage,
-                                      Number(e.target.value),
-                                    )
-                                  }
-                                  className="h-7 text-xs text-center border-destructive/30"
-                                  title="Descansos máximos permitidos"
-                                />
                               </div>
                             ))}
                           </div>
-                          <div className="flex justify-center gap-6 pt-1">
-                            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
-                              <span className="inline-block h-2 w-2 rounded-full bg-primary/40" />
-                              Empleados por día
-                            </span>
-                            <span className="text-[10px] text-destructive/70 flex items-center gap-1">
-                              <span className="inline-block h-2 w-2 rounded-full bg-destructive/40" />
-                              Descansos máx.
+                          <div className="flex justify-center">
+                            <span className="text-[10px] font-semibold text-accent bg-accent/10 px-3 py-1 rounded-full">
+                              Total personal:{" "}
+                              {cov.monday +
+                                cov.tuesday +
+                                cov.wednesday +
+                                cov.thursday +
+                                cov.friday +
+                                cov.saturday +
+                                cov.sunday}
                             </span>
                           </div>
                         </div>
@@ -913,6 +1015,80 @@ export function CustomerFormPage() {
                 <Plus className="h-3.5 w-3.5" />
                 Agregar puesto
               </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── TAB: PLANTAS ─────────────────────────────────────────────────── */}
+        {activeTab === "plants" && (
+          <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
+            <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <Warehouse className="h-4 w-4 text-primary" />
+                Asignación de plantas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Available plants */}
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                    Disponibles ({availPlants.length})
+                  </p>
+                  <div className="rounded-lg border border-border/50 bg-muted/20 min-h-[200px] max-h-[300px] overflow-y-auto">
+                    {availPlants.length === 0 ? (
+                      <p className="p-4 text-sm text-muted-foreground text-center">
+                        No hay plantas disponibles
+                      </p>
+                    ) : (
+                      availPlants.map((plant) => (
+                        <button
+                          key={plant._id}
+                          type="button"
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-primary/5 transition-colors cursor-pointer border-b border-border/30 last:border-b-0"
+                          onClick={() => togglePlant(plant._id)}
+                        >
+                          <span className="text-muted-foreground">
+                            ({plant.code})
+                          </span>{" "}
+                          {plant.name}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Selected plants */}
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                    Seleccionadas ({selPlants.length})
+                  </p>
+                  <div className="rounded-lg border border-border/50 bg-muted/20 min-h-[200px] max-h-[300px] overflow-y-auto">
+                    {selPlants.length === 0 ? (
+                      <p className="p-4 text-sm text-muted-foreground text-center">
+                        Ninguna planta seleccionada
+                      </p>
+                    ) : (
+                      selPlants.map((plant) => (
+                        <button
+                          key={plant._id}
+                          type="button"
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-destructive/5 transition-colors cursor-pointer border-b border-border/30 last:border-b-0"
+                          onClick={() => togglePlant(plant._id)}
+                        >
+                          <span className="text-muted-foreground">
+                            ({plant.code})
+                          </span>{" "}
+                          {plant.name}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Haz clic en una planta para moverla entre las listas.
+              </p>
             </CardContent>
           </Card>
         )}

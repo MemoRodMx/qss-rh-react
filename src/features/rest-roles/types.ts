@@ -1,114 +1,78 @@
-export interface RestRoleDay {
-  day_name: string;
-  employee_numbers: string[];
+export interface OptimalContractedRow {
+  _id: string;
+  workday_type: string;
+  area: string;
+  position: string;
+  mon: number;
+  tue: number;
+  wed: number;
+  thu: number;
+  fri: number;
+  sat: number;
+  sun: number;
 }
 
-export interface RestRoleDayEmployee {
-  number: string;
-  full_name: string;
+export interface OptimalContractedResponse {
+  rows: OptimalContractedRow[];
+  optimo: Record<string, number>;
 }
 
-export interface RestRoleDayWithEmployees {
-  day_name: string;
-  employee_numbers: string[];
-  employees: RestRoleDayEmployee[];
+export interface EmployeeAssignment {
+  employee_id: string;
+  employee_number: string;
+  name: string;
+  area_id?: string;
+  area_name?: string;
+  position_id?: string;
+  position_name?: string;
+  is_supervisor?: boolean;
 }
 
-export interface RestRoleStatusLogEntry {
-  status: string;
-  notes: string | null;
-  changed_by_username: string;
-  changed_at: string;
+export interface Descansos {
+  mon: number;
+  tue: number;
+  wed: number;
+  thu: number;
+  fri: number;
+  sat: number;
+  sun: number;
+}
+
+export interface AssignmentEntry {
+  employee_id: string;
+  area_id?: string;
+  mon: string;
+  tue: string;
+  wed: string;
+  thu: string;
+  fri: string;
+  sat: string;
+  sun: string;
+  observations: string;
 }
 
 export interface RestRole {
   _id: string;
-  plant_id: string;
-  plant_name?: string;
-  shift_id: string;
-  shift_name?: string;
-  year: number;
+  company_id: string;
+  direct_supervisor_id: string;
+  type: "fijo" | "recorrido";
+  business_unit: string;
   week: number;
-  supervisor_id: string;
-  supervisor_name?: string;
-  created_by: string;
-  creator_username?: string;
-  status: "PENDIENTE DE REVISION" | "ACEPTADA" | "RECHAZADA";
-  reviewed_by?: string;
-  reviewer_username?: string;
-  reviewed_at?: string;
-  review_notes?: string;
-  days: RestRoleDayWithEmployees[];
-  status_log: RestRoleStatusLogEntry[];
+  shift_id: string;
+  descansos: Descansos;
+  assignments: AssignmentEntry[];
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface Supervisor {
-  _id: string;
-  name: string;
-  employee_number: string;
-}
+export const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
-export interface SupervisorPlant {
-  plant_id: string;
-  plant_code: string | null;
-  plant_name: string | null;
-  shift_id: string | null;
-  shift_code: string | null;
-  shift_name: string | null;
-}
-
-export interface EmployeeSearchResult {
-  employee_number: string;
-  fullname: string;
-}
-
-export interface DayAssignment {
-  employee_number: string;
-  label: string;
-}
-
-export interface ShiftOption {
-  _id: string;
-  code: string;
-  name: string;
-}
-
-export interface PlantOption {
-  _id: string;
-  name: string;
-}
-
-export const DAY_NAMES = [
-  { key: "monday", label: "Lunes" },
-  { key: "tuesday", label: "Martes" },
-  { key: "wednesday", label: "Miércoles" },
-  { key: "thursday", label: "Jueves" },
-  { key: "friday", label: "Viernes" },
-  { key: "saturday", label: "Sábado" },
-  { key: "sunday", label: "Domingo" },
-] as const;
-
-export const DAY_NAMES_MAP: Record<string, string> = {
-  monday: "Lunes",
-  tuesday: "Martes",
-  wednesday: "Miércoles",
-  thursday: "Jueves",
-  friday: "Viernes",
-  saturday: "Sábado",
-  sunday: "Domingo",
-};
-
-export const STATUS_SEVERITY: Record<
-  string,
-  "warning" | "success" | "destructive"
-> = {
-  "PENDIENTE DE REVISION": "warning",
-  ACEPTADA: "success",
-  RECHAZADA: "destructive",
-};
-
-export const STATUS_LABELS: Record<string, string> = {
-  "PENDIENTE DE REVISION": "Pendiente de revisión",
-  ACEPTADA: "Aceptada",
-  RECHAZADA: "Rechazada",
+export const DAY_LABELS: Record<string, string> = {
+  mon: "Lunes",
+  tue: "Martes",
+  wed: "Miércoles",
+  thu: "Jueves",
+  fri: "Viernes",
+  sat: "Sábado",
+  sun: "Domingo",
 };

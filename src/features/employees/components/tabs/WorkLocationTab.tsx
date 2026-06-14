@@ -22,6 +22,13 @@ type Props = Pick<
   | "setSupervisor"
 >;
 
+function Hint({ children, show }: { children: React.ReactNode; show: boolean }) {
+  if (!show) return null;
+  return (
+    <p className="mt-1 text-xs text-muted-foreground/70">{children}</p>
+  );
+}
+
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70 mb-3 pb-1.5 border-b border-border/30">
@@ -57,10 +64,14 @@ export function WorkLocationTab({
   const watchedPositionId = watch("work_location_position_id");
   const watchedScheduleId = watch("work_location_schedule_id");
   const watchedAreaId = watch("work_location_area_id");
+  const watchedCustomerId = watch("customer_id");
 
-  // Supervisor search with debounce
+  const hasCustomer = !!watchedCustomerId;
+  const hasArea = !!watchedAreaId;
+
+  // Supervisor search with debounce (filtered by area + shift)
   useEffect(() => {
-    if (!supervisorSearch || supervisorSearch.length < 2) {
+    if (!supervisorSearch || supervisorSearch.length < 2 || !watchedAreaId) {
       return;
     }
 
@@ -71,7 +82,7 @@ export function WorkLocationTab({
       try {
         const results = await employeeService.listSupervisors(
           supervisorSearch,
-          watchedPlantId || undefined,
+          watchedAreaId,
           watchedShiftId || undefined,
         );
         setSupervisorResults(results);
@@ -86,7 +97,7 @@ export function WorkLocationTab({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [supervisorSearch, watchedPlantId, watchedShiftId]);
+  }, [supervisorSearch, watchedAreaId, watchedShiftId]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -135,15 +146,18 @@ export function WorkLocationTab({
               valueRenderer={(value) => {
                 if (!value) return "";
                 const plant = plants.find((p) => p.code === value);
-                return plant?.name ?? value;
+                return plant ? `${plant.code} - ${plant.name}` : value;
               }}
             >
               {plants.map((p) => (
                 <SelectItem key={p.code} value={p.code}>
-                  {p.name}
+                  {p.code} - {p.name}
                 </SelectItem>
               ))}
             </FloatLabelSelect>
+            <Hint show={!hasCustomer}>
+              Seleccione un cliente para ver las plantas
+            </Hint>
           </div>
           <div>
             <FloatLabelSelect
@@ -157,12 +171,12 @@ export function WorkLocationTab({
               valueRenderer={(value) => {
                 if (!value) return "";
                 const pos = positions.find((p) => p.code === value);
-                return pos?.name ?? value;
+                return pos ? `${pos.code} - ${pos.description ?? pos.name}` : value;
               }}
             >
               {positions.map((p) => (
                 <SelectItem key={p.code} value={p.code}>
-                  {p.name}
+                  {p.code} - {p.description ?? p.name}
                 </SelectItem>
               ))}
             </FloatLabelSelect>
@@ -186,12 +200,12 @@ export function WorkLocationTab({
                 const shift = shifts.find(
                   (s) => s.code?.toLowerCase() === value.toLowerCase(),
                 );
-                return shift?.name ?? value;
+                return shift ? `${shift.code} - ${shift.name}` : value;
               }}
             >
               {shifts.map((s) => (
                 <SelectItem key={s.code} value={s.code}>
-                  {s.name}
+                  {s.code} - {s.name}
                 </SelectItem>
               ))}
             </FloatLabelSelect>
@@ -229,21 +243,29 @@ export function WorkLocationTab({
               label="Área"
               value={watchedAreaId}
               hasValue={!!watchedAreaId}
-              onValueChange={(val) =>
-                setValue("work_location_area_id", val ?? "")
-              }
+              onValueChange={(val) => {
+                setValue("work_location_area_id", val ?? "");
+                setSupervisor(null);
+                setValue("work_location_direct_supervisor_id", "");
+                setSupervisorSearch("");
+                setShowSupervisorDropdown(false);
+                setSupervisorResults([]);
+              }}
               valueRenderer={(value) => {
                 if (!value) return "";
                 const area = areas.find((a) => a.code === value);
-                return area?.name ?? value;
+                return area ? `${area.code} - ${area.name}` : value;
               }}
             >
               {areas.map((a) => (
                 <SelectItem key={a.code} value={a.code}>
-                  {a.name}
+                  {a.code} - {a.name}
                 </SelectItem>
               ))}
             </FloatLabelSelect>
+            <Hint show={!hasCustomer}>
+              Seleccione un cliente para ver las áreas
+            </Hint>
           </div>
         </div>
 
@@ -259,6 +281,9 @@ export function WorkLocationTab({
                 if (supervisor) clearSupervisor();
               }}
             />
+            <Hint show={!hasArea}>
+              Seleccione un área para buscar el jefe directo
+            </Hint>
             {isSearchingSupervisor && (
               <p className="mt-1 text-xs text-muted-foreground">Buscando...</p>
             )}

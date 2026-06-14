@@ -85,6 +85,5 @@ export interface Company {
   land_use_license?: CompanyDocument;
   suppliers_registry?: CompanyDocument;
   status: "ACTIVE" | "INACTIVE";
-  plants?: Array<{ plant_id: string }>;
   company_id?: string;
 }

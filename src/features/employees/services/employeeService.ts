@@ -109,26 +109,45 @@ export const employeeService = {
   // ── Supervisors ───────────────────────────────────────────────────────────
   async listSupervisors(
     search: string,
-    plantCode?: string,
+    areaCode?: string,
     shiftCode?: string,
   ): Promise<SupervisorOption[]> {
     const query: Record<string, unknown> = { search, limit: 10 };
-    const url = plantCode
-      ? "/direct-supervisors/by-plant"
+    const url = areaCode
+      ? "/direct-supervisors/by-area"
       : "/direct-supervisors";
 
-    if (plantCode) {
-      query.plant_code = plantCode;
+    if (areaCode) {
+      query.area_code = areaCode;
       if (shiftCode) query.shift_code = shiftCode;
     }
 
     const { data } = await api.get(url, { params: query });
-    const list = plantCode
+    const list = areaCode
       ? Array.isArray(data)
         ? data
         : []
       : data?.data || [];
 
+    return list.map(
+      (s: { _id: string; employee_number: string; name: string }) => ({
+        _id: s._id,
+        employee_number: s.employee_number,
+        name: s.name,
+        label: `${s.employee_number} - ${s.name}`,
+      }),
+    );
+  },
+
+  async listSupervisorsByPlant(
+    plantId: string,
+    search: string,
+  ): Promise<SupervisorOption[]> {
+    if (!plantId) return [];
+    const { data } = await api.get("/direct-supervisors/by-plant", {
+      params: { plant_id: plantId, search, limit: 10 },
+    });
+    const list = Array.isArray(data) ? data : [];
     return list.map(
       (s: { _id: string; employee_number: string; name: string }) => ({
         _id: s._id,
@@ -195,8 +214,11 @@ export const employeeService = {
   },
 
   // ── Areas ─────────────────────────────────────────────────────────────────
-  async listAreas(): Promise<CatalogOption[]> {
-    const { data } = await api.get("/areas/list");
+  async listAreas(customerId?: string): Promise<CatalogOption[]> {
+    const params: Record<string, unknown> = {};
+    if (customerId) params.customer_id = customerId;
+
+    const { data } = await api.get("/areas/list", { params });
     return (Array.isArray(data) ? data : []).map(
       (a: { code: string; name: string }) => ({
         code: a.code,

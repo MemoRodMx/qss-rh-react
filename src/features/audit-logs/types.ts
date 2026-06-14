@@ -71,7 +71,6 @@ export const ENTITY_OPTIONS: SelectOption[] = [
   { label: "Motivos cambio salario", value: "salary-change-reasons" },
   { label: "Cambios de salario", value: "salary-changes" },
   { label: "Solicitudes vacaciones", value: "vacation-requests" },
-  { label: "Roles de descanso", value: "rest-roles" },
   { label: "Asistencias", value: "attendance-records" },
   { label: "Jefes directos", value: "direct-supervisors" },
   { label: "Óptimos contratados", value: "customer-optimal-contracts" },

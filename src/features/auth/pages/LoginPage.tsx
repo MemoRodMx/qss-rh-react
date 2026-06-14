@@ -102,8 +102,7 @@ export function LoginPage() {
           <div className="mx-auto my-5 h-1 w-12 rounded-full bg-cyan-500" />
           <p className="text-lg font-light text-cyan-300">Sistema de Gestión</p>
           <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-gray-400">
-            Administra contrataciones, asistencia, roles de descanso e informes
-            desde un solo lugar.
+            Administra contrataciones, asistencia e informes desde un solo lugar.
           </p>
         </div>
 
@@ -257,7 +256,7 @@ export function LoginPage() {
             </form>
 
             {/* Forgot password link */}
-            <p className="mt-4 text-center text-sm text-muted-foreground">
+            {/* <p className="mt-4 text-center text-sm text-muted-foreground">
               <button
                 type="button"
                 className="cursor-pointer underline-offset-4 hover:text-primary hover:underline transition-colors"
@@ -267,7 +266,7 @@ export function LoginPage() {
               >
                 ¿Olvidaste tu contraseña?
               </button>
-            </p>
+            </p> */}
           </CardContent>
         </Card>
       </div>

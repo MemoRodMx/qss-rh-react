@@ -1,6 +1,12 @@
 import api from "@/lib/api";
 import type { PaginatedResponse } from "@/lib/types";
-import type { Customer, SelectOption } from "../types";
+import type { Customer, SelectOption, CsfData } from "../types";
+
+export interface PlantOption {
+  _id: string;
+  code: string;
+  name: string;
+}
 
 export const customerService = {
   async list(
@@ -44,8 +50,10 @@ export const customerService = {
     return Array.isArray(data) ? data : (data?.data ?? []);
   },
 
-  async listAreas(): Promise<SelectOption[]> {
-    const { data } = await api.get("/areas/list");
+  async listAreas(customerId?: string): Promise<SelectOption[]> {
+    const params: Record<string, unknown> = {};
+    if (customerId) params.customer_id = customerId;
+    const { data } = await api.get("/areas/list", { params });
     return Array.isArray(data) ? data : (data?.data ?? []);
   },
 
@@ -59,5 +67,43 @@ export const customerService = {
     const params = customerId ? { "customer-id": customerId } : {};
     const { data } = await api.get("/shifts-and-schedules/list", { params });
     return Array.isArray(data) ? data : (data?.data ?? []);
+  },
+
+  async listWorkdayTypes(): Promise<SelectOption[]> {
+    const { data } = await api.get("/workday-types/list");
+    return Array.isArray(data) ? data : (data?.data ?? []);
+  },
+
+  async listPlants(
+    customerId?: string,
+  ): Promise<[PlantOption[], PlantOption[]]> {
+    const url = customerId
+      ? `/plants/list?customer_id=${customerId}`
+      : "/plants/list";
+    const response = await api.get(url);
+    const raw = response.data;
+    if (Array.isArray(raw)) {
+      if (raw.length === 2 && Array.isArray(raw[0]) && Array.isArray(raw[1])) {
+        return raw as [PlantOption[], PlantOption[]];
+      }
+      return [raw as PlantOption[], []];
+    }
+    if (raw?.data && Array.isArray(raw.data)) {
+      const d = raw.data;
+      if (d.length === 2 && Array.isArray(d[0]) && Array.isArray(d[1])) {
+        return d as [PlantOption[], PlantOption[]];
+      }
+      return [d as PlantOption[], []];
+    }
+    return [[], []];
+  },
+
+  async parseCsf(file: File): Promise<CsfData> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post<CsfData>("/customers/parse-csf", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
   },
 };

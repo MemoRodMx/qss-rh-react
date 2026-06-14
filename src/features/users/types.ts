@@ -9,7 +9,6 @@ export const PRIVILEGE_RESOURCES: PrivilegeResource[] = [
   { key: "companies", label: "Empresas", icon: "Building2" },
   { key: "customers", label: "Clientes", icon: "Wallet" },
   { key: "employees", label: "Empleados", icon: "Users" },
-  { key: "rest-roles", label: "Roles de Descanso", icon: "Calendar" },
   {
     key: "vacation-requests",
     label: "Solicitudes de Vacaciones",

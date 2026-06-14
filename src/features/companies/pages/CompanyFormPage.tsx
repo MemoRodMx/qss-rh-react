@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { companyService, type PlantOption } from "../services/companyService";
+import { companyService } from "../services/companyService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,6 @@ import {
   Building2,
   FileText,
   MapPin,
-  Warehouse,
   AlertTriangle,
 } from "lucide-react";
 
@@ -84,7 +83,6 @@ const companyFormSchema = z
     }),
     address: addressSchema.optional(),
     documents: createDocumentsSchema(),
-    plants: z.array(z.string()).optional().default([]),
   })
   .superRefine((data, ctx) => {
     // Cross-validate each document pair
@@ -118,7 +116,7 @@ const companyFormSchema = z
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
 
 // ── Tab configuration ───────────────────────────────────────────────────────
-type TabId = "general" | "documents" | "address" | "plants";
+type TabId = "general" | "documents" | "address";
 
 interface TabConfig {
   id: TabId;
@@ -130,7 +128,6 @@ const TABS: TabConfig[] = [
   { id: "general", label: "Datos generales", icon: Building2 },
   { id: "documents", label: "Documentación", icon: FileText },
   { id: "address", label: "Domicilio", icon: MapPin },
-  { id: "plants", label: "Plantas", icon: Warehouse },
 ];
 
 // ── Component ───────────────────────────────────────────────────────────────
@@ -143,8 +140,6 @@ export function CompanyFormPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingRecord, setIsLoadingRecord] = useState(isEditMode);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [availPlants, setAvailPlants] = useState<PlantOption[]>([]);
-  const [selPlants, setSelPlants] = useState<PlantOption[]>([]);
 
   const {
     register,
@@ -173,39 +168,20 @@ export function CompanyFormPage() {
         zipcode: "",
       },
       documents: {},
-      plants: [],
     },
   });
 
   const watchedStatus = watch("status");
 
-  // ── Load plants ───────────────────────────────────────────────────────────
-  const loadPlants = useCallback(async (companyId?: string) => {
-    try {
-      const [available, selected] = await companyService.listPlants(companyId);
-      setAvailPlants(available);
-      setSelPlants(selected);
-    } catch {
-      setAvailPlants([]);
-      setSelPlants([]);
-    }
-  }, []);
-
   // ── Load record for edit mode ─────────────────────────────────────────────
   useEffect(() => {
-    if (!isEditMode) {
-      loadPlants();
-      return;
-    }
+    if (!isEditMode) return;
 
     let cancelled = false;
 
     async function load() {
       try {
-        const [company, [available, selected]] = await Promise.all([
-          companyService.getById(id!),
-          companyService.listPlants(id),
-        ]);
+        const company = await companyService.getById(id!);
 
         if (cancelled) return;
 
@@ -239,9 +215,6 @@ export function CompanyFormPage() {
           zipcode: addr.zipcode ?? "",
         };
 
-        // Selected plants
-        const plantIds = selected.map((p) => p._id);
-
         reset({
           legal_name: company.legal_name,
           rfc: company.rfc,
@@ -251,11 +224,7 @@ export function CompanyFormPage() {
           status: company.status,
           address,
           documents: documents as CompanyFormValues["documents"],
-          plants: plantIds,
         });
-
-        setAvailPlants(available);
-        setSelPlants(selected);
       } catch {
         setServerError("Error al cargar los datos de la empresa");
       } finally {
@@ -267,26 +236,7 @@ export function CompanyFormPage() {
     return () => {
       cancelled = true;
     };
-  }, [id, isEditMode, loadPlants, reset]);
-
-  // ── Toggle plant selection ────────────────────────────────────────────────
-  const togglePlant = (plantId: string) => {
-    // Find the plant in either list
-    const plant =
-      availPlants.find((p) => p._id === plantId) ||
-      selPlants.find((p) => p._id === plantId);
-    if (!plant) return;
-
-    if (selPlants.find((p) => p._id === plantId)) {
-      // Move from selected to available
-      setSelPlants((prev) => prev.filter((p) => p._id !== plantId));
-      setAvailPlants((prev) => [...prev, plant]);
-    } else {
-      // Move from available to selected
-      setAvailPlants((prev) => prev.filter((p) => p._id !== plantId));
-      setSelPlants((prev) => [...prev, plant]);
-    }
-  };
+  }, [id, isEditMode, reset]);
 
   // ── Submit ────────────────────────────────────────────────────────────────
   const onSubmit = async (values: CompanyFormValues) => {
@@ -303,7 +253,6 @@ export function CompanyFormPage() {
         fiscal_reg_number: values.fiscal_reg_number || undefined,
         status: values.status,
         address: values.address,
-        plants: selPlants.map((p) => ({ plant_id: p._id })),
       };
 
       // Add document fields
@@ -632,80 +581,6 @@ export function CompanyFormPage() {
           </Card>
         )}
 
-        {/* ── TAB: PLANTAS ─────────────────────────────────────────────────── */}
-        {activeTab === "plants" && (
-          <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-            <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                <Warehouse className="h-4 w-4 text-primary" />
-                Asignación de plantas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Available plants */}
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
-                    Disponibles ({availPlants.length})
-                  </p>
-                  <div className="rounded-lg border border-border/50 bg-muted/20 min-h-[200px] max-h-[300px] overflow-y-auto">
-                    {availPlants.length === 0 ? (
-                      <p className="p-4 text-sm text-muted-foreground text-center">
-                        No hay plantas disponibles
-                      </p>
-                    ) : (
-                      availPlants.map((plant) => (
-                        <button
-                          key={plant._id}
-                          type="button"
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-primary/5 transition-colors cursor-pointer border-b border-border/30 last:border-b-0"
-                          onClick={() => togglePlant(plant._id)}
-                        >
-                          <span className="text-muted-foreground">
-                            ({plant.code})
-                          </span>{" "}
-                          {plant.name}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* Selected plants */}
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
-                    Seleccionadas ({selPlants.length})
-                  </p>
-                  <div className="rounded-lg border border-border/50 bg-muted/20 min-h-[200px] max-h-[300px] overflow-y-auto">
-                    {selPlants.length === 0 ? (
-                      <p className="p-4 text-sm text-muted-foreground text-center">
-                        Ninguna planta seleccionada
-                      </p>
-                    ) : (
-                      selPlants.map((plant) => (
-                        <button
-                          key={plant._id}
-                          type="button"
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-destructive/5 transition-colors cursor-pointer border-b border-border/30 last:border-b-0"
-                          onClick={() => togglePlant(plant._id)}
-                        >
-                          <span className="text-muted-foreground">
-                            ({plant.code})
-                          </span>{" "}
-                          {plant.name}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Haz clic en una planta para moverla entre las listas.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
         {/* ── Action bar ───────────────────────────────────────────────────── */}
         <div className="flex items-center gap-3 pt-4 border-t border-border/40 mt-6">
           <Button
@@ -790,10 +665,6 @@ function countTabErrors(tabId: TabId, errors: Record<string, unknown>): number {
     for (const f of fields) {
       if (getNestedError(errors, f)) count++;
     }
-  }
-
-  if (tabId === "plants") {
-    if (getNestedError(errors, "plants")) count++;
   }
 
   return count;

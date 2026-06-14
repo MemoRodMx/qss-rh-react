@@ -4,7 +4,7 @@ import type {
   AttendanceRecordListItem,
   AttendanceRecordDetail,
   SupervisorOption,
-  PlantOption,
+  AreaOption,
   EmployeeBySupervisorItem,
   LoanSuggestion,
 } from "../types";
@@ -67,12 +67,11 @@ export const attendanceService = {
     return unwrapData<SupervisorOption[]>(data);
   },
 
-  async listSupervisorPlants(supervisorId: string): Promise<PlantOption[]> {
+  async listSupervisorAreas(supervisorId: string): Promise<AreaOption[]> {
     const { data } = await api.get(
-      `/direct-supervisors/${supervisorId}/plants`,
+      `/direct-supervisors/${supervisorId}/areas`,
     );
-    // API returns { status, data: [...] } or just [...]
-    return unwrapData<PlantOption[]>(data);
+    return unwrapData<AreaOption[]>(data);
   },
 
   async listEmployeesBySupervisor(

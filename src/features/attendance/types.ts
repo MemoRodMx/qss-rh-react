@@ -57,10 +57,10 @@ export interface SupervisorOption {
   employee_number: string;
 }
 
-export interface PlantOption {
-  plant_id: string;
-  plant_code: string | null;
-  plant_name: string | null;
+export interface AreaOption {
+  area_id: string;
+  area_code: string | null;
+  area_name: string | null;
   shift_id: string | null;
   shift_code: string | null;
   shift_name: string | null;

@@ -55,6 +55,22 @@ export interface Colony {
   zipcode: string;
 }
 
+export interface Plant {
+  _id: string;
+  customer_id: string;
+  code: string;
+  name: string;
+  description?: string;
+}
+
+export interface WorkdayType {
+  _id: string;
+  code: string;
+  name: string;
+  description?: string;
+  status: boolean;
+}
+
 export interface CustomerOption {
   name: string;
   code: string;

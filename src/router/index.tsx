@@ -15,12 +15,11 @@ import { ColoniesPage } from "@/features/catalogs/pages/ColoniesPage";
 import { PublicHolidaysPage } from "@/features/catalogs/pages/PublicHolidaysPage";
 import { PayrollCalendarsPage } from "@/features/catalogs/pages/PayrollCalendarsPage";
 import { ShiftsSchedulesPage } from "@/features/catalogs/pages/ShiftsSchedulesPage";
+import { WorkdayTypesPage } from "@/features/catalogs/pages/WorkdayTypesPage";
+import { PlantsPage } from "@/features/catalogs/pages/PlantsPage";
+import { PlantFormPage } from "@/features/catalogs/pages/PlantFormPage";
 import { EmployeesPage } from "@/features/employees/pages/EmployeesPage";
 import { EmployeeFormPage } from "@/features/employees/pages/EmployeeFormPage";
-import { RestRolesPage } from "@/features/rest-roles/pages/RestRolesPage";
-import { RestRoleFormPage } from "@/features/rest-roles/pages/RestRoleFormPage";
-import { RestRoleDetailPage } from "@/features/rest-roles/pages/RestRoleDetailPage";
-import { RestRoleReviewPage } from "@/features/rest-roles/pages/RestRoleReviewPage";
 import { VacationRequestsPage } from "@/features/vacation-requests/pages/VacationRequestsPage";
 import { VacationRequestFormPage } from "@/features/vacation-requests/pages/VacationRequestFormPage";
 import { VacationRequestReviewPage } from "@/features/vacation-requests/pages/VacationRequestReviewPage";
@@ -31,6 +30,10 @@ import { UsersPage } from "@/features/users/pages/UsersPage";
 import { UserFormPage } from "@/features/users/pages/UserFormPage";
 import { AuditLogsPage } from "@/features/audit-logs/pages/AuditLogsPage";
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
+import { DirectSupervisorsPage } from "@/features/direct-supervisors/pages/DirectSupervisorsPage";
+import { DirectSupervisorFormPage } from "@/features/direct-supervisors/pages/DirectSupervisorFormPage";
+import RestRolesPage from "@/features/rest-roles/pages/RestRolesPage";
+import RestRoleFormPage from "@/features/rest-roles/pages/RestRoleFormPage";
 
 export const router = createBrowserRouter([
   {
@@ -69,14 +72,28 @@ export const router = createBrowserRouter([
             path: "catalogs/shifts-schedules",
             element: <ShiftsSchedulesPage />,
           },
+          {
+            path: "catalogs/workday-types",
+            element: <WorkdayTypesPage />,
+          },
+          { path: "catalogs/plants", element: <PlantsPage /> },
+          { path: "catalogs/plants/new", element: <PlantFormPage /> },
+          { path: "catalogs/plants/:id/edit", element: <PlantFormPage /> },
+          {
+            path: "catalogs/direct-supervisors",
+            element: <DirectSupervisorsPage />,
+          },
+          {
+            path: "catalogs/direct-supervisors/new",
+            element: <DirectSupervisorFormPage />,
+          },
+          {
+            path: "catalogs/direct-supervisors/:id/edit",
+            element: <DirectSupervisorFormPage />,
+          },
           { path: "employees", element: <EmployeesPage /> },
           { path: "employees/new", element: <EmployeeFormPage /> },
           { path: "employees/:id/edit", element: <EmployeeFormPage /> },
-          { path: "rest-roles", element: <RestRolesPage /> },
-          { path: "rest-roles/new", element: <RestRoleFormPage /> },
-          { path: "rest-roles/:id", element: <RestRoleDetailPage /> },
-          { path: "rest-roles/:id/edit", element: <RestRoleFormPage /> },
-          { path: "rest-roles/:id/review", element: <RestRoleReviewPage /> },
           { path: "vacation-requests", element: <VacationRequestsPage /> },
           {
             path: "vacation-requests/new",
@@ -94,6 +111,9 @@ export const router = createBrowserRouter([
           { path: "users/new", element: <UserFormPage /> },
           { path: "users/:id/edit", element: <UserFormPage /> },
           { path: "settings", element: <SettingsPage /> },
+          { path: "rest-roles", element: <RestRolesPage /> },
+          { path: "rest-roles/new", element: <RestRoleFormPage /> },
+          { path: "rest-roles/:id/edit", element: <RestRoleFormPage /> },
           { path: "audit-logs", element: <AuditLogsPage /> },
           { path: "attendance", element: <AttendanceRecordsPage /> },
           { path: "attendance/new", element: <AttendanceRecordFormPage /> },

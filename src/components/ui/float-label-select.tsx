@@ -50,7 +50,7 @@ function FloatLabelSelect({
           aria-invalid={!!error}
           className="!h-12 pt-5 pb-1"
         >
-          <SelectValue>{valueRenderer}</SelectValue>
+          <SelectValue>{valueRenderer?.(value ?? null)}</SelectValue>
         </SelectTrigger>
         <SelectContent>{children}</SelectContent>
       </Select>

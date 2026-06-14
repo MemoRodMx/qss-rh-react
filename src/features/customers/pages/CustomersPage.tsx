@@ -14,11 +14,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CustomerOptimalSheet } from "../components/CustomerOptimalSheet";
 import {
   Search,
   Users,
   Plus,
   Pencil,
+  Eye,
   Trash2,
   AlertTriangle,
   RefreshCw,
@@ -61,6 +63,8 @@ export function CustomersPage() {
     deleteCustomer,
   } = useCustomers(10);
 
+  const [viewCustomerId, setViewCustomerId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletingName, setDeletingName] = useState("");
@@ -85,14 +89,6 @@ export function CustomersPage() {
       setDeletingId(null);
       setDeletingName("");
     }
-  };
-
-  const getCompanyName = (
-    company: string | { _id: string; legal_name: string } | undefined,
-  ): string => {
-    if (!company) return "—";
-    if (typeof company === "string") return company;
-    return company.legal_name ?? "—";
   };
 
   return (
@@ -231,11 +227,13 @@ export function CustomersPage() {
                           RFC: {customer.rfc || "—"}
                         </p>
                       </div>
-                      <div className="hidden lg:block text-xs text-muted-foreground truncate max-w-[160px]">
-                        {getCompanyName(customer.company_id)}
-                      </div>
-                      <div className="hidden xl:block text-xs text-muted-foreground truncate max-w-[100px]">
-                        Área: {customer.area_code || "—"}
+                      <div className="hidden xl:block text-xs text-muted-foreground truncate max-w-[140px]">
+                        {customer.plants && customer.plants.length > 0
+                          ? customer.plants
+                              .map((p) => p.plant_id?.code ?? "")
+                              .filter(Boolean)
+                              .join(", ") || "—"
+                          : "—"}
                       </div>
                       <div className="hidden xl:block text-xs text-muted-foreground">
                         {formatDate(customer.contract_date)}
@@ -247,6 +245,18 @@ export function CustomersPage() {
                         {statusLabels[customer.status] || customer.status}
                       </Badge>
                       <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="cursor-pointer text-muted-foreground hover:text-sky-500"
+                          onClick={() => {
+                            setViewCustomerId(customer._id);
+                            setSheetOpen(true);
+                          }}
+                          title="Ver óptimo contratado"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon-sm"
@@ -309,16 +319,33 @@ export function CustomersPage() {
                   </div>
 
                   <div className="space-y-1 text-xs text-muted-foreground">
-                    {getCompanyName(customer.company_id) !== "—" && (
-                      <p>Empresa: {getCompanyName(customer.company_id)}</p>
+                    {customer.plants && customer.plants.length > 0 && (
+                      <p>
+                        Plantas:{" "}
+                        {customer.plants
+                          .map((p) => p.plant_id?.code ?? "")
+                          .filter(Boolean)
+                          .join(", ") || "—"}
+                      </p>
                     )}
-                    {customer.area_code && <p>Área: {customer.area_code}</p>}
                     {customer.contract_date && (
                       <p>Contrato: {formatDate(customer.contract_date)}</p>
                     )}
                   </div>
 
                   <div className="flex gap-2 mt-3 pt-3 border-t border-border/40">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="cursor-pointer gap-1 flex-1 text-sky-600 hover:text-sky-700"
+                      onClick={() => {
+                        setViewCustomerId(customer._id);
+                        setSheetOpen(true);
+                      }}
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Ver óptimo
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
@@ -411,6 +438,13 @@ export function CustomersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Optimal contracted sheet */}
+      <CustomerOptimalSheet
+        customerId={viewCustomerId}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+      />
     </div>
   );
 }

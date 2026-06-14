@@ -1,12 +1,17 @@
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useRestRoles } from "../hooks/useRestRoles";
-import { STATUS_SEVERITY, STATUS_LABELS } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -16,75 +21,93 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Search,
-  CalendarCheck,
   Plus,
+  Search,
   Pencil,
   Trash2,
   AlertTriangle,
-  RefreshCw,
   ChevronLeft,
   ChevronRight,
-  X,
-  Eye,
-  ClipboardCheck,
+  ListChecks,
 } from "lucide-react";
+import { restRoleService } from "../services/restRoleService";
+import type { RestRole } from "../types";
 
-export function RestRolesPage() {
+export default function RestRolesPage() {
   const navigate = useNavigate();
-  const {
-    roles,
-    isLoading,
-    total,
-    page,
-    totalPages,
-    search,
-    setSearch,
-    setPage,
-    refresh,
-    deleteRole,
-  } = useRestRoles(10);
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deletingLabel, setDeletingLabel] = useState("");
+  const [roles, setRoles] = useState<RestRole[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [search, setSearch] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fetchIdRef = useRef(0);
+
+  const [deleteTarget, setDeleteTarget] = useState<RestRole | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDeleteClick = (id: string, label: string) => {
-    setDeletingId(id);
-    setDeletingLabel(label);
-    setDeleteDialogOpen(true);
-  };
+  const fetchData = useCallback(
+    async (pageNum: number, searchTerm: string) => {
+      const id = ++fetchIdRef.current;
+      setIsLoading(true);
+      try {
+        const params: Record<string, unknown> = { page: pageNum, limit: 10 };
+        if (searchTerm.trim()) params.search = searchTerm.trim();
+        const { data } = await (await import("@/lib/api")).default.get("/rest-roles", { params });
+        if (id === fetchIdRef.current) {
+          const result = data as { data: RestRole[]; total: number; page: number; total_pages: number };
+          setRoles(result.data ?? []);
+          setTotal(result.total ?? 0);
+          setPage(result.page ?? 1);
+          setTotalPages(result.total_pages ?? 0);
+        }
+      } catch {
+        if (id === fetchIdRef.current) {
+          setRoles([]);
+          setTotal(0);
+        }
+      } finally {
+        if (id === fetchIdRef.current) setIsLoading(false);
+      }
+    },
+    [],
+  );
 
-  const handleDeleteConfirm = async () => {
-    if (!deletingId) return;
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchData(1, search), 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [search, fetchData]);
+
+  const refresh = () => fetchData(page, search);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      await deleteRole(deletingId);
-      setDeleteDialogOpen(false);
+      await restRoleService.delete(deleteTarget._id);
+      setDeleteTarget(null);
+      refresh();
     } catch {
-      // Error handled silently
+      // handled
     } finally {
       setIsDeleting(false);
-      setDeletingId(null);
-      setDeletingLabel("");
     }
   };
 
-  const canReview = (status: string) => status === "PENDIENTE DE REVISION";
-  const canEdit = (status: string) => status === "PENDIENTE DE REVISION";
-  const canDelete = (status: string) => status === "PENDIENTE DE REVISION";
-
   return (
-    <div className="space-y-6 max-w-[1080px] animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Roles de Descanso
           </h1>
           <p className="text-sm text-muted-foreground">
-            Gestión de roles de descanso semanales
+            Gestión de roles de descanso y asignación de empleados
           </p>
         </div>
         <Button
@@ -94,350 +117,162 @@ export function RestRolesPage() {
           onClick={() => navigate("/rest-roles/new")}
         >
           <Plus className="h-4 w-4" />
-          Nuevo Rol
+          Agregar Rol de Descanso
         </Button>
       </div>
 
-      {/* Search bar */}
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por planta, turno, supervisor..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        {search && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="cursor-pointer gap-1"
-            onClick={() => setSearch("")}
-          >
-            <X className="h-3.5 w-3.5" />
-            Limpiar
-          </Button>
-        )}
-        <Button
-          variant="outline"
-          size="icon"
-          className="cursor-pointer"
-          onClick={refresh}
-          disabled={isLoading}
-          title="Recargar datos"
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-        </Button>
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar por unidad de negocio o tipo..."
+          className="pl-9"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
       </div>
 
-      {/* Loading state */}
-      {isLoading ? (
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton
-              key={i}
-              className="h-16 rounded-xl"
-              style={{ animationDelay: `${i * 80}ms` }}
-            />
-          ))}
-        </div>
-      ) : roles.length === 0 ? (
-        /* Empty state */
-        <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="mb-4 rounded-full bg-primary/10 p-4">
-              <CalendarCheck className="h-8 w-8 text-primary" />
-            </div>
-            <p className="mb-1 text-base font-medium text-foreground">
-              {search ? "Sin resultados" : "No hay roles de descanso"}
-            </p>
-            <p className="mb-6 text-sm text-muted-foreground">
-              {search
-                ? `No se encontraron roles para "${search}"`
-                : "Crea el primer rol de descanso para comenzar."}
-            </p>
-            {!search ? (
-              <Button
-                variant="default"
-                size="sm"
-                className="cursor-pointer gap-1.5"
-                onClick={() => navigate("/rest-roles/new")}
-              >
-                <Plus className="h-4 w-4" />
-                Nuevo Rol
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="cursor-pointer gap-1"
-                onClick={() => setSearch("")}
-              >
-                <X className="h-3.5 w-3.5" />
-                Limpiar búsqueda
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          {/* Desktop table */}
-          <div className="hidden md:block">
-            <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-              <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-                <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                  <CalendarCheck className="h-4 w-4 text-primary" />
-                  {total} roles de descanso
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-border/40">
-                  {roles.map((role, index) => (
-                    <div
-                      key={role._id}
-                      className="flex items-center gap-4 px-5 py-3 transition-all duration-200 hover:bg-primary/[0.02] hover:border-l-[3px] hover:border-l-primary hover:pl-[17px] animate-fade-in-up"
-                      style={{ animationDelay: `${index * 40}ms` }}
-                    >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 ring-2 ring-primary/10">
-                        <CalendarCheck className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {role.plant_name || role.plant_id} —{" "}
-                          {role.shift_name || role.shift_id}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          Semana {role.week}, {role.year} · Supervisor:{" "}
-                          {role.supervisor_name || role.supervisor_id}
-                        </p>
-                      </div>
-                      <div className="hidden lg:block text-xs text-muted-foreground">
-                        Creado por: {role.creator_username || "—"}
-                      </div>
+      <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
+        <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
+          <CardTitle className="flex items-center gap-2 text-sm font-medium">
+            <ListChecks className="h-4 w-4 text-primary" />
+            {total} roles de descanso
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Unidad de negocio</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Jefe Directo</TableHead>
+                <TableHead>Turno</TableHead>
+                <TableHead>Semana</TableHead>
+                <TableHead className="w-24">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && roles.length === 0 ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell colSpan={6}>
+                      <div className="h-6 bg-muted/40 rounded animate-pulse" />
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : roles.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-6">
+                    {search ? `Sin resultados para "${search}"` : "No hay roles de descanso registrados"}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                roles.map((role, i) => (
+                  <TableRow
+                    key={role._id}
+                    className="animate-fade-in-up"
+                    style={{ animationDelay: `${i * 40}ms` }}
+                  >
+                    <TableCell>
+                      <span className="font-medium">{role.business_unit}</span>
+                    </TableCell>
+                    <TableCell>
                       <Badge
-                        variant={STATUS_SEVERITY[role.status] || "secondary"}
-                        className="capitalize cursor-pointer"
+                        variant={role.type === "fijo" ? "info" : "warning"}
+                        className="text-white"
                       >
-                        {STATUS_LABELS[role.status] || role.status}
+                        {role.type === "fijo" ? "Fijo" : "Recorrido"}
                       </Badge>
-                      <div className="flex items-center gap-1">
-                        {canReview(role.status) && (
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="cursor-pointer text-muted-foreground hover:text-accent"
-                            onClick={() =>
-                              navigate(`/rest-roles/${role._id}/review`)
-                            }
-                            title="Revisar"
-                          >
-                            <ClipboardCheck className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        {!canReview(role.status) && (
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="cursor-pointer text-muted-foreground hover:text-primary"
-                            onClick={() => navigate(`/rest-roles/${role._id}`)}
-                            title="Ver detalle"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        {canEdit(role.status) && (
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="cursor-pointer text-muted-foreground hover:text-primary"
-                            onClick={() =>
-                              navigate(`/rest-roles/${role._id}/edit`)
-                            }
-                            title="Modificar"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        {canDelete(role.status) && (
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            className="cursor-pointer text-muted-foreground hover:text-destructive"
-                            onClick={() =>
-                              handleDeleteClick(
-                                role._id,
-                                `${role.plant_name || role.plant_id} - Sem ${role.week}/${role.year}`,
-                              )
-                            }
-                            title="Eliminar"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">—</TableCell>
+                    <TableCell className="text-muted-foreground">—</TableCell>
+                    <TableCell>{role.week}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="cursor-pointer text-muted-foreground hover:text-primary"
+                          onClick={() => navigate(`/rest-roles/${role._id}/edit`)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="cursor-pointer text-muted-foreground hover:text-destructive"
+                          onClick={() => setDeleteTarget(role)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-          {/* Mobile cards */}
-          <div className="md:hidden space-y-3">
-            {roles.map((role, index) => (
-              <Card
-                key={role._id}
-                className="border-border/50 bg-card shadow-[var(--shadow-1)] animate-fade-in-up"
-                style={{ animationDelay: `${index * 40}ms` }}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 ring-2 ring-primary/10">
-                        <CalendarCheck className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {role.plant_name || role.plant_id}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {role.shift_name || role.shift_id} · Sem {role.week},{" "}
-                          {role.year}
-                        </p>
-                      </div>
-                    </div>
-                    <Badge
-                      variant={STATUS_SEVERITY[role.status] || "secondary"}
-                      className="capitalize cursor-pointer"
-                    >
-                      {STATUS_LABELS[role.status] || role.status}
-                    </Badge>
-                  </div>
-
-                  <div className="space-y-1 text-xs text-muted-foreground mb-3">
-                    <p>
-                      Supervisor: {role.supervisor_name || role.supervisor_id}
-                    </p>
-                    <p>Creado por: {role.creator_username || "—"}</p>
-                  </div>
-
-                  <div className="flex gap-2 pt-3 border-t border-border/40">
-                    {canReview(role.status) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="cursor-pointer gap-1 flex-1"
-                        onClick={() =>
-                          navigate(`/rest-roles/${role._id}/review`)
-                        }
-                      >
-                        <ClipboardCheck className="h-3.5 w-3.5" />
-                        Revisar
-                      </Button>
-                    )}
-                    {!canReview(role.status) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="cursor-pointer gap-1 flex-1"
-                        onClick={() => navigate(`/rest-roles/${role._id}`)}
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        Detalle
-                      </Button>
-                    )}
-                    {canEdit(role.status) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="cursor-pointer gap-1 flex-1"
-                        onClick={() => navigate(`/rest-roles/${role._id}/edit`)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Editar
-                      </Button>
-                    )}
-                    {canDelete(role.status) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="cursor-pointer gap-1 flex-1 text-destructive hover:text-destructive"
-                        onClick={() =>
-                          handleDeleteClick(
-                            role._id,
-                            `${role.plant_name || role.plant_id} - Sem ${role.week}/${role.year}`,
-                          )
-                        }
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        Eliminar
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="cursor-pointer"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Página {page} de {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="cursor-pointer"
-                disabled={page >= totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* Delete confirmation dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
-              <AlertTriangle className="h-6 w-6 text-destructive" />
-            </div>
-            <DialogTitle className="text-center">
-              Confirmar eliminación
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              ¿Estás seguro de que deseas eliminar el rol de descanso{" "}
-              <strong>"{deletingLabel}"</strong>?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:justify-center">
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Página {page} de {totalPages} ({total} registros)
+          </p>
+          <div className="flex gap-1">
             <Button
               variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
+              size="icon-sm"
+              disabled={page <= 1}
+              onClick={() => fetchData(page - 1, search)}
               className="cursor-pointer"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              disabled={page >= totalPages}
+              onClick={() => fetchData(page + 1, search)}
+              className="cursor-pointer"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Eliminar rol de descanso
+            </DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de eliminar el rol de descanso{" "}
+              <strong>{deleteTarget?.business_unit}</strong>?
+              <br />
+              Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              className="cursor-pointer"
+              onClick={() => setDeleteTarget(null)}
               disabled={isDeleting}
             >
               Cancelar
             </Button>
             <Button
               variant="destructive"
-              onClick={handleDeleteConfirm}
+              size="sm"
               className="cursor-pointer"
+              onClick={handleDelete}
               disabled={isDeleting}
             >
               {isDeleting ? "Eliminando..." : "Eliminar"}

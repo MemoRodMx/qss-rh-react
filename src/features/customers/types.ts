@@ -14,6 +14,7 @@ export interface Coverage {
   friday_off: number;
   saturday_off: number;
   sunday_off: number;
+  workday_type?: string;
 }
 
 export interface OptimalContracted {
@@ -34,6 +35,10 @@ export interface CustomerAddress {
   zipcode?: string;
 }
 
+export interface CustomerPlantRef {
+  plant_id: { _id: string; code: string; name: string } | null;
+}
+
 export interface Customer {
   _id: string;
   company_id: string | { _id: string; legal_name: string };
@@ -45,6 +50,7 @@ export interface Customer {
   left_date: string | null;
   readmission_date: string | null;
   optimal_contracted: OptimalContracted[];
+  plants?: CustomerPlantRef[];
   status: string;
   createdAt?: string;
   updatedAt?: string;
@@ -72,4 +78,20 @@ export interface SelectOption {
   _id: string;
   name: string;
   code?: string;
+}
+
+export interface CsfAddress {
+  street: string;
+  number: string;
+  interior: string;
+  colony: string;
+  city: string;
+  state: string;
+  zipcode: string;
+}
+
+export interface CsfData {
+  rfc: string;
+  legal_name: string;
+  address: CsfAddress;
 }

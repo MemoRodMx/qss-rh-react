@@ -33,7 +33,7 @@ import type {
   AttendanceRecordDetail,
   EmployeeEntry,
   SupervisorOption,
-  PlantOption,
+  AreaOption,
   LoanSuggestion,
 } from "../types";
 
@@ -63,7 +63,7 @@ export function AttendanceFormShell({
 
   // Form state
   const [supervisors, setSupervisors] = useState<SupervisorOption[]>([]);
-  const [plants, setPlants] = useState<PlantOption[]>([]);
+  const [plants, setPlants] = useState<AreaOption[]>([]);
   const [employees, setEmployees] = useState<EmployeeEntry[]>([]);
   const [isLoadingSupervisors, setIsLoadingSupervisors] = useState(true);
   const [isLoadingPlants, setIsLoadingPlants] = useState(false);
@@ -77,7 +77,7 @@ export function AttendanceFormShell({
   const [readonlySupervisor, setReadonlySupervisor] = useState("");
 
   // Store the full selected plant object to access plant_code and shift_code
-  const [selectedPlantObj, setSelectedPlantObj] = useState<PlantOption | null>(
+  const [selectedPlantObj, setSelectedPlantObj] = useState<AreaOption | null>(
     null,
   );
 
@@ -131,7 +131,7 @@ export function AttendanceFormShell({
       setValue("plant_id", "");
       setSelectedPlantObj(null);
       try {
-        const data = await attendanceService.listSupervisorPlants(supervisorId);
+        const data = await attendanceService.listSupervisorAreas(supervisorId);
         setPlants(data);
       } catch {
         setServerError("Error al cargar plantas");
@@ -154,7 +154,7 @@ export function AttendanceFormShell({
       try {
         // The API expects plant_code (plants.code) as plant_id param
         const plantCode =
-          selectedPlantObj?.plant_code ?? selectedPlantObj?.plant_id ?? plantId;
+          selectedPlantObj?.area_code ?? selectedPlantObj?.area_id ?? plantId;
         const data = await attendanceService.listEmployeesBySupervisor(
           supervisorId,
           plantCode,
@@ -274,10 +274,10 @@ export function AttendanceFormShell({
     setIsSubmitting(true);
 
     try {
-      // The API expects plant_code (plants.code) as plant_id
+      // The API expects area_code as plant_id
       const plantCode =
-        selectedPlantObj?.plant_code ??
-        selectedPlantObj?.plant_id ??
+        selectedPlantObj?.area_code ??
+        selectedPlantObj?.area_id ??
         values.plant_id;
 
       const payload: Record<string, unknown> = {
@@ -444,13 +444,13 @@ export function AttendanceFormShell({
               disabled={!supervisorId || isLoadingPlants || isEdit}
               onValueChange={(val) => {
                 setValue("plant_id", val ?? "", { shouldValidate: true });
-                const plant = plants.find((p) => p.plant_id === val) ?? null;
+                const plant = plants.find((p) => p.area_id === val) ?? null;
                 setSelectedPlantObj(plant);
               }}
               valueRenderer={(value) => {
                 if (!value) return "";
-                const plant = plants.find((p) => p.plant_id === value);
-                return plant?.plant_name || plant?.plant_code || value;
+                const plant = plants.find((p) => p.area_id === value);
+                return plant?.area_name || plant?.area_code || value;
               }}
             >
               {isLoadingPlants ? (
@@ -459,8 +459,8 @@ export function AttendanceFormShell({
                 </div>
               ) : (
                 plants.map((plant) => (
-                  <SelectItem key={plant.plant_id} value={plant.plant_id}>
-                    {plant.plant_name || plant.plant_code || plant.plant_id}
+                  <SelectItem key={plant.area_id} value={plant.area_id}>
+                    {plant.area_name || plant.area_code || plant.area_id}
                   </SelectItem>
                 ))
               )}
