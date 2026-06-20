@@ -101,6 +101,28 @@ export function CustomerOptimalSheet({ customerId, open, onOpenChange }: Props) 
     )?.name ?? code;
   }
 
+  function getAreaName(areaId: string): string {
+    const a = customer?.areas?.find(
+      (ref) => ref.area_id?._id === areaId,
+    );
+    const areaData = a?.area_id;
+    if (typeof areaData === "object" && areaData !== null) {
+      return `(${areaData.code ?? areaData._id}) ${areaData.name}`;
+    }
+    return areaId;
+  }
+
+  function getAreaCode(areaId: string): string {
+    const a = customer?.areas?.find(
+      (ref) => ref.area_id?._id === areaId,
+    );
+    const areaData = a?.area_id;
+    if (typeof areaData === "object" && areaData !== null) {
+      return areaData.code ?? "";
+    }
+    return "";
+  }
+
   const optimalContracted: OptimalContracted[] =
     customer?.optimal_contracted ?? [];
 
@@ -175,28 +197,72 @@ export function CustomerOptimalSheet({ customerId, open, onOpenChange }: Props) 
           )}
 
           {/* data */}
-          {!loading && !error && optimalContracted.length > 0 && (
+          {!loading && !error && optimalContracted.length > 0 && (() => {
+            const groupedByArea = (() => {
+              const map = new Map<string, OptimalContracted[]>();
+              for (const oc of optimalContracted) {
+                const key = oc.area_id || "__unassigned__";
+                if (!map.has(key)) map.set(key, []);
+                map.get(key)!.push(oc);
+              }
+              return Array.from(map.entries())
+                .map(([key, positions]) => ({
+                  key,
+                  areaLabel:
+                    key === "__unassigned__"
+                      ? "Sin área"
+                      : getAreaName(key),
+                  areaCode:
+                    key === "__unassigned__"
+                      ? ""
+                      : getAreaCode(key),
+                  positions,
+                  count: positions.length,
+                }))
+                .sort((a, b) => {
+                  if (a.key === "__unassigned__") return 1;
+                  if (b.key === "__unassigned__") return -1;
+                  return a.areaLabel.localeCompare(b.areaLabel);
+                });
+            })();
+
+            return (
             <div className="space-y-6 stagger-grid">
-              {optimalContracted.map((oc, ocIndex) => (
+              {groupedByArea.map((group, _gIdx) => (
+                <div key={group.key}>
+                  <div className="flex items-center gap-2 mb-3 px-1">
+                    <span className="text-xs font-semibold uppercase text-muted-foreground tracking-wider">
+                      {group.areaCode ? `(${group.areaCode}) ` : ""}{group.areaLabel}
+                    </span>
+                    <Badge variant="secondary" className="text-[10px]">{group.count}</Badge>
+                  </div>
+                  {group.positions.map((oc, ocIndex) => (
                 <div
                   key={ocIndex}
                   className="rounded-xl border-2 border-border/50 bg-card shadow-[var(--shadow-1)] overflow-hidden"
                 >
                   {/* position header */}
                   <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-border/40">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                        {ocIndex + 1}
-                      </span>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {getPositionName(oc.position) || "—"}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {oc.position || "Sin código"}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                          {ocIndex + 1}
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-foreground">
+                              {getPositionName(oc.position) || "—"}
+                            </p>
+                            {oc.area_id && (
+                              <Badge variant="outline" className="text-[10px]">
+                                {getAreaName(oc.area_id)}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">
+                            {oc.position || "Sin código"}
+                          </p>
+                        </div>
                       </div>
-                    </div>
                     <div className="flex items-center gap-4 text-right">
                       <div>
                         <p className="text-[10px] uppercase text-muted-foreground tracking-wider">
@@ -254,11 +320,13 @@ export function CustomerOptimalSheet({ customerId, open, onOpenChange }: Props) 
                                     {cov.shift} - {getShiftName(cov.shift)}
                                   </span>
                                 </div>
-                                {cov.workday_type && (
-                                  <Badge variant="secondary" className="text-[10px] uppercase">
-                                    {getWorkdayTypeName(cov.workday_type)}
-                                  </Badge>
-                                )}
+                                <div className="flex items-center gap-1.5">
+                                  {cov.workday_type && (
+                                    <Badge variant="secondary" className="text-[10px] uppercase">
+                                      {getWorkdayTypeName(cov.workday_type)}
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
 
                               {/* day grid + total column */}
@@ -291,8 +359,11 @@ export function CustomerOptimalSheet({ customerId, open, onOpenChange }: Props) 
                   </div>
                 </div>
               ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
+          );
+        })()}
         </div>
       </SheetContent>
     </Sheet>

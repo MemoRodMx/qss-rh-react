@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import api from "@/lib/api";
 import { restRoleService } from "../services/restRoleService";
 import { OptimoTab } from "../components/OptimoTab";
 import { AsignacionTab } from "../components/AsignacionTab";
@@ -18,7 +19,38 @@ export default function RestRoleFormPage() {
   const [initialLoading, setInitialLoading] = useState(isEdit);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [isSupervisorUser, setIsSupervisorUser] = useState(false);
+  const [mySupervisor, setMySupervisor] = useState<{
+    _id: string;
+    employee_number: string;
+    name: string;
+  } | null>(null);
+  const supervisorChecked = useRef(false);
+
   const hook = useRestRole();
+
+  // Detect if the logged-in user is a direct supervisor
+  useEffect(() => {
+    api.get("/direct-supervisors/me")
+      .then((r) => {
+        if (r.data?._id) {
+          setIsSupervisorUser(true);
+          setMySupervisor({
+            _id: r.data._id,
+            employee_number: r.data.employee_number || "",
+            name: r.data.name,
+          });
+          if (!isEdit) {
+            hook.setSupervisor(r.data._id);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        supervisorChecked.current = true;
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     hook.setBusinessUnit(hook.type.toUpperCase());
@@ -34,10 +66,21 @@ export default function RestRoleFormPage() {
   useEffect(() => {
     if (!id) return;
     restRoleService.getById(id).then((data) => {
+      const roleSupervisorId =
+        data.direct_supervisor_id?._id || data.direct_supervisor_id;
+
+      if (mySupervisor && roleSupervisorId !== mySupervisor._id) {
+        toast.error("Acceso denegado", {
+          description: "Este rol de descanso pertenece a otro jefe directo.",
+        });
+        navigate("/rest-roles");
+        return;
+      }
+
       hook.setType(data.type);
       hook.setBusinessUnit(data.business_unit);
       hook.loadRoleData(
-        data.direct_supervisor_id?._id || data.direct_supervisor_id,
+        roleSupervisorId,
         data.shift_id?._id || data.shift_id,
         data.type,
       );
@@ -47,7 +90,7 @@ export default function RestRoleFormPage() {
       setInitialLoading(false);
     }).catch(() => setInitialLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, mySupervisor]);
 
   const handleSave = async () => {
     setServerError(null);
@@ -138,6 +181,8 @@ export default function RestRoleFormPage() {
             descansos={hook.descansos}
             onDescansosChange={hook.setDescansos}
             loading={hook.loading}
+            isSupervisorUser={isSupervisorUser}
+            mySupervisor={mySupervisor}
           />
         </TabsContent>
 

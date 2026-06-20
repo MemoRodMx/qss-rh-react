@@ -57,7 +57,7 @@ export interface Colony {
 
 export interface Plant {
   _id: string;
-  customer_id: string;
+  company_id: string;
   code: string;
   name: string;
   description?: string;

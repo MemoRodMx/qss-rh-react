@@ -44,6 +44,8 @@ interface OptimoTabProps {
   descansos: Descansos;
   onDescansosChange: (descansos: Descansos) => void;
   loading: boolean;
+  isSupervisorUser?: boolean;
+  mySupervisor?: { _id: string; employee_number: string; name: string } | null;
 }
 
 export function OptimoTab({
@@ -61,6 +63,8 @@ export function OptimoTab({
   descansos,
   onDescansosChange,
   loading,
+  isSupervisorUser,
+  mySupervisor,
 }: OptimoTabProps) {
   const [supervisors, setSupervisors] = useState<
     { _id: string; employee_number: string; name: string }[]
@@ -68,9 +72,11 @@ export function OptimoTab({
   const [allShifts, setAllShifts] = useState<CatalogOption[]>([]);
 
   useEffect(() => {
-    api.get("/direct-supervisors/list").then((r) => {
-      setSupervisors(Array.isArray(r.data) ? r.data : []);
-    });
+    if (!isSupervisorUser) {
+      api.get("/direct-supervisors/list").then((r) => {
+        setSupervisors(Array.isArray(r.data) ? r.data : []);
+      });
+    }
     api.get("/shifts-and-schedules/catalog").then((r) => {
       const raw = Array.isArray(r.data) ? r.data : [];
       setAllShifts(raw);
@@ -92,32 +98,46 @@ export function OptimoTab({
   const getRowTotal = (row: OptimalContractedRow) =>
     DAYS.reduce((sum, d) => sum + (Number(row[d]) || 0), 0);
 
+  const mySupervisorLabel = mySupervisor
+    ? `${mySupervisor.employee_number || ""} - ${mySupervisor.name || ""}`.trim().replace(/^ - /, "")
+    : "";
+
   const showTable = supervisorId && shiftId;
 
   return (
     <div className="space-y-4">
       {/* Primera línea: Jefe directo + Turno */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FloatLabelSelect
-          id="supervisor"
-          label="Jefe directo"
-          value={supervisorId}
-          hasValue={!!supervisorId}
-          onValueChange={(val) => onSupervisorChange(val ?? "")}
-          valueRenderer={(value) => {
-            if (!value) return "";
-            const sup = supervisors.find((s) => s._id === value);
-            return sup
-              ? `${sup.employee_number || ""} - ${sup.name}`
-              : value;
-          }}
-        >
-          {supervisors.map((s) => (
-            <SelectItem key={s._id} value={s._id}>
-              {s.employee_number || ""} - {s.name}
-            </SelectItem>
-          ))}
-        </FloatLabelSelect>
+        {isSupervisorUser ? (
+          <FloatLabelInput
+            id="supervisor"
+            label="Jefe directo"
+            value={mySupervisorLabel}
+            readOnly
+            className="bg-muted/30"
+          />
+        ) : (
+          <FloatLabelSelect
+            id="supervisor"
+            label="Jefe directo"
+            value={supervisorId}
+            hasValue={!!supervisorId}
+            onValueChange={(val) => onSupervisorChange(val ?? "")}
+            valueRenderer={(value) => {
+              if (!value) return "";
+              const sup = supervisors.find((s) => s._id === value);
+              return sup
+                ? `${sup.employee_number || ""} - ${sup.name}`
+                : value;
+            }}
+          >
+            {supervisors.map((s) => (
+              <SelectItem key={s._id} value={s._id}>
+                {s.employee_number || ""} - {s.name}
+              </SelectItem>
+            ))}
+          </FloatLabelSelect>
+        )}
 
         <FloatLabelSelect
           id="shift"

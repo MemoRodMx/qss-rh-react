@@ -14,11 +14,10 @@ import { FloatLabelTextarea } from "@/components/ui/float-label-textarea";
 import { ArrowLeft, Save, Building2, AlertTriangle } from "lucide-react";
 
 const plantFormSchema = z.object({
-  customer_id: z.string().min(1, "El cliente es obligatorio"),
+  company_id: z.string().min(1, "La empresa es obligatoria"),
   code: z
     .string()
-    .min(3, "El código debe tener al menos 3 caracteres")
-    .max(3, "El código debe tener máximo 3 caracteres"),
+    .min(2, "El código debe tener al menos 2 caracteres"),
   name: z
     .string()
     .min(2, "El nombre debe tener al menos 2 caracteres"),
@@ -27,7 +26,7 @@ const plantFormSchema = z.object({
 
 type PlantFormValues = z.infer<typeof plantFormSchema>;
 
-interface CustomerOption {
+interface CompanyOption {
   _id: string;
   name: string;
 }
@@ -40,7 +39,7 @@ export function PlantFormPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingRecord, setIsLoadingRecord] = useState(isEditMode);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [companies, setCompanies] = useState<CompanyOption[]>([]);
 
   const {
     register,
@@ -50,24 +49,21 @@ export function PlantFormPage() {
     watch,
     formState: { errors },
   } = useForm<PlantFormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(plantFormSchema) as any,
     defaultValues: {
-      customer_id: "",
+      company_id: "",
       code: "",
       name: "",
       description: "",
     },
   });
 
-  const watchedCustomerId = watch("customer_id");
+  const watchedCompanyId = watch("company_id");
 
-  // ── Load customers ─────────────────────────────────────────────────────────
   useEffect(() => {
-    plantsService.listCustomers().then(setCustomers).catch(() => setCustomers([]));
+    plantsService.listCompanies().then(setCompanies).catch(() => setCompanies([]));
   }, []);
 
-  // ── Load record for edit mode ─────────────────────────────────────────────
   useEffect(() => {
     if (!isEditMode) return;
 
@@ -79,7 +75,7 @@ export function PlantFormPage() {
         if (cancelled) return;
 
         reset({
-          customer_id: plant.customer_id ?? "",
+          company_id: plant.company_id ?? "",
           code: plant.code,
           name: plant.name,
           description: plant.description ?? "",
@@ -97,14 +93,13 @@ export function PlantFormPage() {
     };
   }, [id, isEditMode, reset]);
 
-  // ── Submit ────────────────────────────────────────────────────────────────
   const onSubmit = async (values: PlantFormValues) => {
     setServerError(null);
     setIsSubmitting(true);
 
     try {
       const payload: Record<string, unknown> = {
-        customer_id: values.customer_id,
+        company_id: values.company_id,
         code: values.code.toUpperCase(),
         name: values.name,
         description: values.description || undefined,
@@ -128,7 +123,6 @@ export function PlantFormPage() {
     }
   };
 
-  // ── Loading state ─────────────────────────────────────────────────────────
   if (isLoadingRecord) {
     return (
       <div className="space-y-6 max-w-[1080px] animate-fade-in">
@@ -144,7 +138,6 @@ export function PlantFormPage() {
 
   return (
     <div className="space-y-6 max-w-[1080px] animate-fade-in">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -166,7 +159,6 @@ export function PlantFormPage() {
         </div>
       </div>
 
-      {/* Server error */}
       {serverError && (
         <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -186,22 +178,22 @@ export function PlantFormPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <FloatLabelSelect
-                  id="customer_id"
-                  label="Cliente"
-                  value={watchedCustomerId}
-                  hasValue={!!watchedCustomerId}
+                  id="company_id"
+                  label="Empresa"
+                  value={watchedCompanyId}
+                  hasValue={!!watchedCompanyId}
                   onValueChange={(val) =>
-                    setValue("customer_id", val ?? "", { shouldValidate: true })
+                    setValue("company_id", val ?? "", { shouldValidate: true })
                   }
                   valueRenderer={(value) => {
                     if (!value) return "";
                     return (
-                      customers.find((c) => c._id === value)?.name ?? value
+                      companies.find((c) => c._id === value)?.name ?? value
                     );
                   }}
-                  error={errors.customer_id?.message}
+                  error={errors.company_id?.message}
                 >
-                  {customers.map((c) => (
+                  {companies.map((c) => (
                     <SelectItem key={c._id} value={c._id}>
                       {c.name}
                     </SelectItem>
@@ -212,7 +204,6 @@ export function PlantFormPage() {
                 <FloatLabelInput
                   id="code"
                   label="Código"
-                  maxLength={3}
                   className="uppercase"
                   style={{ textTransform: "uppercase" }}
                   error={errors.code?.message}
@@ -243,7 +234,6 @@ export function PlantFormPage() {
           </CardContent>
         </Card>
 
-        {/* Action bar */}
         <div className="flex items-center gap-3 pt-4 border-t border-border/40 mt-6">
           <Button
             type="submit"

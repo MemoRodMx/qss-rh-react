@@ -45,16 +45,36 @@ export const customerService = {
     await api.delete(`/customers/${id}`);
   },
 
-  async listCompanies(): Promise<SelectOption[]> {
-    const { data } = await api.get("/companies/list");
-    return Array.isArray(data) ? data : (data?.data ?? []);
-  },
-
   async listAreas(customerId?: string): Promise<SelectOption[]> {
     const params: Record<string, unknown> = {};
     if (customerId) params.customer_id = customerId;
     const { data } = await api.get("/areas/list", { params });
-    return Array.isArray(data) ? data : (data?.data ?? []);
+
+    // New format: { data: [available[], selected[]] }
+    if (data?.data && Array.isArray(data.data)) {
+      // Return flat list for dropdowns
+      const [available, selected] = data.data;
+      return [...(Array.isArray(available) ? available : []), ...(Array.isArray(selected) ? selected : [])];
+    }
+    // Old format: flat array
+    if (Array.isArray(data)) return data;
+    return data?.data ?? [];
+  },
+
+  async listAreasPickList(
+    customerId?: string,
+  ): Promise<[SelectOption[], SelectOption[]]> {
+    const params: Record<string, unknown> = {};
+    if (customerId) params.customer_id = customerId;
+    const { data } = await api.get("/areas/list", { params });
+
+    if (data?.data && Array.isArray(data.data) && data.data.length === 2) {
+      return data.data as [SelectOption[], SelectOption[]];
+    }
+    if (Array.isArray(data) && data.length === 2) {
+      return data as [SelectOption[], SelectOption[]];
+    }
+    return [[], []];
   },
 
   async listPositions(customerId?: string): Promise<SelectOption[]> {
@@ -82,18 +102,18 @@ export const customerService = {
       : "/plants/list";
     const response = await api.get(url);
     const raw = response.data;
-    if (Array.isArray(raw)) {
-      if (raw.length === 2 && Array.isArray(raw[0]) && Array.isArray(raw[1])) {
-        return raw as [PlantOption[], PlantOption[]];
-      }
-      return [raw as PlantOption[], []];
-    }
     if (raw?.data && Array.isArray(raw.data)) {
       const d = raw.data;
       if (d.length === 2 && Array.isArray(d[0]) && Array.isArray(d[1])) {
         return d as [PlantOption[], PlantOption[]];
       }
       return [d as PlantOption[], []];
+    }
+    if (Array.isArray(raw)) {
+      if (raw.length === 2 && Array.isArray(raw[0]) && Array.isArray(raw[1])) {
+        return raw as [PlantOption[], PlantOption[]];
+      }
+      return [raw as PlantOption[], []];
     }
     return [[], []];
   },

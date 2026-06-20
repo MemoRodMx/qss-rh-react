@@ -9,15 +9,14 @@ interface UseSettingsReturn {
   areas: AreaOption[];
   selectedRecorridoAreaCodes: string[];
   setSelectedRecorridoAreaCodes: (codes: string[]) => void;
+  ccEmails: string[];
+  setCcEmails: (emails: string[]) => void;
   companyId: string;
   isLoading: boolean;
   isSaving: boolean;
   error: string | null;
   save: () => Promise<{ success: boolean; message: string }>;
-  saveRecorridoAreas: () => Promise<{
-    success: boolean;
-    message: string;
-  }>;
+  saveSettings: () => Promise<{ success: boolean; message: string }>;
 }
 
 export function useSettings(): UseSettingsReturn {
@@ -27,6 +26,7 @@ export function useSettings(): UseSettingsReturn {
   const [selectedRecorridoAreaCodes, setSelectedRecorridoAreaCodes] = useState<
     string[]
   >([]);
+  const [ccEmails, setCcEmails] = useState<string[]>([]);
   const [companyId, setCompanyId] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -58,6 +58,7 @@ export function useSettings(): UseSettingsReturn {
         if (cId) {
           const config = await settingsService.getConfig(cId);
           setSelectedRecorridoAreaCodes(config.recorrido_area_codes ?? []);
+          setCcEmails(config.rest_role_notification_cc_emails ?? []);
         }
       } catch {
         if (!cancelled) {
@@ -81,11 +82,10 @@ export function useSettings(): UseSettingsReturn {
     success: boolean;
     message: string;
   }> => {
-    // position_ids save — placeholder, not yet implemented
     return { success: true, message: "OK" };
   }, []);
 
-  const saveRecorridoAreas = useCallback(async (): Promise<{
+  const saveSettings = useCallback(async (): Promise<{
     success: boolean;
     message: string;
   }> => {
@@ -98,6 +98,7 @@ export function useSettings(): UseSettingsReturn {
       await settingsService.saveConfig({
         company_id: companyId,
         recorrido_area_codes: selectedRecorridoAreaCodes,
+        rest_role_notification_cc_emails: ccEmails,
       });
       return {
         success: true,
@@ -113,7 +114,7 @@ export function useSettings(): UseSettingsReturn {
     } finally {
       setIsSaving(false);
     }
-  }, [companyId, selectedRecorridoAreaCodes]);
+  }, [companyId, selectedRecorridoAreaCodes, ccEmails]);
 
   return {
     positions,
@@ -122,11 +123,13 @@ export function useSettings(): UseSettingsReturn {
     areas,
     selectedRecorridoAreaCodes,
     setSelectedRecorridoAreaCodes,
+    ccEmails,
+    setCcEmails,
     companyId,
     isLoading,
     isSaving,
     error,
     save,
-    saveRecorridoAreas,
+    saveSettings,
   };
 }

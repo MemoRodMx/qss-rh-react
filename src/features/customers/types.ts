@@ -22,6 +22,7 @@ export interface OptimalContracted {
   position: string;
   salary: number;
   bonus: number;
+  area_id: string;
   coverage: Coverage[];
 }
 
@@ -35,14 +36,13 @@ export interface CustomerAddress {
   zipcode?: string;
 }
 
-export interface CustomerPlantRef {
-  plant_id: { _id: string; code: string; name: string } | null;
+export interface CustomerAreaRef {
+  area_id: { _id: string; code: string; name: string } | null;
 }
 
 export interface Customer {
   _id: string;
-  company_id: string | { _id: string; legal_name: string };
-  area_code: string;
+  plant_id: string | { _id: string; code: string; name: string };
   rfc: string;
   legal_name: string;
   address?: CustomerAddress;
@@ -50,15 +50,14 @@ export interface Customer {
   left_date: string | null;
   readmission_date: string | null;
   optimal_contracted: OptimalContracted[];
-  plants?: CustomerPlantRef[];
+  areas?: CustomerAreaRef[];
   status: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface CustomerFormValues {
-  company_id: string;
-  area_code: string;
+  plant_id: string;
   rfc: string;
   legal_name: string;
   contract_date: string | null;

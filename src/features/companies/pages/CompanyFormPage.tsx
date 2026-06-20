@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { companyService } from "../services/companyService";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -371,12 +371,6 @@ export function CompanyFormPage() {
         {/* ── TAB: DATOS GENERALES ─────────────────────────────────────────── */}
         {activeTab === "general" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-            <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                <Building2 className="h-4 w-4 text-primary" />
-                Identificación
-              </CardTitle>
-            </CardHeader>
             <CardContent className="p-5 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">
@@ -459,12 +453,6 @@ export function CompanyFormPage() {
         {/* ── TAB: DOCUMENTACIÓN ───────────────────────────────────────────── */}
         {activeTab === "documents" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-            <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                <FileText className="h-4 w-4 text-primary" />
-                Documentos
-              </CardTitle>
-            </CardHeader>
             <CardContent className="p-5">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {DOCUMENT_TYPES.map((doc) => {
@@ -518,12 +506,6 @@ export function CompanyFormPage() {
         {/* ── TAB: DOMICILIO ───────────────────────────────────────────────── */}
         {activeTab === "address" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-            <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                <MapPin className="h-4 w-4 text-primary" />
-                Domicilio
-              </CardTitle>
-            </CardHeader>
             <CardContent className="p-5">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">

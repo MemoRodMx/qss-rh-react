@@ -19,8 +19,6 @@ export function EmployeeFormPage() {
     errors,
 
     // Catalog data
-    customers,
-    plants,
     positions,
     shifts,
     schedules,
@@ -29,6 +27,11 @@ export function EmployeeFormPage() {
     states,
     municipalities,
     colonies,
+
+    // Area dependencies display
+    customerDisplayName,
+    plantDisplayCode,
+    plantDisplayName,
 
     // Supervisor
     supervisor,
@@ -55,8 +58,6 @@ export function EmployeeFormPage() {
       watch={watch}
       errors={errors}
       // Catalog data
-      customers={customers}
-      plants={plants}
       positions={positions}
       shifts={shifts}
       schedules={schedules}
@@ -65,6 +66,10 @@ export function EmployeeFormPage() {
       states={states}
       municipalities={municipalities}
       colonies={colonies}
+      // Area dependencies display
+      customerDisplayName={customerDisplayName}
+      plantDisplayCode={plantDisplayCode}
+      plantDisplayName={plantDisplayName}
       // Supervisor
       supervisor={supervisor}
       setSupervisor={setSupervisor}

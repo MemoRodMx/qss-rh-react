@@ -4,17 +4,12 @@ import { SelectItem } from "@/components/ui/select";
 import { FloatLabelInput } from "@/components/ui/float-label-input";
 import { FloatLabelSelect } from "@/components/ui/float-label-select";
 import { getNestedError } from "../../hooks/useEmployeeForm";
-import {
-  MARITAL_STATUS_OPTIONS,
-  GENRE_OPTIONS,
-  STATUS_OPTIONS,
-  CONTRACT_TYPE_OPTIONS,
-} from "../../types";
+import { GENRE_OPTIONS } from "../../types";
 import type { EmployeeFormShellProps } from "../EmployeeFormShell";
 
 type Props = Pick<
   EmployeeFormShellProps,
-  "register" | "setValue" | "watch" | "errors" | "customers" | "states"
+  "register" | "setValue" | "watch" | "errors" | "states"
 >;
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -30,17 +25,12 @@ export function GeneralInfoTab({
   setValue,
   watch,
   errors,
-  customers,
   states,
 }: Props) {
   const errorsRecord = errors as unknown as Record<string, unknown>;
 
   const watchedGenre = watch("genre");
   const watchedBirthPlace = watch("birth_place");
-  const watchedCustomerId = watch("customer_id");
-  const watchedStatus = watch("status");
-  const watchedContractType = watch("contract_type");
-  const watchedMaritalStatus = watch("marital_status");
 
   const getError = (fieldName: string) =>
     getNestedError(errorsRecord, fieldName)?.message;
@@ -96,7 +86,7 @@ export function GeneralInfoTab({
       {/* ── Datos de nacimiento y género ─────────────────────────────────── */}
       <div>
         <SectionTitle>Datos de nacimiento y género</SectionTitle>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <FloatLabelSelect
               id="genre"
@@ -129,6 +119,8 @@ export function GeneralInfoTab({
               {...register("birth_date")}
             />
           </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <FloatLabelSelect
               id="birth_place"
@@ -150,6 +142,14 @@ export function GeneralInfoTab({
                 </SelectItem>
               ))}
             </FloatLabelSelect>
+          </div>
+          <div>
+            <FloatLabelInput
+              id="city_of_birth"
+              label="Ciudad de nacimiento"
+              {...register("city_of_birth")}
+              className="uppercase"
+            />
           </div>
         </div>
       </div>
@@ -204,149 +204,6 @@ export function GeneralInfoTab({
         </div>
       </div>
 
-      {/* ── Cliente ──────────────────────────────────────────────────────── */}
-      <div>
-        <SectionTitle>Cliente</SectionTitle>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <FloatLabelSelect
-              id="customer_id"
-              label="Cliente"
-              value={watchedCustomerId}
-              hasValue={!!watchedCustomerId}
-              onValueChange={(val) =>
-                setValue("customer_id", val ?? "", { shouldValidate: true })
-              }
-              valueRenderer={(value) => {
-                if (!value) return "";
-                const customer = customers.find((c) => c.code === value);
-                return customer?.name ?? value;
-              }}
-              error={getError("customer_id")}
-            >
-              {customers.map((c) => (
-                <SelectItem key={c.code} value={c.code}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </FloatLabelSelect>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Contratación ─────────────────────────────────────────────────── */}
-      <div>
-        <SectionTitle>Contratación</SectionTitle>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <FloatLabelSelect
-              id="status"
-              label="Estatus"
-              value={watchedStatus}
-              hasValue={!!watchedStatus}
-              onValueChange={(val) =>
-                setValue("status", val ?? "", { shouldValidate: true })
-              }
-              valueRenderer={(value) => {
-                if (!value) return "";
-                return (
-                  STATUS_OPTIONS.find((s) => s.value === value)?.label ?? value
-                );
-              }}
-              error={getError("status")}
-            >
-              {STATUS_OPTIONS.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </FloatLabelSelect>
-          </div>
-          <div>
-            <FloatLabelInput
-              id="hire_date"
-              label="Fecha de alta"
-              type="date"
-              {...register("hire_date")}
-            />
-          </div>
-          <div>
-            <FloatLabelInput
-              id="seniority"
-              label="Antigüedad (años)"
-              {...register("seniority", { valueAsNumber: true })}
-              readOnly
-              className="bg-muted/30"
-            />
-          </div>
-          <div>
-            <FloatLabelSelect
-              id="contract_type"
-              label="Tipo de contrato"
-              value={watchedContractType}
-              hasValue={!!watchedContractType}
-              onValueChange={(val) =>
-                setValue("contract_type", val ?? "", { shouldValidate: true })
-              }
-              valueRenderer={(value) => {
-                if (!value) return "";
-                return (
-                  CONTRACT_TYPE_OPTIONS.find((c) => c.value === value)?.label ??
-                  value
-                );
-              }}
-              error={getError("contract_type")}
-            >
-              {CONTRACT_TYPE_OPTIONS.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </FloatLabelSelect>
-          </div>
-          <div>
-            <FloatLabelInput
-              id="email"
-              label="Correo electrónico"
-              type="email"
-              {...register("email")}
-            />
-          </div>
-          <div>
-            <FloatLabelInput
-              id="sat_zip_code"
-              label="C.P. SAT"
-              {...register("sat_zip_code")}
-              maxLength={5}
-            />
-          </div>
-          <div>
-            <FloatLabelSelect
-              id="marital_status"
-              label="Estado civil"
-              value={watchedMaritalStatus}
-              hasValue={!!watchedMaritalStatus}
-              onValueChange={(val) =>
-                setValue("marital_status", val ?? "", { shouldValidate: true })
-              }
-              valueRenderer={(value) => {
-                if (!value) return "";
-                return (
-                  MARITAL_STATUS_OPTIONS.find((m) => m.value === value)
-                    ?.label ?? value
-                );
-              }}
-              error={getError("marital_status")}
-            >
-              {MARITAL_STATUS_OPTIONS.map((m) => (
-                <SelectItem key={m.value} value={m.value}>
-                  {m.label}
-                </SelectItem>
-              ))}
-            </FloatLabelSelect>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

@@ -11,6 +11,7 @@ export interface Employee {
   birth_date: string | null;
   resident: boolean;
   birth_place: string;
+  city_of_birth: string;
   genre: string;
   rfc: string;
   curp: string;
@@ -94,6 +95,7 @@ export interface EmployeeFormValues {
   genre: string;
   birth_date: string;
   birth_place: string;
+  city_of_birth: string;
   nss: string;
   status: string;
   seniority: number;

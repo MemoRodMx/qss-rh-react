@@ -15,4 +15,10 @@ export interface AreaOption {
 export interface SettingsPayload {
   company_id: string;
   recorrido_area_codes: string[];
+  rest_role_notification_cc_emails: string[];
+}
+
+export interface SettingsResponse {
+  recorrido_area_codes: string[];
+  rest_role_notification_cc_emails: string[];
 }

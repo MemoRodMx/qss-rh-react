@@ -21,6 +21,7 @@ const employeeFormSchema = z.object({
   genre: z.string().min(1, "El género es obligatorio"),
   birth_date: z.string().optional().default(""),
   birth_place: z.string().optional().default(""),
+  city_of_birth: z.string().optional().default(""),
   nss: z.string().optional().default(""),
   status: z.string().min(1, "El estado es obligatorio"),
   seniority: z.number().optional().default(0),
@@ -105,7 +106,6 @@ export const TABS: TabConfig[] = [
 // ── Tab error count ─────────────────────────────────────────────────────────
 const TAB_FIELDS: Record<TabId, (keyof FormValues)[]> = {
   general: [
-    "customer_id",
     "name",
     "surname",
     "lastname",
@@ -114,21 +114,23 @@ const TAB_FIELDS: Record<TabId, (keyof FormValues)[]> = {
     "genre",
     "birth_date",
     "birth_place",
+    "city_of_birth",
     "nss",
-    "status",
-    "hire_date",
-    "contract_type",
-    "sat_zip_code",
-    "email",
-    "marital_status",
   ],
   work_location: [
+    "customer_id",
     "work_location_plant_id",
     "work_location_position_id",
     "work_location_shift_id",
     "work_location_schedule_id",
     "work_location_direct_supervisor_id",
     "work_location_area_id",
+    "status",
+    "hire_date",
+    "contract_type",
+    "sat_zip_code",
+    "email",
+    "marital_status",
   ],
   salary: [
     "salary_salary_type",
@@ -199,12 +201,6 @@ export function useEmployeeForm() {
   const [serverError, setServerError] = useState<string | null>(null);
 
   // Catalog data
-  const [customers, setCustomers] = useState<
-    Array<{ code: string; name: string }>
-  >([]);
-  const [plants, setPlants] = useState<Array<{ code: string; name: string }>>(
-    [],
-  );
   const [positions, setPositions] = useState<
     Array<{ code: string; name: string }>
   >([]);
@@ -219,6 +215,11 @@ export function useEmployeeForm() {
   const [states, setStates] = useState<CatalogOption[]>([]);
   const [municipalities, setMunicipalities] = useState<CatalogOption[]>([]);
   const [colonies, setColonies] = useState<CatalogOption[]>([]);
+
+  // Area dependencies display
+  const [customerDisplayName, setCustomerDisplayName] = useState("");
+  const [plantDisplayCode, setPlantDisplayCode] = useState("");
+  const [plantDisplayName, setPlantDisplayName] = useState("");
 
   // Supervisor
   const [supervisor, setSupervisor] = useState<SupervisorOption | null>(null);
@@ -249,6 +250,7 @@ export function useEmployeeForm() {
       genre: "",
       birth_date: "",
       birth_place: "",
+      city_of_birth: "",
       nss: "",
       status: "",
       seniority: 0,
@@ -299,7 +301,7 @@ export function useEmployeeForm() {
   const { errors } = formState;
 
   // Watched values for cascades
-  const watchedCustomerId = watch("customer_id");
+  const watchedAreaId = watch("work_location_area_id");
   const watchedShiftId = watch("work_location_shift_id");
   const watchedState = watch("address_state");
   const watchedZipcode = watch("address_zipcode");
@@ -311,20 +313,15 @@ export function useEmployeeForm() {
   // ── Load auxiliary data ───────────────────────────────────────────────────
   const loadAuxData = useCallback(async () => {
     try {
-      const [
-        customersData,
-        positionsData,
-        shiftsData,
-        banksData,
-        statesData,
-      ] = await Promise.all([
-        employeeService.listCustomers(),
-        employeeService.listPositions(),
-        employeeService.listShifts(),
-        employeeService.listBanks(),
-        employeeService.listStates(),
-      ]);
-      setCustomers(customersData);
+      const [areasData, positionsData, shiftsData, banksData, statesData] =
+        await Promise.all([
+          employeeService.listAreas(),
+          employeeService.listPositions(),
+          employeeService.listShifts(),
+          employeeService.listBanks(),
+          employeeService.listStates(),
+        ]);
+      setAreas(areasData);
       setPositions(positionsData);
       setShifts(shiftsData);
       setBanks(banksData);
@@ -384,6 +381,7 @@ export function useEmployeeForm() {
           genre: employee.genre ?? "",
           birth_date: birthDate,
           birth_place: employee.birth_place ?? "",
+          city_of_birth: employee.city_of_birth ?? "",
           nss: employee.nss ?? "",
           status: employee.status ?? "",
           seniority: employee.seniority ?? 0,
@@ -449,6 +447,18 @@ export function useEmployeeForm() {
           if (!cancelled) setSupervisor(sup);
         }
 
+        // Load area dependencies (customer + plant display)
+        if (employee.work_location?.area_id) {
+          const deps = await employeeService.getAreaDependencies(
+            employee.work_location.area_id,
+          );
+          if (!cancelled && deps) {
+            setCustomerDisplayName(deps.customer?.legal_name ?? "");
+            setPlantDisplayCode(deps.plant?.code ?? "");
+            setPlantDisplayName(deps.plant?.name ?? "");
+          }
+        }
+
         if (!cancelled) isInitialLoadRef.current = false;
       } catch {
         setServerError("Error al cargar los datos del empleado");
@@ -463,35 +473,33 @@ export function useEmployeeForm() {
     };
   }, [id, isEditMode, loadAuxData, reset]);
 
-  // ── Cascade: customer → plants ────────────────────────────────────────────
+  // ── Cascade: area → customer + plant ──────────────────────────────────────
   useEffect(() => {
-    if (!watchedCustomerId) {
-      setPlants([]);
+    if (!watchedAreaId) {
       if (!isInitialLoadRef.current) {
+        setValue("customer_id", "");
         setValue("work_location_plant_id", "");
-        setValue("work_location_area_id", "");
-        setValue("work_location_direct_supervisor_id", "");
-        setSupervisor(null);
+        setCustomerDisplayName("");
+        setPlantDisplayCode("");
+        setPlantDisplayName("");
       }
       return;
     }
     employeeService
-      .listPlants(watchedCustomerId)
-      .then(setPlants)
+      .getAreaDependencies(watchedAreaId)
+      .then((deps) => {
+        if (deps?.customer?._id) {
+          setValue("customer_id", deps.customer._id);
+          setCustomerDisplayName(deps.customer.legal_name ?? "");
+        }
+        if (deps?.plant?.code) {
+          setValue("work_location_plant_id", deps.plant.code);
+          setPlantDisplayCode(deps.plant.code);
+          setPlantDisplayName(deps.plant.name ?? "");
+        }
+      })
       .catch(() => {});
-  }, [watchedCustomerId, setValue]);
-
-  // ── Cascade: customer → areas ─────────────────────────────────────────────
-  useEffect(() => {
-    if (!watchedCustomerId) {
-      setAreas([]);
-      return;
-    }
-    employeeService
-      .listAreas(watchedCustomerId)
-      .then(setAreas)
-      .catch(() => {});
-  }, [watchedCustomerId]);
+  }, [watchedAreaId, setValue]);
 
   // ── Cascade: shift → schedules ────────────────────────────────────────────
   useEffect(() => {
@@ -622,6 +630,7 @@ export function useEmployeeForm() {
         genre: values.genre,
         birth_date: values.birth_date || null,
         birth_place: values.birth_place || undefined,
+        city_of_birth: values.city_of_birth || undefined,
         nss: values.nss || undefined,
         status: values.status,
         hire_date: values.hire_date || null,
@@ -744,8 +753,6 @@ export function useEmployeeForm() {
     reset,
 
     // Catalog data
-    customers,
-    plants,
     positions,
     shifts,
     schedules,
@@ -754,6 +761,11 @@ export function useEmployeeForm() {
     states,
     municipalities,
     colonies,
+
+    // Area dependencies display
+    customerDisplayName,
+    plantDisplayCode,
+    plantDisplayName,
 
     // Supervisor
     supervisor,

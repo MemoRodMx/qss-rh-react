@@ -38,8 +38,9 @@ export const plantsService = {
     await api.delete(`/plants/${id}`);
   },
 
-  async listCustomers(): Promise<{ _id: string; name: string }[]> {
-    const { data } = await api.get("/customers/list");
-    return Array.isArray(data) ? data : [];
+  async listCompanies(): Promise<{ _id: string; name: string }[]> {
+    const { data } = await api.get("/companies/list");
+    const raw = data?.data ?? data;
+    return Array.isArray(raw) ? raw : [];
   },
 };

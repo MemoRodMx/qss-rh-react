@@ -48,11 +48,12 @@ export const directSupervisorsService = {
   },
 
   async listAreas(customerId?: string): Promise<AreaOption[]> {
-    const params: Record<string, unknown> = {};
+    const params: Record<string, unknown> = { all: "1" };
     if (customerId) params.customer_id = customerId;
 
     const { data } = await api.get("/areas/list", { params });
-    return Array.isArray(data) ? data : (data?.data ?? []);
+    const result = Array.isArray(data) ? data : (data?.data ?? []);
+    return result.flat();
   },
 
   async listShifts(): Promise<ShiftOption[]> {

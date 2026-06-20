@@ -30,6 +30,7 @@ import {
   ChevronRight,
   ListChecks,
 } from "lucide-react";
+import api from "@/lib/api";
 import { restRoleService } from "../services/restRoleService";
 import type { RestRole } from "../types";
 
@@ -44,9 +45,20 @@ export default function RestRolesPage() {
   const [search, setSearch] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fetchIdRef = useRef(0);
+  const mySupervisorIdRef = useRef<string | null>(null);
 
   const [deleteTarget, setDeleteTarget] = useState<RestRole | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    api.get("/direct-supervisors/me")
+      .then((r) => {
+        mySupervisorIdRef.current = r.data?._id || null;
+      })
+      .catch(() => {
+        mySupervisorIdRef.current = null;
+      });
+  }, []);
 
   const fetchData = useCallback(
     async (pageNum: number, searchTerm: string) => {
@@ -55,7 +67,8 @@ export default function RestRolesPage() {
       try {
         const params: Record<string, unknown> = { page: pageNum, limit: 10 };
         if (searchTerm.trim()) params.search = searchTerm.trim();
-        const { data } = await (await import("@/lib/api")).default.get("/rest-roles", { params });
+        if (mySupervisorIdRef.current) params.direct_supervisor_id = mySupervisorIdRef.current;
+        const { data } = await api.get("/rest-roles", { params });
         if (id === fetchIdRef.current) {
           const result = data as { data: RestRole[]; total: number; page: number; total_pages: number };
           setRoles(result.data ?? []);

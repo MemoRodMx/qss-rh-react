@@ -1,5 +1,5 @@
 import type { UseFormReturn } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,9 +31,7 @@ export interface EmployeeFormShellProps {
   errors: UseFormReturn<EmployeeFormValues>["formState"]["errors"];
 
   // Catalog data
-  customers: Array<{ code: string; name: string }>;
-  plants: Array<{ code: string; name: string }>;
-  positions: Array<{ code: string; name: string }>;
+  positions: Array<{ code: string; name: string; description?: string }>;
   shifts: Array<{ code: string; name: string }>;
   schedules: Array<{ code: string; label: string }>;
   areas: Array<{ code: string; name: string }>;
@@ -41,6 +39,11 @@ export interface EmployeeFormShellProps {
   states: Array<{ code: string; name: string }>;
   municipalities: Array<{ code: string; name: string }>;
   colonies: Array<{ code: string; name: string }>;
+
+  // Area dependencies display
+  customerDisplayName: string;
+  plantDisplayCode: string;
+  plantDisplayName: string;
 
   // Supervisor
   supervisor: {
@@ -160,11 +163,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
         {/* ── TAB: DATOS GENERALES ─────────────────────────────────────────── */}
         {activeTab === "general" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-            <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                Datos generales
-              </CardTitle>
-            </CardHeader>
             <CardContent className="p-5 space-y-6">
               <GeneralInfoTab {...props} />
             </CardContent>
@@ -174,11 +172,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
         {/* ── TAB: UBICACIÓN LABORAL ──────────────────────────────────────── */}
         {activeTab === "work_location" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-            <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                Ubicación laboral
-              </CardTitle>
-            </CardHeader>
             <CardContent className="p-5 space-y-6">
               <WorkLocationTab {...props} />
             </CardContent>
@@ -188,11 +181,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
         {/* ── TAB: SALARIO ────────────────────────────────────────────────── */}
         {activeTab === "salary" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-            <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                Salario
-              </CardTitle>
-            </CardHeader>
             <CardContent className="p-5 space-y-6">
               <SalaryTab {...props} />
             </CardContent>
@@ -202,11 +190,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
         {/* ── TAB: BANCO ──────────────────────────────────────────────────── */}
         {activeTab === "bank" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-            <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                Banco
-              </CardTitle>
-            </CardHeader>
             <CardContent className="p-5 space-y-6">
               <BankTab {...props} />
             </CardContent>
@@ -216,11 +199,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
         {/* ── TAB: DIRECCIÓN ──────────────────────────────────────────────── */}
         {activeTab === "address" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-            <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                Dirección
-              </CardTitle>
-            </CardHeader>
             <CardContent className="p-5 space-y-6">
               <AddressTab {...props} />
             </CardContent>
@@ -230,11 +208,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
         {/* ── TAB: DATOS PERSONALES ───────────────────────────────────────── */}
         {activeTab === "personal_data" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
-            <CardHeader className="bg-gradient-to-b from-primary/5 to-primary/[0.02] border-b-2 border-primary/20 px-5 py-3">
-              <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                Datos personales
-              </CardTitle>
-            </CardHeader>
             <CardContent className="p-5 space-y-6">
               <PersonalDataTab {...props} />
             </CardContent>

@@ -7,19 +7,27 @@ import { getNestedError } from "../../hooks/useEmployeeForm";
 import { employeeService } from "../../services/employeeService";
 import type { EmployeeFormShellProps } from "../EmployeeFormShell";
 import type { SupervisorOption } from "../../types";
+import {
+  STATUS_OPTIONS,
+  CONTRACT_TYPE_OPTIONS,
+  MARITAL_STATUS_OPTIONS,
+} from "../../types";
 
 type Props = Pick<
   EmployeeFormShellProps,
+  | "register"
   | "setValue"
   | "watch"
   | "errors"
-  | "plants"
   | "positions"
   | "shifts"
   | "schedules"
   | "areas"
   | "supervisor"
   | "setSupervisor"
+  | "customerDisplayName"
+  | "plantDisplayCode"
+  | "plantDisplayName"
 >;
 
 function Hint({ children, show }: { children: React.ReactNode; show: boolean }) {
@@ -38,16 +46,19 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function WorkLocationTab({
+  register,
   setValue,
   watch,
   errors,
-  plants,
   positions,
   shifts,
   schedules,
   areas,
   supervisor,
   setSupervisor,
+  customerDisplayName,
+  plantDisplayCode,
+  plantDisplayName,
 }: Props) {
   const errorsRecord = errors as unknown as Record<string, unknown>;
   const [supervisorSearch, setSupervisorSearch] = useState("");
@@ -59,14 +70,14 @@ export function WorkLocationTab({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const watchedPlantId = watch("work_location_plant_id");
   const watchedShiftId = watch("work_location_shift_id");
   const watchedPositionId = watch("work_location_position_id");
   const watchedScheduleId = watch("work_location_schedule_id");
   const watchedAreaId = watch("work_location_area_id");
-  const watchedCustomerId = watch("customer_id");
+  const watchedStatus = watch("status");
+  const watchedContractType = watch("contract_type");
+  const watchedMaritalStatus = watch("marital_status");
 
-  const hasCustomer = !!watchedCustomerId;
   const hasArea = !!watchedAreaId;
 
   // Supervisor search with debounce (filtered by area + shift)
@@ -129,36 +140,188 @@ export function WorkLocationTab({
 
   return (
     <div className="space-y-8">
-      {/* ── Ubicación de trabajo ─────────────────────────────────────────── */}
+      {/* ── Contratación ─────────────────────────────────────────────────── */}
       <div>
-        <SectionTitle>Ubicación de trabajo</SectionTitle>
-        {/* Row 1: Plant + Position */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <SectionTitle>Contratación</SectionTitle>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <FloatLabelSelect
-              id="work_location_plant_id"
-              label="Planta"
-              value={watchedPlantId}
-              hasValue={!!watchedPlantId}
+              id="status"
+              label="Estatus"
+              value={watchedStatus}
+              hasValue={!!watchedStatus}
               onValueChange={(val) =>
-                setValue("work_location_plant_id", val ?? "")
+                setValue("status", val ?? "", { shouldValidate: true })
               }
               valueRenderer={(value) => {
                 if (!value) return "";
-                const plant = plants.find((p) => p.code === value);
-                return plant ? `${plant.code} - ${plant.name}` : value;
+                return (
+                  STATUS_OPTIONS.find((s) => s.value === value)?.label ?? value
+                );
               }}
+              error={getNestedError(errorsRecord, "status")?.message}
             >
-              {plants.map((p) => (
-                <SelectItem key={p.code} value={p.code}>
-                  {p.code} - {p.name}
+              {STATUS_OPTIONS.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
                 </SelectItem>
               ))}
             </FloatLabelSelect>
-            <Hint show={!hasCustomer}>
-              Seleccione un cliente para ver las plantas
+          </div>
+          <div>
+            <FloatLabelInput
+              id="hire_date"
+              label="Fecha de alta"
+              type="date"
+              {...register("hire_date")}
+            />
+          </div>
+          <div>
+            <FloatLabelInput
+              id="seniority"
+              label="Antigüedad (años)"
+              {...register("seniority", { valueAsNumber: true })}
+              readOnly
+              className="bg-muted/30"
+            />
+          </div>
+          <div>
+            <FloatLabelSelect
+              id="contract_type"
+              label="Tipo de contrato"
+              value={watchedContractType}
+              hasValue={!!watchedContractType}
+              onValueChange={(val) =>
+                setValue("contract_type", val ?? "", { shouldValidate: true })
+              }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                return (
+                  CONTRACT_TYPE_OPTIONS.find((c) => c.value === value)?.label ??
+                  value
+                );
+              }}
+              error={getNestedError(errorsRecord, "contract_type")?.message}
+            >
+              {CONTRACT_TYPE_OPTIONS.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
+          </div>
+          <div>
+            <FloatLabelInput
+              id="email"
+              label="Correo electrónico"
+              type="email"
+              {...register("email")}
+            />
+          </div>
+          <div>
+            <FloatLabelInput
+              id="sat_zip_code"
+              label="C.P. SAT"
+              {...register("sat_zip_code")}
+              maxLength={5}
+            />
+          </div>
+          <div>
+            <FloatLabelSelect
+              id="marital_status"
+              label="Estado civil"
+              value={watchedMaritalStatus}
+              hasValue={!!watchedMaritalStatus}
+              onValueChange={(val) =>
+                setValue("marital_status", val ?? "", { shouldValidate: true })
+              }
+              valueRenderer={(value) => {
+                if (!value) return "";
+                return (
+                  MARITAL_STATUS_OPTIONS.find((m) => m.value === value)
+                    ?.label ?? value
+                );
+              }}
+              error={getNestedError(errorsRecord, "marital_status")?.message}
+            >
+              {MARITAL_STATUS_OPTIONS.map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Ubicación de trabajo ─────────────────────────────────────────── */}
+      <div>
+        <SectionTitle>Ubicación de trabajo</SectionTitle>
+        {/* Row 1: Area + Customer (r/o) + Plant (r/o) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div>
+            <FloatLabelSelect
+              id="work_location_area_id"
+              label="Área"
+              value={watchedAreaId}
+              hasValue={!!watchedAreaId}
+              onValueChange={(val) => {
+                setValue("work_location_area_id", val ?? "");
+                setSupervisor(null);
+                setValue("work_location_direct_supervisor_id", "");
+                setSupervisorSearch("");
+                setShowSupervisorDropdown(false);
+                setSupervisorResults([]);
+              }}
+              valueRenderer={(value) => {
+                if (!value) return "";
+                const area = areas.find((a) => a.code === value);
+                return area ? `${area.code} - ${area.name}` : value;
+              }}
+            >
+              {areas.map((a) => (
+                <SelectItem key={a.code} value={a.code}>
+                  {a.code} - {a.name}
+                </SelectItem>
+              ))}
+            </FloatLabelSelect>
+            <Hint show={areas.length === 0}>
+              No hay áreas disponibles
             </Hint>
           </div>
+          <div>
+            <FloatLabelInput
+              id="customer_display"
+              label="Cliente"
+              value={customerDisplayName}
+              readOnly
+              className="bg-muted/30"
+              error={getNestedError(errorsRecord, "customer_id")?.message}
+            />
+            <Hint show={!customerDisplayName}>
+              Se muestra al seleccionar un área
+            </Hint>
+          </div>
+          <div>
+            <FloatLabelInput
+              id="plant_display"
+              label="Planta"
+              value={
+                plantDisplayCode && plantDisplayName
+                  ? `${plantDisplayCode} - ${plantDisplayName}`
+                  : ""
+              }
+              readOnly
+              className="bg-muted/30"
+            />
+            <Hint show={!plantDisplayName}>
+              Se muestra al seleccionar un área
+            </Hint>
+          </div>
+        </div>
+
+        {/* Row 2: Position + Shift + Schedule */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <FloatLabelSelect
               id="work_location_position_id"
@@ -171,7 +334,9 @@ export function WorkLocationTab({
               valueRenderer={(value) => {
                 if (!value) return "";
                 const pos = positions.find((p) => p.code === value);
-                return pos ? `${pos.code} - ${pos.description ?? pos.name}` : value;
+                return pos
+                  ? `${pos.code} - ${pos.description ?? pos.name}`
+                  : value;
               }}
             >
               {positions.map((p) => (
@@ -181,10 +346,6 @@ export function WorkLocationTab({
               ))}
             </FloatLabelSelect>
           </div>
-        </div>
-
-        {/* Row 2: Shift + Schedule */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <FloatLabelSelect
               id="work_location_shift_id"
@@ -235,41 +396,7 @@ export function WorkLocationTab({
           </div>
         </div>
 
-        {/* Row 3: Area */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <FloatLabelSelect
-              id="work_location_area_id"
-              label="Área"
-              value={watchedAreaId}
-              hasValue={!!watchedAreaId}
-              onValueChange={(val) => {
-                setValue("work_location_area_id", val ?? "");
-                setSupervisor(null);
-                setValue("work_location_direct_supervisor_id", "");
-                setSupervisorSearch("");
-                setShowSupervisorDropdown(false);
-                setSupervisorResults([]);
-              }}
-              valueRenderer={(value) => {
-                if (!value) return "";
-                const area = areas.find((a) => a.code === value);
-                return area ? `${area.code} - ${area.name}` : value;
-              }}
-            >
-              {areas.map((a) => (
-                <SelectItem key={a.code} value={a.code}>
-                  {a.code} - {a.name}
-                </SelectItem>
-              ))}
-            </FloatLabelSelect>
-            <Hint show={!hasCustomer}>
-              Seleccione un cliente para ver las áreas
-            </Hint>
-          </div>
-        </div>
-
-        {/* Row 4: Supervisor (autocomplete) */}
+        {/* Row 3: Supervisor (autocomplete) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="relative" ref={dropdownRef}>
             <FloatLabelInput

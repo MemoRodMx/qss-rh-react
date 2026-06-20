@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import type { PositionOption, AreaOption, SettingsPayload } from "../types";
+import type { PositionOption, AreaOption, SettingsPayload, SettingsResponse } from "../types";
 
 export const settingsService = {
   async listPositions(): Promise<PositionOption[]> {
@@ -12,9 +12,7 @@ export const settingsService = {
     return Array.isArray(data) ? data : (data?.data ?? []);
   },
 
-  async getConfig(
-    companyId: string,
-  ): Promise<{ recorrido_area_codes: string[] }> {
+  async getConfig(companyId: string): Promise<SettingsResponse> {
     const { data } = await api.get("/settings", {
       params: { company_id: companyId },
     });

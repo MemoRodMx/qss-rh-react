@@ -216,15 +216,45 @@ export const employeeService = {
   // ── Areas ─────────────────────────────────────────────────────────────────
   async listAreas(customerId?: string): Promise<CatalogOption[]> {
     const params: Record<string, unknown> = {};
-    if (customerId) params.customer_id = customerId;
+    if (customerId) {
+      params.customer_id = customerId;
+    } else {
+      params.all = "1";
+    }
 
     const { data } = await api.get("/areas/list", { params });
+    // Handle new 2D tuple format: { data: [available[], selected[]] }
+    if (data?.data && Array.isArray(data.data) && data.data.length === 2) {
+      const flat = [...(data.data[0] ?? []), ...(data.data[1] ?? [])];
+      return (Array.isArray(flat) ? flat : []).map(
+        (a: { code: string; name: string }) => ({
+          code: a.code,
+          name: a.name,
+        }),
+      );
+    }
+    // Handle old flat array format
     return (Array.isArray(data) ? data : []).map(
       (a: { code: string; name: string }) => ({
         code: a.code,
         name: a.name,
       }),
     );
+  },
+
+  async getAreaDependencies(areaCode: string): Promise<{
+    area: { code: string; name: string; _id: string };
+    customer: { _id: string; legal_name: string };
+    plant: { code: string; name: string };
+  } | null> {
+    try {
+      const { data } = await api.get("/areas/dependencies", {
+        params: { area_code: areaCode },
+      });
+      return data;
+    } catch {
+      return null;
+    }
   },
 
   // ── Banks ─────────────────────────────────────────────────────────────────

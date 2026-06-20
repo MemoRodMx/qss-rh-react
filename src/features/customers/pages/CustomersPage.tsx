@@ -228,9 +228,12 @@ export function CustomersPage() {
                         </p>
                       </div>
                       <div className="hidden xl:block text-xs text-muted-foreground truncate max-w-[140px]">
-                        {customer.plants && customer.plants.length > 0
-                          ? customer.plants
-                              .map((p) => p.plant_id?.code ?? "")
+                        {customer.plant_id?.code ?? "—"}
+                      </div>
+                      <div className="hidden xl:block text-xs text-muted-foreground truncate max-w-[160px]">
+                        {customer.areas && customer.areas.length > 0
+                          ? customer.areas
+                              .map((a) => a.area_id?.code ?? "")
                               .filter(Boolean)
                               .join(", ") || "—"
                           : "—"}
@@ -319,11 +322,14 @@ export function CustomersPage() {
                   </div>
 
                   <div className="space-y-1 text-xs text-muted-foreground">
-                    {customer.plants && customer.plants.length > 0 && (
+                    {customer.plant_id?.code && (
+                      <p>Planta: {customer.plant_id.code}</p>
+                    )}
+                    {customer.areas && customer.areas.length > 0 && (
                       <p>
-                        Plantas:{" "}
-                        {customer.plants
-                          .map((p) => p.plant_id?.code ?? "")
+                        Áreas:{" "}
+                        {customer.areas
+                          .map((a) => a.area_id?.code ?? "")
                           .filter(Boolean)
                           .join(", ") || "—"}
                       </p>
