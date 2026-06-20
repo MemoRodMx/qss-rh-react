@@ -8,6 +8,7 @@ import { CustomersPage } from "@/features/customers/pages/CustomersPage";
 import { CustomerFormPage } from "@/features/customers/pages/CustomerFormPage";
 import { CompaniesPage } from "@/features/companies/pages/CompaniesPage";
 import { CompanyFormPage } from "@/features/companies/pages/CompanyFormPage";
+import { CatalogsPage } from "@/features/catalogs/pages/CatalogsPage";
 import { StatesPage } from "@/features/catalogs/pages/StatesPage";
 import { CitiesPage } from "@/features/catalogs/pages/CitiesPage";
 import { ZipcodesPage } from "@/features/catalogs/pages/ZipcodesPage";
@@ -59,6 +60,7 @@ export const router = createBrowserRouter([
           { path: "companies", element: <CompaniesPage /> },
           { path: "companies/new", element: <CompanyFormPage /> },
           { path: "companies/:id/edit", element: <CompanyFormPage /> },
+          { path: "catalogs", element: <CatalogsPage /> },
           { path: "catalogs/states", element: <StatesPage /> },
           { path: "catalogs/cities", element: <CitiesPage /> },
           { path: "catalogs/zipcodes", element: <ZipcodesPage /> },

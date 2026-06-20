@@ -1,33 +1,28 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
-  Building2,
+  Building,
+  BriefcaseBusiness,
   Calendar,
   FileText,
   Settings,
   LogOut,
   ChevronLeft,
-  ChevronDown,
   AlertTriangle,
   BookOpen,
-  MapPin,
   CalendarDays,
-  Clock,
   Users,
   UserCog,
   Shield,
-  Warehouse,
-  Briefcase,
   ListChecks,
 } from "lucide-react";
 
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { APP_NAME } from "@/lib/constants";
 import { Avatar, AvatarFallback, AvatarBadge } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -49,48 +44,53 @@ interface SidebarProps {
   onToggle: () => void;
 }
 
-const navItems = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/employees", label: "Empleados", icon: Users },
-  { to: "/customers", label: "Clientes", icon: Building2 },
-  { to: "/companies", label: "Empresas", icon: Building2 },
-  { to: "/vacation-requests", label: "Vacaciones", icon: CalendarDays },
-  { to: "/rest-roles", label: "Roles de Descanso", icon: ListChecks },
-  { to: "/attendance", label: "Asistencia", icon: Calendar },
-  { to: "/users", label: "Usuarios", icon: UserCog },
-  { to: "/audit-logs", label: "Auditoría", icon: Shield },
-  { to: "/reports", label: "Reportes", icon: FileText },
-  { to: "/settings", label: "Configuración", icon: Settings },
-];
-
-const catalogItems = [
-  { to: "/catalogs/states", label: "Estados", icon: MapPin },
-  { to: "/catalogs/cities", label: "Ciudades", icon: MapPin },
-  { to: "/catalogs/zipcodes", label: "Códigos Postales", icon: MapPin },
-  { to: "/catalogs/colonies", label: "Colonias", icon: MapPin },
+const navSections = [
   {
-    to: "/catalogs/public-holidays",
-    label: "Días Festivos",
-    icon: CalendarDays,
+    label: "Principal",
+    items: [
+      { to: "/", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/employees", label: "Empleados", icon: Users },
+      { to: "/attendance", label: "Asistencia", icon: Calendar },
+      { to: "/vacation-requests", label: "Vacaciones", icon: CalendarDays },
+      { to: "/rest-roles", label: "Roles de Descanso", icon: ListChecks },
+    ],
   },
   {
-    to: "/catalogs/payroll-calendars",
-    label: "Calendario Nómina",
-    icon: CalendarDays,
+    label: "Organizaciones",
+    items: [
+      { to: "/companies", label: "Empresas", icon: Building },
+      { to: "/customers", label: "Clientes", icon: BriefcaseBusiness },
+    ],
   },
-  { to: "/catalogs/shifts-schedules", label: "Turnos y Horarios", icon: Clock },
-  { to: "/catalogs/workday-types", label: "Tipos de Jornada", icon: Briefcase },
-  { to: "/catalogs/plants", label: "Plantas", icon: Warehouse },
-  { to: "/catalogs/direct-supervisors", label: "Jefes Directos", icon: UserCog },
+  {
+    label: "Reportes",
+    items: [
+      { to: "/reports", label: "Reportes", icon: FileText },
+      { to: "/audit-logs", label: "Auditoría", icon: Shield },
+    ],
+  },
+  {
+    label: "Sistema",
+    items: [
+      { to: "/users", label: "Usuarios", icon: UserCog },
+      { to: "/settings", label: "Configuración", icon: Settings },
+    ],
+  },
+  {
+    label: "Catálogos",
+    items: [
+      { to: "/catalogs", label: "Catálogos", icon: BookOpen },
+    ],
+  },
 ];
 
 const roleConfig: Record<
   string,
-  { label: string; variant: "teal" | "success" | "warning" | "default" }
+  { label: string; variant: "default" | "secondary" | "outline" }
 > = {
-  System: { label: "Sistema", variant: "teal" },
-  Admin: { label: "Admin", variant: "success" },
-  User: { label: "Usuario", variant: "warning" },
+  System: { label: "Sistema", variant: "default" },
+  Admin: { label: "Admin", variant: "secondary" },
+  User: { label: "Usuario", variant: "outline" },
 };
 
 function RoleBadge({ role }: { role: string }) {
@@ -99,19 +99,25 @@ function RoleBadge({ role }: { role: string }) {
     variant: "default" as const,
   };
   return (
-    <Badge
-      variant={config.variant}
-      className="cursor-default text-[10px] leading-none px-1.5 py-0.5 text-white"
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none",
+        config.variant === "default" &&
+          "bg-[hsl(var(--sidebar-accent)_/_0.15)] text-[hsl(var(--sidebar-accent))]",
+        config.variant === "secondary" &&
+          "bg-emerald-500/15 text-emerald-400",
+        config.variant === "outline" &&
+          "bg-[hsl(var(--sidebar-text)_/_0.08)] text-[hsl(var(--sidebar-muted))]",
+      )}
     >
       {config.label}
-    </Badge>
+    </span>
   );
 }
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { user, logout } = useAuth();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
-  const [catalogOpen, setCatalogOpen] = useState(false);
 
   const initials = user?.name
     ?.split(" ")
@@ -125,17 +131,25 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     logout();
   };
 
+  const navLinkClasses = (isActive: boolean) =>
+    cn(
+      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+      isActive
+        ? "bg-[hsl(var(--sidebar-accent)_/_0.10)] text-[hsl(var(--sidebar-text))] shadow-[inset_3px_0_0_0] shadow-[hsl(var(--sidebar-accent)_/_0.8)]"
+        : "text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-border))] hover:text-[hsl(var(--sidebar-text))]",
+    );
+
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-[hsl(var(--sidebar-border))] bg-gradient-to-b from-[hsl(var(--sidebar-bg))] to-[hsl(var(--sidebar-surface))] transition-all duration-300 ease-out",
+        "flex flex-col border-r border-[hsl(var(--sidebar-border)_/_0.6)] bg-gradient-to-b from-[hsl(var(--sidebar-bg))] to-[hsl(var(--sidebar-surface))] transition-all duration-300 ease-out",
         collapsed ? "w-16" : "w-64",
       )}
     >
       {/* Logo */}
       <div className="flex h-14 items-center justify-between px-4">
         {!collapsed && (
-          <span className="animate-fade-in text-sm font-semibold tracking-tight text-[hsl(var(--teal)_/_0.9)]">
+          <span className="animate-fade-in text-sm font-semibold tracking-tight text-[hsl(var(--sidebar-text))]">
             {APP_NAME}
           </span>
         )}
@@ -143,7 +157,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           variant="ghost"
           size="icon"
           onClick={onToggle}
-          className="cursor-pointer text-[hsl(var(--teal)_/_0.85)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white"
+          className="cursor-pointer text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-border))] hover:text-[hsl(var(--sidebar-text))]"
         >
           <ChevronLeft
             className={cn(
@@ -154,140 +168,80 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </Button>
       </div>
 
-      <Separator className="bg-[hsl(var(--sidebar-border))]" />
+      <Separator className="bg-[hsl(var(--sidebar-border)_/_0.4)]" />
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 p-2 overflow-y-auto">
-        {navItems.map((item) => {
-          // Skip audit-logs for non-System users
-          if (item.to === "/audit-logs" && user?.role !== "System") {
-            return null;
-          }
-          const link = (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
-                  isActive
-                    ? "bg-[hsl(var(--sidebar-border))] text-white shadow-[inset_3px_0_0_0] shadow-[hsl(var(--teal)_/_0.8)]"
-                    : "text-[hsl(var(--teal)_/_0.8)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white",
-                )
-              }
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
-            </NavLink>
-          );
-
-          if (collapsed) {
-            return (
-              <Tooltip key={item.to}>
-                <TooltipTrigger
-                  render={
-                    <NavLink
-                      to={item.to}
-                      className={({ isActive }: { isActive: boolean }) =>
-                        cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
-                          isActive
-                            ? "bg-[hsl(var(--sidebar-border))] text-white shadow-[inset_3px_0_0_0] shadow-[hsl(var(--teal)_/_0.8)]"
-                            : "text-[hsl(var(--teal)_/_0.8)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white",
-                        )
-                      }
-                    >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                    </NavLink>
-                  }
-                />
-                <TooltipContent side="right" sideOffset={8}>
-                  {item.label}
-                </TooltipContent>
-              </Tooltip>
-            );
-          }
-          return link;
-        })}
-
-        {/* ── Catálogos section ──────────────────────────────────────────── */}
-        {collapsed ? (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  type="button"
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 text-[hsl(var(--teal)_/_0.8)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white cursor-pointer"
-                >
-                  <BookOpen className="h-4 w-4 shrink-0" />
-                </button>
-              }
-            />
-            <TooltipContent side="right" sideOffset={8}>
-              Catálogos
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={() => setCatalogOpen(!catalogOpen)}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 cursor-pointer",
-                catalogOpen
-                  ? "bg-[hsl(var(--sidebar-border))] text-white"
-                  : "text-[hsl(var(--teal)_/_0.8)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white",
-              )}
-            >
-              <BookOpen className="h-4 w-4 shrink-0" />
-              <span className="flex-1 text-left">Catálogos</span>
-              <ChevronDown
-                className={cn(
-                  "h-3.5 w-3.5 transition-transform duration-200",
-                  catalogOpen && "rotate-180",
-                )}
-              />
-            </button>
-
-            {catalogOpen && (
-              <div className="ml-2 space-y-0.5 border-l border-[hsl(var(--sidebar-border))] pl-2">
-                {catalogItems.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    className={({ isActive }) =>
-                      cn(
-                        "flex items-center gap-3 rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200",
-                        isActive
-                          ? "bg-[hsl(var(--sidebar-border))] text-white"
-                          : "text-[hsl(var(--teal)_/_0.65)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white",
-                      )
-                    }
-                  >
-                    <item.icon className="h-3 w-3 shrink-0" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
-              </div>
+        {navSections.map((section, sectionIdx) => (
+          <Fragment key={sectionIdx}>
+            {sectionIdx > 0 && (
+              <Separator className="my-2 bg-[hsl(var(--sidebar-border)_/_0.3)]" />
             )}
-          </>
-        )}
+            {!collapsed && (
+              <span className="mt-1 block px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[hsl(var(--sidebar-muted)_/_0.45)]">
+                {section.label}
+              </span>
+            )}
+            {section.items.map((item) => {
+              if (item.to === "/audit-logs" && user?.role !== "System") {
+                return null;
+              }
+
+              if (collapsed) {
+                return (
+                  <Tooltip key={item.to}>
+                    <TooltipTrigger
+                      render={
+                        <NavLink
+                          to={item.to}
+                          className={({ isActive }: { isActive: boolean }) =>
+                            navLinkClasses(isActive)
+                          }
+                        >
+                          <item.icon className="h-4 w-4 shrink-0" />
+                        </NavLink>
+                      }
+                    />
+                    <TooltipContent side="right" sideOffset={8}>
+                      {item.label}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={({ isActive }) => navLinkClasses(isActive)}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </Fragment>
+        ))}
+
+
       </nav>
 
-      <Separator className="bg-[hsl(var(--sidebar-border))]" />
+      <Separator className="bg-[hsl(var(--sidebar-border)_/_0.4)]" />
 
       {/* User info */}
       <div
-        className={cn("bg-[hsl(var(--sidebar-bg))]", collapsed ? "p-2" : "p-3")}
+        className={cn(
+          "bg-[hsl(var(--sidebar-bg))]",
+          collapsed ? "p-2" : "p-3",
+        )}
       >
         {collapsed ? (
-          /* ── Collapsed: tooltip on avatar ─────────────────────────── */
           <Tooltip>
             <TooltipTrigger
               render={
                 <div className="flex items-center justify-center">
-                  <Avatar className="h-9 w-9 ring-2 ring-[hsl(var(--teal)_/_0.3)]">
-                    <AvatarFallback className="bg-[hsl(var(--sidebar-border))] text-xs text-[hsl(var(--teal)_/_0.9)]">
+                  <Avatar className="h-9 w-9 ring-2 ring-[hsl(var(--sidebar-accent)_/_0.2)]">
+                    <AvatarFallback className="bg-[hsl(var(--sidebar-border))] text-xs text-[hsl(var(--sidebar-text))]">
                       {initials}
                     </AvatarFallback>
                     <AvatarBadge className="bg-emerald-400" />
@@ -302,20 +256,19 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             </TooltipContent>
           </Tooltip>
         ) : (
-          /* ── Expanded: full user card ─────────────────────────────── */
           <div className="flex items-center gap-3 animate-fade-in">
-            <Avatar className="h-10 w-10 shrink-0 ring-2 ring-[hsl(var(--teal)_/_0.3)] ring-offset-2 ring-offset-[hsl(var(--sidebar-surface))]">
-              <AvatarFallback className="bg-[hsl(var(--sidebar-border))] text-sm font-semibold text-[hsl(var(--teal)_/_0.9)]">
+            <Avatar className="h-10 w-10 shrink-0 ring-2 ring-[hsl(var(--sidebar-accent)_/_0.2)] ring-offset-2 ring-offset-[hsl(var(--sidebar-surface))]">
+              <AvatarFallback className="bg-[hsl(var(--sidebar-border))] text-sm font-semibold text-[hsl(var(--sidebar-text))]">
                 {initials}
               </AvatarFallback>
               <AvatarBadge className="bg-emerald-400" />
             </Avatar>
 
             <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-semibold text-[hsl(var(--teal)_/_0.9)] leading-tight">
+              <p className="truncate text-sm font-semibold text-[hsl(var(--sidebar-text))] leading-tight">
                 {user?.name}
               </p>
-              <p className="truncate text-xs text-[hsl(var(--teal))] leading-tight">
+              <p className="truncate text-xs text-[hsl(var(--sidebar-muted))] leading-tight">
                 @{user?.username}
               </p>
               <div className="mt-1">
@@ -330,7 +283,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="cursor-pointer shrink-0 text-[hsl(var(--teal)_/_0.85)] hover:bg-[hsl(var(--sidebar-border))] hover:text-white"
+                    className="cursor-pointer shrink-0 text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-border))] hover:text-[hsl(var(--sidebar-text))]"
                     title="Cerrar sesión"
                   >
                     <LogOut className="h-4 w-4" />
