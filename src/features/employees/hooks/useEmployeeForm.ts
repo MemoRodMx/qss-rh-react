@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { employeeService } from "../services/employeeService";
 import { customerService } from "@/features/customers/services/customerService";
-import { generateCurpBase } from "../utils/useCurpRfc";
+import { generateCurp, generateRfc } from "../utils/useCurpRfc";
+import { toast } from "sonner";
 import type { CatalogOption, SupervisorOption, BankOption } from "../types";
 
 // ── Zod schema ──────────────────────────────────────────────────────────────
@@ -230,12 +231,6 @@ export function useEmployeeForm() {
   const isInitialLoadRef = useRef(isEditMode);
 
   // ── CURP / RFC auto-generation ────────────────────────────────────────────
-  // Store the saved CURP/RFC so we can compare the generated base against them.
-  // If the generated base matches the saved value's prefix, we keep the saved
-  // value (preserving the homoclave). Only overwrite when a field change
-  // actually produces a different base.
-  const savedCurpRef = useRef("");
-  const savedRfcRef = useRef("");
 
   const form = useForm<FormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -374,10 +369,6 @@ export function useEmployeeForm() {
               .toISOString()
               .split("T")[0]
           : "";
-
-        // Store saved CURP/RFC so auto-generation can compare and preserve homoclave
-        savedCurpRef.current = employee.curp ?? "";
-        savedRfcRef.current = employee.rfc ?? "";
 
         reset({
           customer_id: customerId,
@@ -634,10 +625,7 @@ export function useEmployeeForm() {
     }
   }, [watchedDailySalary, watchedAttendanceBonus, setValue, watch]);
 
-  // ── CURP auto-generation ──────────────────────────────────────────────────
-  // Only overwrite the CURP when the generated base actually differs from the
-  // saved value's prefix (first 16 chars). This preserves the homoclave (last 2
-  // chars) that the user may have entered manually.
+  // ── CURP / RFC auto-generation ──────────────────────────────────────────────
   const watchedName = watch("name");
   const watchedSurname = watch("surname");
   const watchedLastname = watch("lastname");
@@ -645,8 +633,22 @@ export function useEmployeeForm() {
   const watchedGenre = watch("genre");
   const watchedBirthPlace = watch("birth_place");
 
+  let regenToastTimer: ReturnType<typeof setTimeout> | null = null;
+  function notifyRegen() {
+    if (regenToastTimer) return;
+    regenToastTimer = setTimeout(() => {
+      toast.warning("CURP / RFC regenerados", {
+        description:
+          "Se recalcularon CURP y/o RFC por cambios en los datos de identidad. Verifique que sean correctos.",
+        duration: 6000,
+      });
+      regenToastTimer = null;
+    }, 400);
+  }
+
   useEffect(() => {
-    const base = generateCurpBase(
+    if (isInitialLoadRef.current) return;
+    const curp = generateCurp(
       watchedName,
       watchedSurname,
       watchedLastname,
@@ -654,14 +656,9 @@ export function useEmployeeForm() {
       watchedGenre,
       watchedBirthPlace,
     );
-    if (!base) return;
-
-    const saved = savedCurpRef.current;
-    // If there's a saved value and the generated base matches its first 16 chars,
-    // keep the saved value (preserving the homoclave)
-    if (saved && saved.startsWith(base)) return;
-
-    setValue("curp", base);
+    if (!curp) return;
+    setValue("curp", curp);
+    notifyRegen();
   }, [
     watchedName,
     watchedSurname,
@@ -671,6 +668,19 @@ export function useEmployeeForm() {
     watchedBirthPlace,
     setValue,
   ]);
+
+  useEffect(() => {
+    if (isInitialLoadRef.current) return;
+    const rfc = generateRfc(
+      watchedName,
+      watchedSurname,
+      watchedLastname,
+      watchedBirthDate || null,
+    );
+    if (!rfc) return;
+    setValue("rfc", rfc);
+    notifyRegen();
+  }, [watchedName, watchedSurname, watchedLastname, watchedBirthDate, setValue]);
 
   // ── Submit handler ─────────────────────────────────────────────────────────
   const onSubmit = async (values: FormValues) => {
