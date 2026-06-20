@@ -262,4 +262,33 @@ export const employeeService = {
     const { data } = await api.get("/banks/list");
     return Array.isArray(data) ? data : [];
   },
+
+  async getSalaryHistory(
+    employeeNumber: string,
+    page = 1,
+    limit = 10,
+  ): Promise<{
+    data: Array<{
+      _id: string;
+      daily_salary: number;
+      variable_salary: number;
+      monthly_salary: number;
+      integration_factor: number;
+      integrated_salary: number;
+      salary_change_reason: string;
+      effective_date: string;
+      createdAt: string;
+      source?: string;
+      username?: string;
+    }>;
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const { data } = await api.get(
+      `/salary-changes/by-employee/${employeeNumber}`,
+      { params: { page, limit } },
+    );
+    return data;
+  },
 };

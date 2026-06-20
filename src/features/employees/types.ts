@@ -125,6 +125,7 @@ export interface EmployeeFormValues {
   salary_variable_salary: string;
   salary_weekly_salary: string;
   salary_monthly_salary: string;
+  salary_is_customized: boolean;
 
   // Bank (nested)
   bank_bank_id: string;

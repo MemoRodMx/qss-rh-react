@@ -182,7 +182,7 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
         {activeTab === "salary" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
             <CardContent className="p-5 space-y-6">
-              <SalaryTab {...props} />
+              <SalaryTab {...props} isEditMode={isEditMode} />
             </CardContent>
           </Card>
         )}

@@ -1,16 +1,22 @@
+import { useState } from "react";
 import { SelectItem } from "@/components/ui/select";
 import { FloatLabelInput } from "@/components/ui/float-label-input";
 import { FloatLabelSelect } from "@/components/ui/float-label-select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Clock } from "lucide-react";
 import {
   SALARY_TYPE_OPTIONS,
   ZONE_OPTIONS,
   PAYMENT_WAY_OPTIONS,
 } from "../../types";
 import type { EmployeeFormShellProps } from "../EmployeeFormShell";
+import { SalaryHistoryDialog } from "../SalaryHistoryDialog";
 
 type Props = Pick<
   EmployeeFormShellProps,
-  "register" | "setValue" | "watch" | "errors"
+  "register" | "setValue" | "watch" | "errors" | "isEditMode"
 >;
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -21,10 +27,13 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function SalaryTab({ register, setValue, watch }: Props) {
+export function SalaryTab({ register, setValue, watch, isEditMode }: Props) {
   const watchedSalaryType = watch("salary_salary_type");
   const watchedZone = watch("salary_zone");
   const watchedPaymentWay = watch("salary_payment_way");
+  const watchedIsCustomized = watch("salary_is_customized");
+
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -102,7 +111,48 @@ export function SalaryTab({ register, setValue, watch }: Props) {
 
       {/* ── Importes ─────────────────────────────────────────────────────── */}
       <div>
-        <SectionTitle>Importes</SectionTitle>
+        <div className="flex items-center justify-between mb-3">
+          <SectionTitle>Importes</SectionTitle>
+          {isEditMode && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="cursor-pointer h-7 text-xs gap-1"
+              onClick={() => setHistoryOpen(true)}
+            >
+              <Clock className="h-3.5 w-3.5" />
+              Histórico de salario
+            </Button>
+          )}
+        </div>
+
+        {/* ── Checkbox personalizar ──────────────────────────────────────── */}
+        <div className="flex items-center gap-2 mb-4">
+          <Checkbox
+            id="salary_is_customized"
+            checked={watchedIsCustomized}
+            onCheckedChange={(checked) => {
+              setValue("salary_is_customized", !!checked);
+            }}
+          />
+          <label
+            htmlFor="salary_is_customized"
+            className="text-sm cursor-pointer select-none"
+          >
+            Personalizar salario
+          </label>
+          {watchedIsCustomized ? (
+            <Badge variant="outline" className="text-[10px] border-orange-300 text-orange-600">
+              Personalizado
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-[10px] border-blue-300 text-blue-600">
+              Óptimo contratado
+            </Badge>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
           <div>
             <FloatLabelInput
@@ -111,6 +161,7 @@ export function SalaryTab({ register, setValue, watch }: Props) {
               type="number"
               step="0.01"
               min="0"
+              disabled={!watchedIsCustomized}
               {...register("salary_daily_salary")}
             />
           </div>
@@ -167,6 +218,7 @@ export function SalaryTab({ register, setValue, watch }: Props) {
               type="number"
               step="0.01"
               min="0"
+              disabled={!watchedIsCustomized}
               {...register("salary_attendance_bonus")}
             />
           </div>
@@ -192,6 +244,14 @@ export function SalaryTab({ register, setValue, watch }: Props) {
           </div>
         </div>
       </div>
+
+      {isEditMode && (
+        <SalaryHistoryDialog
+          open={historyOpen}
+          onOpenChange={setHistoryOpen}
+          employeeNumber={watch("employee_number") as string}
+        />
+      )}
     </div>
   );
 }

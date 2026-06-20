@@ -1,6 +1,6 @@
 import api from "@/lib/api";
 import type { PaginatedResponse } from "@/lib/types";
-import type { Customer, SelectOption, CsfData } from "../types";
+import type { Customer, SelectOption, CsfData, OptimalContracted } from "../types";
 
 export interface PlantOption {
   _id: string;
@@ -124,6 +124,17 @@ export const customerService = {
     const { data } = await api.post<CsfData>("/customers/parse-csf", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
+    return data;
+  },
+
+  async getOptimalContracted(
+    customerId: string,
+    areaCode: string,
+  ): Promise<OptimalContracted[]> {
+    const { data } = await api.get<OptimalContracted[]>(
+      `/customers/${customerId}/optimal-contracted`,
+      { params: { area_code: areaCode } },
+    );
     return data;
   },
 };

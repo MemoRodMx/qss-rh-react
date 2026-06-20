@@ -1275,9 +1275,22 @@ export function CustomerFormPage() {
                         variant="outline"
                         size="sm"
                         className="cursor-pointer gap-1 text-xs"
-                        onClick={() =>
-                          addEmptyCoverage(ocIdx, shifts[0]?.code ?? shifts[0]?._id ?? "")
+                        disabled={
+                          (oc.coverage ?? []).length >= shifts.length
                         }
+                        onClick={() => {
+                          const used = new Set(
+                            (oc.coverage ?? []).map((c) => c.shift),
+                          );
+                          const next = shifts.find(
+                            (s) => !used.has(s.code ?? s._id ?? ""),
+                          );
+                          if (next)
+                            addEmptyCoverage(
+                              ocIdx,
+                              next.code ?? next._id ?? "",
+                            );
+                        }}
                       >
                         <Plus className="h-3 w-3" />
                         Agregar turno

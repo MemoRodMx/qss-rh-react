@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { employeeService } from "../services/employeeService";
+import { customerService } from "@/features/customers/services/customerService";
 import { generateCurpBase } from "../utils/useCurpRfc";
 import type { CatalogOption, SupervisorOption, BankOption } from "../types";
 
@@ -51,6 +52,7 @@ const employeeFormSchema = z.object({
   salary_variable_salary: z.string().optional().default(""),
   salary_weekly_salary: z.string().optional().default(""),
   salary_monthly_salary: z.string().optional().default(""),
+  salary_is_customized: z.boolean().optional().default(false),
 
   // Bank
   bank_bank_id: z.string().optional().default(""),
@@ -276,6 +278,7 @@ export function useEmployeeForm() {
       salary_variable_salary: "",
       salary_weekly_salary: "",
       salary_monthly_salary: "",
+      salary_is_customized: false,
       bank_bank_id: "",
       bank_account_number: "",
       bank_card_number: "",
@@ -306,9 +309,16 @@ export function useEmployeeForm() {
   const watchedState = watch("address_state");
   const watchedZipcode = watch("address_zipcode");
   const watchedDailySalary = watch("salary_daily_salary");
+  const watchedAttendanceBonus = watch("salary_attendance_bonus");
   const watchedSalaryType = watch("salary_salary_type");
   const watchedDayPerMonth = watch("salary_day_per_month");
   const watchedHireDate = watch("hire_date");
+
+  const watchedCustomerId = watch("customer_id");
+  const watchedPositionId = watch("work_location_position_id");
+
+  const optimoSalaryRef = useRef<number | null>(null);
+  const optimoBonusRef = useRef<number | null>(null);
 
   // ── Load auxiliary data ───────────────────────────────────────────────────
   const loadAuxData = useCallback(async () => {
@@ -414,6 +424,7 @@ export function useEmployeeForm() {
             employee.salary?.weekly_salary?.toString() ?? "",
           salary_monthly_salary:
             employee.salary?.monthly_salary?.toString() ?? "",
+          salary_is_customized: employee.salary?.is_customized ?? false,
           bank_bank_id: employee.bank?.bank_id ?? "",
           bank_account_number: employee.bank?.account_number ?? "",
           bank_card_number: employee.bank?.card_number ?? "",
@@ -574,6 +585,55 @@ export function useEmployeeForm() {
     }
   }, [watchedDailySalary, watchedSalaryType, watchedDayPerMonth, setValue]);
 
+  const watchedIsCustomized = watch("salary_is_customized");
+
+  useEffect(() => {
+    if (!watchedCustomerId || !watchedAreaId || !watchedPositionId) return;
+
+    const isCustomized = watch("salary_is_customized");
+    if (isCustomized) return;
+
+    customerService
+      .getOptimalContracted(watchedCustomerId, watchedAreaId)
+      .then((optimos) => {
+        const match = optimos.find(
+          (o: { position: string }) => o.position === watchedPositionId,
+        );
+        if (match) {
+          optimoSalaryRef.current = match.salary;
+          optimoBonusRef.current = match.bonus;
+          setValue("salary_daily_salary", String(match.salary));
+          setValue("salary_attendance_bonus", String(match.bonus));
+          setValue("salary_is_customized", false);
+        } else {
+          optimoSalaryRef.current = null;
+          optimoBonusRef.current = null;
+        }
+      })
+      .catch(() => {});
+  }, [watchedCustomerId, watchedAreaId, watchedPositionId, watchedIsCustomized, setValue, watch]);
+
+  useEffect(() => {
+    const currentDaily = watch("salary_daily_salary");
+    const currentBonus = watch("salary_attendance_bonus");
+    const isCustomized = watch("salary_is_customized");
+
+    if (isCustomized) return;
+
+    if (optimoSalaryRef.current !== null && optimoBonusRef.current !== null) {
+      const dailyDiffers =
+        currentDaily !== "" &&
+        parseFloat(currentDaily) !== optimoSalaryRef.current;
+      const bonusDiffers =
+        currentBonus !== "" &&
+        parseFloat(currentBonus) !== optimoBonusRef.current;
+
+      if (dailyDiffers || bonusDiffers) {
+        setValue("salary_is_customized", true);
+      }
+    }
+  }, [watchedDailySalary, watchedAttendanceBonus, setValue, watch]);
+
   // ── CURP auto-generation ──────────────────────────────────────────────────
   // Only overwrite the CURP when the generated base actually differs from the
   // saved value's prefix (first 16 chars). This preserves the homoclave (last 2
@@ -668,6 +728,7 @@ export function useEmployeeForm() {
           variable_salary: values.salary_variable_salary
             ? parseFloat(values.salary_variable_salary)
             : null,
+          is_customized: values.salary_is_customized ?? false,
         },
         bank: {
           bank_id: values.bank_bank_id || undefined,
