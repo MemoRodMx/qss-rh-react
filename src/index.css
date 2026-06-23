@@ -82,8 +82,8 @@
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
+    --border: 214 20% 65%;
+    --input: 214 18% 72%;
     --ring: 221 83% 53%;
 
     /* ── Warm Dark Sidebar (always dark, independent of theme) ── */
@@ -129,8 +129,8 @@
     --accent-foreground: 222 47% 11%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 25%;
-    --input: 217 33% 25%;
+    --border: 217 20% 35%;
+    --input: 217 18% 42%;
     --ring: 213 94% 68%;
 
     /* Chart palette - dark */

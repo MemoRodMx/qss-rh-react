@@ -53,6 +53,7 @@ export interface EmployeeSalary {
   variable_salary: number | null;
   weekly_salary: number | null;
   monthly_salary: number | null;
+  is_customized: boolean;
 }
 
 export interface EmployeeBank {
@@ -85,7 +86,7 @@ export interface EmployeePersonalData {
 // ── Form values (flat structure for react-hook-form) ────────────────────────
 export interface EmployeeFormValues {
   customer_id: string;
-  employee_number?: string;
+  employee_number: string;
   name: string;
   surname: string;
   lastname: string;
@@ -223,6 +224,86 @@ export const PAYMENT_WAY_OPTIONS = [
   { value: "CHEQUE", label: "Cheque" },
   { value: "TARJETA", label: "Tarjeta" },
 ] as const;
+
+// ── API Payload types ────────────────────────────────────────────────────────
+export interface EmployeeWorkLocationPayload {
+  plant_id?: string;
+  position_id?: string;
+  shift_id?: string;
+  schedule_id?: string;
+  direct_supervisor_id?: string;
+  area_id?: string;
+}
+
+export interface EmployeeSalaryPayload {
+  salary_type?: string;
+  daily_salary?: number | null;
+  attendance_bonus?: number | null;
+  zone?: string;
+  payment_way?: string;
+  last_salary_modification?: string | null;
+  integrated_factor?: number | null;
+  day_per_month?: number | null;
+  variable_salary?: number | null;
+  weekly_salary?: number | null;
+  monthly_salary?: number | null;
+  is_customized?: boolean;
+}
+
+export interface EmployeeBankPayload {
+  bank_id?: string;
+  account_number?: string;
+  card_number?: string;
+  clabe?: string;
+}
+
+export interface EmployeeAddressPayload {
+  street?: string;
+  exterior_number?: string;
+  internal_number?: string;
+  colony?: string;
+  city?: string;
+  state?: string;
+  zipcode?: string;
+  country?: string;
+}
+
+export interface EmployeePersonalDataPayload {
+  house_owner?: boolean;
+  schooling?: string;
+  landline_phone_number?: string;
+  mobile_phone_number?: string;
+  emergency_phone_number?: string;
+  relationship?: string;
+}
+
+export interface EmployeePayload {
+  customer_id: string;
+  employee_number?: string;
+  name?: string;
+  surname?: string;
+  lastname?: string;
+  rfc?: string;
+  curp?: string;
+  resident?: boolean;
+  genre?: string;
+  birth_date?: string | null;
+  birth_place?: string;
+  city_of_birth?: string;
+  nss?: string;
+  status?: string;
+  hire_date?: string | null;
+  contract_type?: string;
+  sat_zip_code?: string;
+  email?: string;
+  marital_status?: string;
+  seniority?: number;
+  work_location?: EmployeeWorkLocationPayload;
+  salary?: EmployeeSalaryPayload;
+  bank?: EmployeeBankPayload;
+  address?: EmployeeAddressPayload;
+  personal_data?: EmployeePersonalDataPayload;
+}
 
 export const SCHOOLING_OPTIONS = [
   { value: "PRIMARIA", label: "Primaria" },

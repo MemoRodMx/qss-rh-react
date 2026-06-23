@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SelectItem } from "@/components/ui/select";
 import { FloatLabelInput } from "@/components/ui/float-label-input";
 import { FloatLabelSelect } from "@/components/ui/float-label-select";
+import { FloatLabelDateInput } from "@/components/ui/float-label-date-input";
 import { CsfUploader } from "../components/CsfUploader";
 import {
   Accordion,
@@ -39,6 +40,7 @@ import {
   Building2,
   MapPin,
   Briefcase,
+  Clock,
   LayoutGrid,
   AlertTriangle,
   Plus,
@@ -373,6 +375,9 @@ export function CustomerFormPage() {
 
   const watchedStatus = watch("status");
   const watchedPlantId = watch("plant_id");
+  const watchedContractDate = watch("contract_date");
+  const watchedLeftDate = watch("left_date");
+  const watchedReadmissionDate = watch("readmission_date");
 
   const loadAuxData = useCallback(async (customerId?: string) => {
     try {
@@ -779,29 +784,41 @@ export function CustomerFormPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <FloatLabelInput
+                    <FloatLabelDateInput
                       id="contract_date"
                       label="Fecha de contrato"
-                      type="date"
-                      {...register("contract_date")}
+                      value={watchedContractDate ?? ""}
+                      onChange={(val) =>
+                        setValue("contract_date", val || null, {
+                          shouldValidate: true,
+                        })
+                      }
                       error={errors.contract_date?.message}
                     />
                   </div>
                   <div>
-                    <FloatLabelInput
+                    <FloatLabelDateInput
                       id="left_date"
                       label="Fecha de baja"
-                      type="date"
-                      {...register("left_date")}
+                      value={watchedLeftDate ?? ""}
+                      onChange={(val) =>
+                        setValue("left_date", val || null, {
+                          shouldValidate: true,
+                        })
+                      }
                       error={errors.left_date?.message}
                     />
                   </div>
                   <div>
-                    <FloatLabelInput
+                    <FloatLabelDateInput
                       id="readmission_date"
                       label="Fecha de reingreso"
-                      type="date"
-                      {...register("readmission_date")}
+                      value={watchedReadmissionDate ?? ""}
+                      onChange={(val) =>
+                        setValue("readmission_date", val || null, {
+                          shouldValidate: true,
+                        })
+                      }
                       error={errors.readmission_date?.message}
                     />
                   </div>
@@ -1006,12 +1023,15 @@ export function CustomerFormPage() {
                               <Plus className="h-3 w-3" />
                               Agregar puesto
                             </Button>
-                            {group.positions.map(({ pos: oc, idx: ocIdx }) => (
-                  <div key={ocIdx} data-oc-idx={ocIdx} className="border border-border/40 rounded-lg p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        Puesto {ocIdx + 1}
-                      </span>
+                            {group.positions.map(({ pos: oc, idx: ocIdx }, localIdx) => (
+                  <div key={ocIdx} data-oc-idx={ocIdx} className="border-2 border-border/50 rounded-xl bg-card shadow-[var(--shadow-1)] overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-2.5 bg-gradient-to-r from-primary/5 to-secondary/5 border-b border-border/40">
+                      <div className="flex items-center gap-2.5">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary tabular-nums">
+                          {localIdx + 1}
+                        </span>
+                        <span className="text-xs font-semibold">Puesto {localIdx + 1}</span>
+                      </div>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
@@ -1046,6 +1066,7 @@ export function CustomerFormPage() {
                         </AlertDialogContent>
                       </AlertDialog>
                     </div>
+                    <div className="p-4 space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                       <div>
                         <FloatLabelSelect
@@ -1163,11 +1184,21 @@ export function CustomerFormPage() {
                       )}
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-muted-foreground mb-2">
+                      <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                        <Clock className="h-3 w-3" />
                         Cobertura por turno
                       </p>
-                      {oc.coverage.map((cov, covIdx) => (
-                        <div key={covIdx} className="border border-border/30 rounded-md p-3 mb-2">
+                      {oc.coverage.map((cov, covIdx) => {
+                          const shiftUpper = (cov.shift ?? "").toUpperCase();
+                          const isAM = shiftUpper === "AM" || shiftUpper === "MATUTINO";
+                          const isPM = shiftUpper === "PM" || shiftUpper === "VESPERTINO";
+                          const shiftAccent = isAM
+                            ? "border-l-primary bg-primary/[0.04]"
+                            : isPM
+                              ? "border-l-accent bg-accent/[0.04]"
+                              : "border-l-muted-foreground/40 bg-muted/10";
+                          return (
+                        <div key={covIdx} className={`border-l-[3px] border border-border/50 rounded-lg p-3 mb-2 ${shiftAccent}`}>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
                             <div>
                               <FloatLabelSelect
@@ -1229,7 +1260,7 @@ export function CustomerFormPage() {
                                     min={0}
                                     aria-invalid={hasDayError}
                                     className={cn(
-                                      "h-8 text-center text-xs px-1",
+                                      "h-7 rounded-md bg-muted/30 text-center text-xs px-1 tabular-nums",
                                       hasDayError &&
                                         "border-destructive ring-1 ring-destructive/30",
                                     )}
@@ -1269,7 +1300,7 @@ export function CustomerFormPage() {
                             );
                           })()}
                         </div>
-                      ))}
+                      )})}
                       <Button
                         type="button"
                         variant="outline"
@@ -1295,6 +1326,7 @@ export function CustomerFormPage() {
                         <Plus className="h-3 w-3" />
                         Agregar turno
                       </Button>
+                    </div>
                     </div>
                   </div>
                             ))}

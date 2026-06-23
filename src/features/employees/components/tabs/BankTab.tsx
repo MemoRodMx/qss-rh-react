@@ -1,27 +1,19 @@
 import { SelectItem } from "@/components/ui/select";
 import { FloatLabelInput } from "@/components/ui/float-label-input";
 import { FloatLabelSelect } from "@/components/ui/float-label-select";
+import { SectionTitle } from "../shared/SectionTitle";
 import type { EmployeeFormShellProps } from "../EmployeeFormShell";
 
 type Props = Pick<
   EmployeeFormShellProps,
-  "register" | "setValue" | "watch" | "errors" | "banks"
+  "register" | "setValue" | "watch" | "banks"
 >;
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70 mb-3 pb-1.5 border-b border-border/30">
-      {children}
-    </h3>
-  );
-}
 
 export function BankTab({ register, setValue, watch, banks }: Props) {
   const watchedBankId = watch("bank_bank_id");
 
   return (
     <div className="space-y-8">
-      {/* ── Datos bancarios ──────────────────────────────────────────────── */}
       <div>
         <SectionTitle>Datos bancarios</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

@@ -35,6 +35,7 @@ import { DirectSupervisorsPage } from "@/features/direct-supervisors/pages/Direc
 import { DirectSupervisorFormPage } from "@/features/direct-supervisors/pages/DirectSupervisorFormPage";
 import RestRolesPage from "@/features/rest-roles/pages/RestRolesPage";
 import RestRoleFormPage from "@/features/rest-roles/pages/RestRoleFormPage";
+import { ReportsPage } from "@/features/reports/pages/ReportsPage";
 
 export const router = createBrowserRouter([
   {
@@ -117,6 +118,7 @@ export const router = createBrowserRouter([
           { path: "rest-roles/new", element: <RestRoleFormPage /> },
           { path: "rest-roles/:id/edit", element: <RestRoleFormPage /> },
           { path: "audit-logs", element: <AuditLogsPage /> },
+          { path: "reports", element: <ReportsPage /> },
           { path: "attendance", element: <AttendanceRecordsPage /> },
           { path: "attendance/new", element: <AttendanceRecordFormPage /> },
           { path: "attendance/:id", element: <AttendanceRecordDetailPage /> },

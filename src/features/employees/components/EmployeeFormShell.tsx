@@ -15,7 +15,6 @@ import { AddressTab } from "./tabs/AddressTab";
 import { PersonalDataTab } from "./tabs/PersonalDataTab";
 
 export interface EmployeeFormShellProps {
-  // State
   activeTab: TabId;
   setActiveTab: (tab: TabId) => void;
   isSubmitting: boolean;
@@ -23,14 +22,12 @@ export interface EmployeeFormShellProps {
   serverError: string | null;
   isEditMode: boolean;
 
-  // Form
   form: UseFormReturn<EmployeeFormValues>;
   register: UseFormReturn<EmployeeFormValues>["register"];
   setValue: UseFormReturn<EmployeeFormValues>["setValue"];
   watch: UseFormReturn<EmployeeFormValues>["watch"];
   errors: UseFormReturn<EmployeeFormValues>["formState"]["errors"];
 
-  // Catalog data
   positions: Array<{ code: string; name: string; description?: string }>;
   shifts: Array<{ code: string; name: string }>;
   schedules: Array<{ code: string; label: string }>;
@@ -38,14 +35,13 @@ export interface EmployeeFormShellProps {
   banks: Array<{ _id: string; name: string }>;
   states: Array<{ code: string; name: string }>;
   municipalities: Array<{ code: string; name: string }>;
+  birthMunicipalities: Array<{ code: string; name: string }>;
   colonies: Array<{ code: string; name: string }>;
 
-  // Area dependencies display
   customerDisplayName: string;
   plantDisplayCode: string;
   plantDisplayName: string;
 
-  // Supervisor
   supervisor: {
     _id: string;
     employee_number: string;
@@ -61,7 +57,6 @@ export interface EmployeeFormShellProps {
     } | null,
   ) => void;
 
-  // Actions
   onSubmit: (e?: React.BaseSyntheticEvent) => Promise<void>;
   navigate: (path: string) => void;
 }
@@ -79,7 +74,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
     navigate,
   } = props;
 
-  // ── Loading state ─────────────────────────────────────────────────────────
   if (isLoadingRecord) {
     return (
       <div className="space-y-6 max-w-[1080px] animate-fade-in">
@@ -97,7 +91,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
 
   return (
     <div className="space-y-6 max-w-[1080px] animate-fade-in">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -119,7 +112,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
         </div>
       </div>
 
-      {/* Server error */}
       {serverError && (
         <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
           <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -128,7 +120,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
       )}
 
       <form onSubmit={onSubmit}>
-        {/* Tabs */}
         <div className="mb-6">
           <div className="flex border-b border-border overflow-x-auto">
             {TABS.map((tab) => {
@@ -160,7 +151,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
           </div>
         </div>
 
-        {/* ── TAB: DATOS GENERALES ─────────────────────────────────────────── */}
         {activeTab === "general" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
             <CardContent className="p-5 space-y-6">
@@ -169,7 +159,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
           </Card>
         )}
 
-        {/* ── TAB: UBICACIÓN LABORAL ──────────────────────────────────────── */}
         {activeTab === "work_location" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
             <CardContent className="p-5 space-y-6">
@@ -178,7 +167,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
           </Card>
         )}
 
-        {/* ── TAB: SALARIO ────────────────────────────────────────────────── */}
         {activeTab === "salary" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
             <CardContent className="p-5 space-y-6">
@@ -187,7 +175,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
           </Card>
         )}
 
-        {/* ── TAB: BANCO ──────────────────────────────────────────────────── */}
         {activeTab === "bank" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
             <CardContent className="p-5 space-y-6">
@@ -196,7 +183,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
           </Card>
         )}
 
-        {/* ── TAB: DIRECCIÓN ──────────────────────────────────────────────── */}
         {activeTab === "address" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
             <CardContent className="p-5 space-y-6">
@@ -205,7 +191,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
           </Card>
         )}
 
-        {/* ── TAB: DATOS PERSONALES ───────────────────────────────────────── */}
         {activeTab === "personal_data" && (
           <Card className="border-border/40 bg-card shadow-[var(--shadow-2)]">
             <CardContent className="p-5 space-y-6">
@@ -214,7 +199,6 @@ export function EmployeeFormShell(props: EmployeeFormShellProps) {
           </Card>
         )}
 
-        {/* ── Action bar ───────────────────────────────────────────────────── */}
         <div className="flex items-center gap-3 pt-4 border-t border-border/40 mt-6">
           <Button
             type="submit"

@@ -2,52 +2,57 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { SelectItem } from "@/components/ui/select";
 import { FloatLabelInput } from "@/components/ui/float-label-input";
 import { FloatLabelSelect } from "@/components/ui/float-label-select";
+import { FloatLabelPhoneInput } from "@/components/ui/float-label-phone-input";
+import { SectionTitle } from "../shared/SectionTitle";
 import { SCHOOLING_OPTIONS } from "../../types";
 import type { EmployeeFormShellProps } from "../EmployeeFormShell";
 
 type Props = Pick<
   EmployeeFormShellProps,
-  "register" | "setValue" | "watch" | "errors"
+  "register" | "setValue" | "watch"
 >;
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70 mb-3 pb-1.5 border-b border-border/30">
-      {children}
-    </h3>
-  );
-}
 
 export function PersonalDataTab({ register, setValue, watch }: Props) {
   const watchedSchooling = watch("personal_data_schooling");
+  const watchedLandline = watch("personal_data_landline_phone_number");
+  const watchedMobile = watch("personal_data_mobile_phone_number");
+  const watchedEmergency = watch("personal_data_emergency_phone_number");
 
   return (
     <div className="space-y-8">
-      {/* ── Teléfonos de contacto ────────────────────────────────────────── */}
       <div>
         <SectionTitle>Teléfonos de contacto</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
-            <FloatLabelInput
+            <FloatLabelPhoneInput
               id="personal_data_landline_phone_number"
               label="Teléfono fijo"
-              {...register("personal_data_landline_phone_number")}
+              value={watchedLandline}
+              onChange={(val) =>
+                setValue("personal_data_landline_phone_number", val)
+              }
             />
           </div>
           <div>
-            <FloatLabelInput
+            <FloatLabelPhoneInput
               id="personal_data_mobile_phone_number"
               label="Teléfono móvil"
-              {...register("personal_data_mobile_phone_number")}
+              value={watchedMobile}
+              onChange={(val) =>
+                setValue("personal_data_mobile_phone_number", val)
+              }
             />
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <FloatLabelInput
+            <FloatLabelPhoneInput
               id="personal_data_emergency_phone_number"
               label="Teléfono de emergencia"
-              {...register("personal_data_emergency_phone_number")}
+              value={watchedEmergency}
+              onChange={(val) =>
+                setValue("personal_data_emergency_phone_number", val)
+              }
             />
           </div>
           <div>
@@ -60,7 +65,6 @@ export function PersonalDataTab({ register, setValue, watch }: Props) {
         </div>
       </div>
 
-      {/* ── Información adicional ────────────────────────────────────────── */}
       <div>
         <SectionTitle>Información adicional</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

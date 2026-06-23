@@ -17,6 +17,7 @@ const PATH_LABELS: Record<string, string> = {
   "/attendance": "Asistencia",
   "/rest-roles": "Roles de Descanso",
   "/vacation-requests": "Vacaciones",
+  "/reports": "Reportes",
 };
 
 /** Intermediate (non-leaf) segments mapped to display labels */
@@ -30,6 +31,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   "rest-roles": "Roles de Descanso",
   "vacation-requests": "Vacaciones",
   "audit-logs": "Auditoría",
+  reports: "Reportes",
   // Catalog children
   states: "Estados",
   cities: "Ciudades",

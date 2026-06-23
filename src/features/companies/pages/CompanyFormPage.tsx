@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { SelectItem } from "@/components/ui/select";
 import { FloatLabelInput } from "@/components/ui/float-label-input";
 import { FloatLabelSelect } from "@/components/ui/float-label-select";
+import { FloatLabelDateInput } from "@/components/ui/float-label-date-input";
 import {
   ArrowLeft,
   Save,
@@ -172,6 +173,7 @@ export function CompanyFormPage() {
   });
 
   const watchedStatus = watch("status");
+  const watchedDocuments = watch("documents");
 
   // ── Load record for edit mode ─────────────────────────────────────────────
   useEffect(() => {
@@ -484,14 +486,18 @@ export function CompanyFormPage() {
                           />
                         </div>
                         <div>
-                          <FloatLabelInput
+                          <FloatLabelDateInput
                             id={`${doc.key}_expiration_date`}
                             label="Vencimiento"
-                            type="date"
+                            value={watchedDocuments?.[doc.key]?.expiration_date ?? ""}
+                            onChange={(val) =>
+                              setValue(
+                                `documents.${doc.key}.expiration_date`,
+                                val || null,
+                                { shouldValidate: true },
+                              )
+                            }
                             error={dateError?.message}
-                            {...register(
-                              `documents.${doc.key}.expiration_date`,
-                            )}
                           />
                         </div>
                       </div>

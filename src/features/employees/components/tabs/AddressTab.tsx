@@ -1,6 +1,7 @@
 import { SelectItem } from "@/components/ui/select";
 import { FloatLabelInput } from "@/components/ui/float-label-input";
 import { FloatLabelSelect } from "@/components/ui/float-label-select";
+import { SectionTitle } from "../shared/SectionTitle";
 import type { EmployeeFormShellProps } from "../EmployeeFormShell";
 
 type Props = Pick<
@@ -13,14 +14,6 @@ type Props = Pick<
   | "municipalities"
   | "colonies"
 >;
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70 mb-3 pb-1.5 border-b border-border/30">
-      {children}
-    </h3>
-  );
-}
 
 export function AddressTab({
   register,
@@ -37,7 +30,6 @@ export function AddressTab({
 
   return (
     <div className="space-y-8">
-      {/* ── Calle y número ───────────────────────────────────────────────── */}
       <div>
         <SectionTitle>Calle y número</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -65,7 +57,6 @@ export function AddressTab({
         </div>
       </div>
 
-      {/* ── Estado, ciudad y colonia ─────────────────────────────────────── */}
       <div>
         <SectionTitle>Estado, ciudad y colonia</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">

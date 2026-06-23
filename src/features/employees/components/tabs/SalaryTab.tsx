@@ -2,10 +2,12 @@ import { useState } from "react";
 import { SelectItem } from "@/components/ui/select";
 import { FloatLabelInput } from "@/components/ui/float-label-input";
 import { FloatLabelSelect } from "@/components/ui/float-label-select";
+import { FloatLabelDateInput } from "@/components/ui/float-label-date-input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock } from "lucide-react";
+import { SectionTitle } from "../shared/SectionTitle";
 import {
   SALARY_TYPE_OPTIONS,
   ZONE_OPTIONS,
@@ -16,28 +18,20 @@ import { SalaryHistoryDialog } from "../SalaryHistoryDialog";
 
 type Props = Pick<
   EmployeeFormShellProps,
-  "register" | "setValue" | "watch" | "errors" | "isEditMode"
+  "register" | "setValue" | "watch" | "isEditMode"
 >;
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/70 mb-3 pb-1.5 border-b border-border/30">
-      {children}
-    </h3>
-  );
-}
 
 export function SalaryTab({ register, setValue, watch, isEditMode }: Props) {
   const watchedSalaryType = watch("salary_salary_type");
   const watchedZone = watch("salary_zone");
   const watchedPaymentWay = watch("salary_payment_way");
   const watchedIsCustomized = watch("salary_is_customized");
+  const watchedLastSalaryMod = watch("salary_last_salary_modification");
 
   const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
     <div className="space-y-8">
-      {/* ── Clasificación salarial ───────────────────────────────────────── */}
       <div>
         <SectionTitle>Clasificación salarial</SectionTitle>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -109,7 +103,6 @@ export function SalaryTab({ register, setValue, watch, isEditMode }: Props) {
         </div>
       </div>
 
-      {/* ── Importes ─────────────────────────────────────────────────────── */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <SectionTitle>Importes</SectionTitle>
@@ -127,7 +120,6 @@ export function SalaryTab({ register, setValue, watch, isEditMode }: Props) {
           )}
         </div>
 
-        {/* ── Checkbox personalizar ──────────────────────────────────────── */}
         <div className="flex items-center gap-2 mb-4">
           <Checkbox
             id="salary_is_customized"
@@ -235,11 +227,15 @@ export function SalaryTab({ register, setValue, watch, isEditMode }: Props) {
             />
           </div>
           <div>
-            <FloatLabelInput
+            <FloatLabelDateInput
               id="salary_last_salary_modification"
               label="Última modificación salarial"
-              type="date"
-              {...register("salary_last_salary_modification")}
+              value={watchedLastSalaryMod}
+              onChange={(val) =>
+                setValue("salary_last_salary_modification", val, {
+                  shouldValidate: true,
+                })
+              }
             />
           </div>
         </div>

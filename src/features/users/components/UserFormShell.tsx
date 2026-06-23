@@ -93,7 +93,7 @@ export function UserFormShell({
 
   if (isLoadingRecord) {
     return (
-      <div className="animate-fade-in max-w-[1080px] mx-auto">
+      <div className="animate-fade-in max-w-[1080px]">
         <div className="flex items-center gap-3 mb-6">
           <Skeleton className="h-9 w-9 rounded-lg" />
           <div>
@@ -116,7 +116,7 @@ export function UserFormShell({
   }
 
   return (
-    <div className="animate-fade-in max-w-[1080px] mx-auto">
+    <div className="animate-fade-in max-w-[1080px]">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">

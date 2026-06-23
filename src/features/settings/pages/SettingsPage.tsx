@@ -38,7 +38,7 @@ export function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-[1080px] space-y-6 p-6 animate-fade-in">
+      <div className="max-w-[1080px] space-y-6 p-6 animate-fade-in">
         <div className="h-6 w-48 bg-muted/40 rounded animate-pulse" />
         <div className="h-4 w-80 bg-muted/40 rounded animate-pulse" />
         <div className="h-64 bg-muted/20 rounded-xl animate-pulse" />
@@ -48,7 +48,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1080px] space-y-6 p-6 animate-fade-in">
+    <div className="max-w-[1080px] space-y-6 p-6 animate-fade-in">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/10">
           <Settings className="h-5 w-5 text-cyan-500" />

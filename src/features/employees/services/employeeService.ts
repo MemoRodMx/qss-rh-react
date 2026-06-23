@@ -5,6 +5,7 @@ import type {
   CatalogOption,
   SupervisorOption,
   BankOption,
+  EmployeePayload,
 } from "../types";
 
 export const employeeService = {
@@ -29,17 +30,23 @@ export const employeeService = {
   },
 
   async create(
-    payload: Record<string, unknown>,
+    payload: EmployeePayload,
   ): Promise<{ status: number; _id?: string }> {
-    const { data } = await api.post("/employees", payload);
+    const { data } = await api.post<{ status: number; _id?: string }>(
+      "/employees",
+      payload,
+    );
     return data;
   },
 
   async update(
     id: string,
-    payload: Record<string, unknown>,
+    payload: EmployeePayload,
   ): Promise<{ status: number; supervisor_name_updated?: boolean }> {
-    const { data } = await api.patch(`/employees/${id}`, payload);
+    const { data } = await api.patch<{
+      status: number;
+      supervisor_name_updated?: boolean;
+    }>(`/employees/${id}`, payload);
     return data;
   },
 

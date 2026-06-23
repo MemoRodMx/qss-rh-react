@@ -15,7 +15,7 @@ export function AppLayout() {
           onToggle={() => setSidebarCollapsed((prev) => !prev)}
         />
         <main className="flex-1 overflow-y-auto p-8 animate-fade-in">
-          <div className="mx-auto max-w-7xl">
+          <div className="max-w-7xl">
             <Breadcrumbs />
             <Outlet />
           </div>

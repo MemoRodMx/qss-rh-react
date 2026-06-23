@@ -50,8 +50,8 @@ const navSections = [
     items: [
       { to: "/", label: "Dashboard", icon: LayoutDashboard },
       { to: "/employees", label: "Empleados", icon: Users },
-      { to: "/attendance", label: "Asistencia", icon: Calendar },
-      { to: "/vacation-requests", label: "Vacaciones", icon: CalendarDays },
+      // { to: "/attendance", label: "Asistencia", icon: Calendar },
+      // { to: "/vacation-requests", label: "Vacaciones", icon: CalendarDays },
       { to: "/rest-roles", label: "Roles de Descanso", icon: ListChecks },
     ],
   },
@@ -78,9 +78,7 @@ const navSections = [
   },
   {
     label: "Catálogos",
-    items: [
-      { to: "/catalogs", label: "Catálogos", icon: BookOpen },
-    ],
+    items: [{ to: "/catalogs", label: "Catálogos", icon: BookOpen }],
   },
 ];
 
@@ -104,8 +102,7 @@ function RoleBadge({ role }: { role: string }) {
         "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none",
         config.variant === "default" &&
           "bg-[hsl(var(--sidebar-accent)_/_0.15)] text-[hsl(var(--sidebar-accent))]",
-        config.variant === "secondary" &&
-          "bg-emerald-500/15 text-emerald-400",
+        config.variant === "secondary" && "bg-emerald-500/15 text-emerald-400",
         config.variant === "outline" &&
           "bg-[hsl(var(--sidebar-text)_/_0.08)] text-[hsl(var(--sidebar-muted))]",
       )}
@@ -222,18 +219,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             })}
           </Fragment>
         ))}
-
-
       </nav>
 
       <Separator className="bg-[hsl(var(--sidebar-border)_/_0.4)]" />
 
       {/* User info */}
       <div
-        className={cn(
-          "bg-[hsl(var(--sidebar-bg))]",
-          collapsed ? "p-2" : "p-3",
-        )}
+        className={cn("bg-[hsl(var(--sidebar-bg))]", collapsed ? "p-2" : "p-3")}
       >
         {collapsed ? (
           <Tooltip>

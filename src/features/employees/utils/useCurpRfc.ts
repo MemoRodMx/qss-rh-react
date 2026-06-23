@@ -55,11 +55,56 @@ const CURP_STATE_MAP: Record<string, string> = {
   NEX: "NE", // Nacido en el extranjero
 };
 
+/** Strips accents from vowels but preserves Ñ (critical for RFC homoclave).
+ *  Ü/ü is mapped to U since umlaut is not used in Mexican tax IDs. */
 function removeAccents(str: string): string {
   return str
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[áàäâ]/gi, "A")
+    .replace(/[éèëê]/gi, "E")
+    .replace(/[íìïî]/gi, "I")
+    .replace(/[óòöô]/gi, "O")
+    .replace(/[úùüû]/gi, "U")
     .toUpperCase();
+}
+
+/** Particles that prefix compound surnames but are ignored for RFC/CURP
+ *  key extraction. Ordered longest-first so "DE LA" matches before "DE". */
+const SURNAME_PARTICLES = [
+  "DE LOS",
+  "DE LAS",
+  "DE LA",
+  "DEL",
+  "DE",
+  "LAS",
+  "LOS",
+  "LA",
+  "EL",
+  "DA",
+  "DAS",
+  "DER",
+  "DI",
+  "DIE",
+  "VAN",
+  "VON",
+  "MAC",
+  "MC",
+  "Y",
+  "E",
+];
+
+/** Removes particles from a compound surname, returning only the significant
+ *  part used for RFC/CURP key extraction. If the surname consists entirely
+ *  of particles, returns the original. */
+function stripParticles(surname: string): string {
+  const upper = surname.toUpperCase().trim();
+  for (const particle of SURNAME_PARTICLES) {
+    const prefix = particle + " ";
+    if (upper.startsWith(prefix)) {
+      const rest = upper.slice(prefix.length).trim();
+      if (rest.length > 0) return rest;
+    }
+  }
+  return upper;
 }
 
 function getVowels(str: string): string {
@@ -76,6 +121,42 @@ function firstInternalVowel(str: string): string {
 
 function firstInternalConsonant(str: string): string {
   return getConsonants(str)[0] ?? "X";
+}
+
+/** If the first given name is JOSÉ (male) or MARÍA (female), RENAPO rules
+ *  dictate that CURP position 4 uses the second given name instead. */
+function getCurpNameKey(name: string, genre: string): string {
+  const words = name.trim().toUpperCase().split(/\s+/);
+  if (words.length >= 2) {
+    const first = words[0];
+    const second = words[1];
+    const g = genre.toUpperCase();
+    if ((first === "JOSE" || first === "JOSÉ") && g === "M") return second;
+    if ((first === "MARIA" || first === "MARÍA") && g === "F") return second;
+  }
+  return words[0] ?? "";
+}
+
+/** Forbidden words (altisonantes) per RENAPO.
+ *  If the first 4 characters of a CURP form one of these words,
+ *  position 2 is replaced with "X". */
+const CURP_FORBIDDEN: ReadonlySet<string> = new Set([
+  "BACA", "BAKA", "BUEI", "BUEY", "CACA", "CACO", "CAGA", "CAGO",
+  "CAKA", "CAKO", "COGE", "COJA", "COJE", "COJI", "COJO", "CULO",
+  "FALO", "FETO", "GETA", "GUEI", "GUEY", "JETA", "JOTO", "KACA",
+  "KACO", "KAGA", "KAGO", "KOGE", "KOJO", "KAKA", "KULO", "LILO",
+  "LOCA", "LOCO", "LOKA", "LOKO", "MAME", "MAMO", "MEAR", "MEON",
+  "MION", "MOCO", "MOKO", "MULA", "MULO", "NACA", "NACO", "PEDA",
+  "PEDO", "PENE", "PUTA", "PUTO", "QULO", "RATA", "RUIN",
+]);
+
+/** Replaces position 2 (index 1) of the given string with "X" if the
+ *  first 4 characters form a forbidden word. */
+function sanitizeForbiddenCURP(key: string): string {
+  if (key.length >= 4 && CURP_FORBIDDEN.has(key.slice(0, 4))) {
+    return key[0] + "X" + key.slice(2);
+  }
+  return key;
 }
 
 // ── CURP: homoclave (positions 17-18) ──────────────────────────────────────
@@ -105,21 +186,23 @@ function curpHomoclave(curp16: string, birthYear: number): string {
   return p17 + p18;
 }
 
-// ── RFC: homoclave (positions 11-13) ───────────────────────────────────────
+// ── RFC: homoclave key (positions 11–12) + verification digit (13) ──────────
 
-/** SAT character → 2-digit value mapping (Anexo 1 de la RMF). */
+/** SAT character → value mapping (Anexo 1 de la RMF).
+ *  Letters produce 2-digit strings, digits produce single-digit strings. */
 const RFC_MAP: Record<string, string> = {
   " ": "00",
-  "0": "00",
-  "1": "01",
-  "2": "02",
-  "3": "03",
-  "4": "04",
-  "5": "05",
-  "6": "06",
-  "7": "07",
-  "8": "08",
-  "9": "09",
+  "0": "0",
+  "1": "1",
+  "2": "2",
+  "3": "3",
+  "4": "4",
+  "5": "5",
+  "6": "6",
+  "7": "7",
+  "8": "8",
+  "9": "9",
+  "&": "10",
   Ñ: "10",
   A: "11",
   B: "12",
@@ -149,29 +232,60 @@ const RFC_MAP: Record<string, string> = {
   Z: "39",
 };
 
-const RFC_HOMOCLAVE_ALPHABET = "123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+/** SAT homoclave key alphabet: 33 characters (0–32), excludes O.
+ *  Remainder → character: 0→1, 1→2, …, 8→9, 9→A, …, 22→N, 23→P, …, 32→Y.
+ *  Remainder 33 falls back to Z. */
+const RFC_HOMOCLAVE_KEY = "123456789ABCDEFGHIJKLMNPQRSTUVWXY";
 
-function rfcHomoclave(fullName: string): string {
-  let numeric = "";
+/** SAT verification digit value table for the 12-char RFC.
+ *  A=10, …, N=23, O=25 (24 reserved for empty string), …, Z=36,
+ *  digits 0-9 = 0-9. */
+const RFC_CHECKSUM_MAP: Record<string, number> = {
+  A: 10, B: 11, C: 12, D: 13, E: 14, F: 15, G: 16, H: 17, I: 18,
+  J: 19, K: 20, L: 21, M: 22, N: 23, O: 25, P: 26, Q: 27, R: 28,
+  S: 29, T: 30, U: 31, V: 32, W: 33, X: 34, Y: 35, Z: 36,
+  "0": 0, "1": 1, "2": 2, "3": 3, "4": 4, "5": 5, "6": 6, "7": 7,
+  "8": 8, "9": 9,
+};
+
+/** Computes the 2-character homoclave key from the full name
+ *  using the SAT sliding‑window algorithm (Anexo 1 de la RMF). */
+function rfcHomoclaveKey(fullName: string): string {
+  let numeric = "0";
   for (const c of fullName) {
     numeric += RFC_MAP[c] ?? "00";
   }
 
   let sum = 0;
-  for (let i = 0; i < numeric.length; i += 2) {
+  for (let i = 0; i < numeric.length - 1; i++) {
     const a = Number(numeric[i]);
-    const b = Number(numeric[i + 1] ?? "0");
-    sum += a * 10 + b;
+    const b = Number(numeric[i + 1]);
+    sum += (a * 10 + b) * b;
   }
 
-  let q = sum;
-  const c1 = RFC_HOMOCLAVE_ALPHABET[q % 34];
-  q = Math.floor(q / 34);
-  const c2 = RFC_HOMOCLAVE_ALPHABET[q % 34];
-  q = Math.floor(q / 34);
-  const c3 = RFC_HOMOCLAVE_ALPHABET[q % 34];
+  let div = sum % 1000;
+  const mod = div % 34;
+  div = (div - mod) / 34;
 
-  return c1 + c2 + c3;
+  return (
+    (RFC_HOMOCLAVE_KEY[div] ?? "Z") + (RFC_HOMOCLAVE_KEY[mod] ?? "Z")
+  );
+}
+
+/** Computes the RFC verification digit (position 13) from the first
+ *  12 characters using a weighted sum modulo 11. */
+function rfcVerificationDigit(rfc12: string): string {
+  let partialSum = 0;
+  for (let i = 0; i < rfc12.length; i++) {
+    const char = rfc12[i];
+    if (char in RFC_CHECKSUM_MAP) {
+      partialSum += RFC_CHECKSUM_MAP[char] * (14 - (i + 1));
+    }
+  }
+  const remainder = partialSum % 11;
+  if (remainder === 0) return "0";
+  const digit = 11 - remainder;
+  return digit === 10 ? "A" : String(digit);
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────
@@ -188,37 +302,41 @@ export function generateCurp(
 ): string | null {
   if (!name || !surname || !birthDate || !genre || !birthStateCode) return null;
 
-  const n = removeAccents(name.trim()).replace(/\s+.*/g, "");
-  const ap = removeAccents(surname.trim());
-  const am = lastname ? removeAccents(lastname.trim()) : "";
+  const nameFull = removeAccents(name.trim());
+  const nameKey = getCurpNameKey(nameFull, genre);
+  const apFull = removeAccents(surname.trim());
+  const apKey = stripParticles(apFull);
+  const amFull = lastname ? removeAccents(lastname.trim()) : "";
+  const amKey = amFull ? stripParticles(amFull) : "";
 
   const stateCode = CURP_STATE_MAP[birthStateCode.toUpperCase()] ?? "NE";
   const sexCode = genre.toUpperCase() === "M" ? "H" : "M";
 
   const d = new Date(birthDate);
-  const yy = String(d.getFullYear()).slice(2);
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
+  const yy = String(d.getUTCFullYear()).slice(2);
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
 
-  const p1 = ap[0] ?? "X";
-  const p2 = firstInternalVowel(ap);
-  const p3 = am[0] ?? "X";
-  const p4 = n[0] ?? "X";
+  const p1 = apKey[0] ?? "X";
+  const p2 = firstInternalVowel(apKey);
+  const p3 = amKey[0] ?? "X";
+  const p4 = nameKey[0] ?? "X";
   const p5to10 = `${yy}${mm}${dd}`;
   const p11 = sexCode;
   const p12to13 = stateCode;
-  const p14 = firstInternalConsonant(ap);
-  const p15 = am ? firstInternalConsonant(am) : "X";
-  const p16 = firstInternalConsonant(n);
+  const p14 = firstInternalConsonant(apKey);
+  const p15 = amKey ? firstInternalConsonant(amKey) : "X";
+  const p16 = firstInternalConsonant(nameKey);
 
-  const curp16 = `${p1}${p2}${p3}${p4}${p5to10}${p11}${p12to13}${p14}${p15}${p16}`;
-  const homoclave = curpHomoclave(curp16, d.getFullYear());
+  let curp16 = `${p1}${p2}${p3}${p4}${p5to10}${p11}${p12to13}${p14}${p15}${p16}`;
+  curp16 = sanitizeForbiddenCURP(curp16);
+  const homoclave = curpHomoclave(curp16, d.getUTCFullYear());
 
   return `${curp16}${homoclave}`.toUpperCase();
 }
 
-/** Generates the full 13-character RFC including homoclave (positions 11-13)
- *  derived from the full name via the SAT algorithm.
+/** Generates the full 13-character RFC: 10-char key + 2-char homoclave
+ *  key (positions 11–12) + verification digit (position 13).
  *  Returns null if any required field is missing. */
 export function generateRfc(
   name: string | null | undefined,
@@ -228,26 +346,31 @@ export function generateRfc(
 ): string | null {
   if (!name || !surname || !birthDate) return null;
 
-  const n = removeAccents(name.trim()).replace(/\s+.*/g, "");
-  const ap = removeAccents(surname.trim());
-  const am = lastname ? removeAccents(lastname.trim()) : "";
+  const nameFull = removeAccents(name.trim());
+  const nameKey = nameFull.replace(/\s+.*/g, "");
+  const apFull = removeAccents(surname.trim());
+  const apKey = stripParticles(apFull);
+  const amFull = lastname ? removeAccents(lastname.trim()) : "";
+  const amKey = amFull ? stripParticles(amFull) : "";
 
   const d = new Date(birthDate);
-  const yy = String(d.getFullYear()).slice(2);
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
+  const yy = String(d.getUTCFullYear()).slice(2);
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
 
-  const p1 = ap[0] ?? "X";
-  const p2 = firstInternalVowel(ap);
-  const p3 = am ? am[0] : "X";
-  const p4 = n[0] ?? "X";
+  const p1 = apKey[0] ?? "X";
+  const p2 = firstInternalVowel(apKey);
+  const p3 = amKey ? amKey[0] : "X";
+  const p4 = nameKey[0] ?? "X";
   const p5to10 = `${yy}${mm}${dd}`;
 
   const rfc10 = `${p1}${p2}${p3}${p4}${p5to10}`;
-  const fullName = `${ap} ${am || "X"} ${n}`;
-  const homoclave = rfcHomoclave(fullName);
+  const fullName = `${apFull} ${amFull || "X"} ${nameFull}`;
+  const key = rfcHomoclaveKey(fullName);
+  const rfc12 = `${rfc10}${key}`;
+  const digit = rfcVerificationDigit(rfc12);
 
-  return `${rfc10}${homoclave}`.toUpperCase();
+  return `${rfc12}${digit}`.toUpperCase();
 }
 
 /** Returns a list of field labels needed but missing to generate the CURP. */
@@ -271,13 +394,11 @@ export function curpMissingFields(
 export function rfcMissingFields(
   name: string | null | undefined,
   surname: string | null | undefined,
-  lastname: string | null | undefined,
   birthDate: Date | string | null | undefined,
 ): string[] {
   const missing: string[] = [];
   if (!name) missing.push("nombre");
   if (!surname) missing.push("primer apellido");
-  if (!lastname) missing.push("segundo apellido");
   if (!birthDate) missing.push("fecha de nacimiento");
   return missing;
 }
