@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
+  X,
   AlertTriangle,
   BookOpen,
   CalendarDays,
@@ -42,6 +43,7 @@ import {
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  variant?: "sidebar" | "sheet";
 }
 
 const navSections = [
@@ -112,7 +114,7 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, variant = "sidebar" }: SidebarProps) {
   const { user, logout } = useAuth();
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
@@ -139,30 +141,41 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex flex-col border-r border-[hsl(var(--sidebar-border)_/_0.6)] bg-gradient-to-b from-[hsl(var(--sidebar-bg))] to-[hsl(var(--sidebar-surface))] transition-all duration-300 ease-out",
+        "flex flex-col h-full border-r border-[hsl(var(--sidebar-border)_/_0.6)] bg-gradient-to-b from-[hsl(var(--sidebar-bg))] to-[hsl(var(--sidebar-surface))] transition-all duration-300 ease-out",
         collapsed ? "w-16" : "w-64",
       )}
     >
       {/* Logo */}
       <div className="flex h-14 items-center justify-between px-4">
-        {!collapsed && (
+        {(variant === "sheet" || !collapsed) && (
           <span className="animate-fade-in text-sm font-semibold tracking-tight text-[hsl(var(--sidebar-text))]">
             {APP_NAME}
           </span>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggle}
-          className="cursor-pointer text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-border))] hover:text-[hsl(var(--sidebar-text))]"
-        >
-          <ChevronLeft
-            className={cn(
-              "h-4 w-4 transition-transform duration-300",
-              collapsed && "rotate-180",
-            )}
-          />
-        </Button>
+        {variant === "sheet" ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            className="ml-auto cursor-pointer text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-border))] hover:text-[hsl(var(--sidebar-text))]"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggle}
+            className="cursor-pointer text-[hsl(var(--sidebar-muted))] hover:bg-[hsl(var(--sidebar-border))] hover:text-[hsl(var(--sidebar-text))]"
+          >
+            <ChevronLeft
+              className={cn(
+                "h-4 w-4 transition-transform duration-300",
+                collapsed && "rotate-180",
+              )}
+            />
+          </Button>
+        )}
       </div>
 
       <Separator className="bg-[hsl(var(--sidebar-border)_/_0.4)]" />
