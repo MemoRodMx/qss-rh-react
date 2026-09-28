@@ -55,14 +55,15 @@ export interface EmployeeOption {
   label: string;
 }
 
-// ── Form values (flat structure for react-hook-form) ─────────────────────────
+// ── Form values (react-hook-form) ────────────────────────────────────────────
 export interface UserFormValues {
   username: string;
   password: string;
   role: string;
   employee_id: string;
-  // Privileges are stored as flat keys: `resources.${key}.${op}`
-  [key: `resources.${string}.${string}`]: boolean;
+  // Privileges stored as a nested object keyed by resource:
+  // { companies: { view, create, edit, delete }, ... }
+  privileges: Record<string, PrivilegeOps>;
 }
 
 // ── User list response ───────────────────────────────────────────────────────

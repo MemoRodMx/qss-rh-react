@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { PrivilegesSection } from "./PrivilegesSection";
 import { EmployeeSearchInput } from "./EmployeeSearchInput";
-import type { RoleOption, EmployeeOption } from "../types";
+import type { RoleOption, EmployeeOption, PrivilegeOps } from "../types";
 import type { UseFormRegister, FieldErrors } from "react-hook-form";
 import type { UserFormValues } from "../types";
 
@@ -48,8 +48,8 @@ interface UserFormShellProps {
   onSearchEmployees: (query: string) => Promise<void>;
 
   // Privileges
-  privilegeValues: Record<string, boolean>;
-  onPrivilegeChange: (values: Record<string, boolean>) => void;
+  privileges: Record<string, PrivilegeOps>;
+  onPrivilegesChange: (values: Record<string, PrivilegeOps>) => void;
 
   // Actions
   onSubmit: () => void;
@@ -79,8 +79,8 @@ export function UserFormShell({
   employeeSuggestions,
   setEmployeeSuggestions,
   onSearchEmployees,
-  privilegeValues,
-  onPrivilegeChange,
+  privileges,
+  onPrivilegesChange,
   onSubmit,
   navigate,
 }: UserFormShellProps) {
@@ -244,8 +244,8 @@ export function UserFormShell({
             </div>
             <div className="p-5">
               <PrivilegesSection
-                initialValues={privilegeValues}
-                onChange={onPrivilegeChange}
+                value={privileges}
+                onChange={onPrivilegesChange}
               />
             </div>
           </Card>

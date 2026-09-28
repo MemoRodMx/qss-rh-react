@@ -1,4 +1,4 @@
-# QSS RRHH — React Frontend
+# QSS RRHH — Dashboard
 
 Frontend del sistema de control de recursos humanos para empresa de seguridad. Gestión de empleados, contrataciones, asistencia, vacaciones, roles de descanso, catálogos, usuarios y reportes.
 
@@ -60,7 +60,7 @@ Las variables deben tener el prefijo `VITE_` para ser expuestas al cliente. Se d
 ## Estructura del Proyecto
 
 ```
-react/
+dashboard/
 ├── public/                    # Assets estáticos (favicon, icons)
 ├── src/
 │   ├── main.tsx               # Punto de entrada
@@ -156,13 +156,13 @@ features/<nombre>/
 ```bash
 docker build \
   --build-arg VITE_API_URL=https://api.example.com \
-  -t qss-rrhh-react .
+  -t qss-rrhh-dashboard .
 ```
 
 ### Run
 
 ```bash
-docker run -p 80:80 qss-rrhh-react
+docker run -p 80:80 qss-rrhh-dashboard
 ```
 
 El build usa multi-stage: compila con Node 22 y sirve con Nginx Alpine. La configuración de Nginx incluye:

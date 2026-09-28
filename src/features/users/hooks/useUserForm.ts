@@ -6,13 +6,23 @@ import { z } from "zod";
 import { userService } from "../services/userService";
 import {
   PRIVILEGE_RESOURCES,
-  PRIV_OPS,
   ALL_ROLE_OPTIONS,
   type UserFormValues,
   type EmployeeOption,
+  type PrivilegeOps,
 } from "../types";
 
 // ── Zod schema ───────────────────────────────────────────────────────────────
+const privilegesSchema = z.record(
+  z.string(),
+  z.object({
+    view: z.boolean(),
+    create: z.boolean(),
+    edit: z.boolean(),
+    delete: z.boolean(),
+  }),
+);
+
 const createSchema = z.object({
   username: z
     .string()
@@ -26,6 +36,7 @@ const createSchema = z.object({
     .min(8, "La contraseña debe tener al menos 8 caracteres"),
   role: z.string().min(1, "El rol es obligatorio"),
   employee_id: z.string().optional().default(""),
+  privileges: privilegesSchema,
 });
 
 const editSchema = z.object({
@@ -44,6 +55,7 @@ const editSchema = z.object({
     }),
   role: z.string().min(1, "El rol es obligatorio"),
   employee_id: z.string().optional().default(""),
+  privileges: privilegesSchema,
 });
 
 // ── Hook ─────────────────────────────────────────────────────────────────────
@@ -63,12 +75,15 @@ export function useUserForm() {
   const [canAssignSystemRole, setCanAssignSystemRole] = useState(false);
 
   // Build default privilege values
-  const buildDefaultPrivileges = useCallback((): Record<string, boolean> => {
-    const defaults: Record<string, boolean> = {};
+  const buildDefaultPrivileges = useCallback((): Record<string, PrivilegeOps> => {
+    const defaults: Record<string, PrivilegeOps> = {};
     for (const res of PRIVILEGE_RESOURCES) {
-      for (const op of PRIV_OPS) {
-        defaults[`resources.${res.key}.${op}`] = true;
-      }
+      defaults[res.key] = {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true,
+      };
     }
     return defaults;
   }, []);
@@ -83,7 +98,7 @@ export function useUserForm() {
       password: "",
       role: "",
       employee_id: "",
-      ...buildDefaultPrivileges(),
+      privileges: buildDefaultPrivileges(),
     },
   });
 
@@ -111,13 +126,17 @@ export function useUserForm() {
 
         // Set privilege values
         const privileges = user.privileges ?? {};
+        const privs: Record<string, PrivilegeOps> = {};
         for (const res of PRIVILEGE_RESOURCES) {
           const ops = privileges[res.key];
-          values[`resources.${res.key}.view`] = ops?.view === true;
-          values[`resources.${res.key}.create`] = ops?.create === true;
-          values[`resources.${res.key}.edit`] = ops?.edit === true;
-          values[`resources.${res.key}.delete`] = ops?.delete === true;
+          privs[res.key] = {
+            view: ops?.view === true,
+            create: ops?.create === true,
+            edit: ops?.edit === true,
+            delete: ops?.delete === true,
+          };
         }
+        values.privileges = privs;
 
         reset(values as unknown as UserFormValues);
 
@@ -138,28 +157,6 @@ export function useUserForm() {
       cancelled = true;
     };
   }, [id, isEditMode, reset]);
-
-  // ── Build privileges payload ──────────────────────────────────────────────
-  function buildPrivilegesPayload(
-    values: Record<string, unknown>,
-  ): Record<
-    string,
-    { view: boolean; create: boolean; edit: boolean; delete: boolean }
-  > {
-    const resources: Record<
-      string,
-      { view: boolean; create: boolean; edit: boolean; delete: boolean }
-    > = {};
-    for (const res of PRIVILEGE_RESOURCES) {
-      resources[res.key] = {
-        view: !!(values[`resources.${res.key}.view`] as boolean),
-        create: !!(values[`resources.${res.key}.create`] as boolean),
-        edit: !!(values[`resources.${res.key}.edit`] as boolean),
-        delete: !!(values[`resources.${res.key}.delete`] as boolean),
-      };
-    }
-    return resources;
-  }
 
   // ── Search employees ──────────────────────────────────────────────────────
   const searchEmployees = useCallback(async (query: string) => {
@@ -186,9 +183,7 @@ export function useUserForm() {
         username: values.username,
         role: values.role,
         ...(selectedEmployee?._id ? { employee_id: selectedEmployee._id } : {}),
-        privileges: buildPrivilegesPayload(
-          values as unknown as Record<string, unknown>,
-        ),
+        privileges: values.privileges,
       };
 
       if (values.password?.trim()) {
@@ -239,6 +234,7 @@ export function useUserForm() {
     handleSubmit,
     setValue,
     watch,
+    control: form.control,
     errors,
 
     // Data

@@ -1,6 +1,8 @@
 import { useCallback } from "react";
+import { useWatch } from "react-hook-form";
 import { useUserForm } from "../hooks/useUserForm";
 import { UserFormShell } from "../components/UserFormShell";
+import type { PrivilegeOps } from "../types";
 
 export function UserFormPage() {
   const {
@@ -16,6 +18,7 @@ export function UserFormPage() {
     handleSubmit,
     setValue,
     watch,
+    control,
     errors,
     roleOptions,
     onSubmit,
@@ -23,30 +26,15 @@ export function UserFormPage() {
     navigate,
   } = useUserForm();
 
-  // Track privilege values from the PrivilegesSection
-  const handlePrivilegeChange = useCallback(
-    (values: Record<string, boolean>) => {
-      // Sync privilege values back to the form
-      for (const [key, value] of Object.entries(values)) {
-        (setValue as (name: string, value: unknown) => void)(key, value);
-      }
+  // Single source of truth: privileges live in react-hook-form.
+  const privileges = useWatch({ control, name: "privileges" });
+
+  const handlePrivilegesChange = useCallback(
+    (values: Record<string, PrivilegeOps>) => {
+      setValue("privileges", values);
     },
     [setValue],
   );
-
-  // Get current privilege values from form
-  const getPrivilegeValues = useCallback((): Record<string, boolean> => {
-    const values: Record<string, boolean> = {};
-    const watched = watch();
-    if (watched && typeof watched === "object") {
-      for (const [key, val] of Object.entries(watched)) {
-        if (key.startsWith("resources.")) {
-          values[key] = val === true;
-        }
-      }
-    }
-    return values;
-  }, [watch]);
 
   return (
     <UserFormShell
@@ -64,8 +52,8 @@ export function UserFormPage() {
       employeeSuggestions={employeeSuggestions}
       setEmployeeSuggestions={setEmployeeSuggestions}
       onSearchEmployees={searchEmployees}
-      privilegeValues={getPrivilegeValues()}
-      onPrivilegeChange={handlePrivilegeChange}
+      privileges={privileges ?? {}}
+      onPrivilegesChange={handlePrivilegesChange}
       onSubmit={handleSubmit(onSubmit)}
       navigate={navigate}
     />

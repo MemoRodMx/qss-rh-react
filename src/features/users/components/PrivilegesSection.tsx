@@ -1,7 +1,10 @@
-import { useState, useCallback } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { PRIVILEGE_RESOURCES, PRIV_OPS } from "../types";
+import {
+  PRIVILEGE_RESOURCES,
+  PRIV_OPS,
+  type PrivilegeOps,
+} from "../types";
 import {
   Building2,
   Wallet,
@@ -27,98 +30,70 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Cog,
 };
 
+const OP_LABELS: Record<string, string> = {
+  view: "Ver",
+  create: "Crear",
+  edit: "Editar",
+  delete: "Eliminar",
+};
+
 interface PrivilegesSectionProps {
-  initialValues?: Record<string, boolean>;
-  onChange?: (values: Record<string, boolean>) => void;
+  value: Record<string, PrivilegeOps>;
+  onChange: (value: Record<string, PrivilegeOps>) => void;
 }
 
-function buildDefaultValues(
-  overrides?: Record<string, boolean>,
-): Record<string, boolean> {
-  const values: Record<string, boolean> = {};
-  for (const res of PRIVILEGE_RESOURCES) {
-    for (const op of PRIV_OPS) {
-      const key = `resources.${res.key}.${op}`;
-      values[key] = overrides?.[key] ?? true;
+function getResourceState(
+  value: Record<string, PrivilegeOps>,
+  key: string,
+): "all" | "some" | "none" {
+  const ops = value[key] ?? {};
+  const checked = PRIV_OPS.filter((op) => ops[op] === true).length;
+  if (checked === PRIV_OPS.length) return "all";
+  return checked > 0 ? "some" : "none";
+}
+
+function getAllState(
+  value: Record<string, PrivilegeOps>,
+): "all" | "some" | "none" {
+  const total = PRIVILEGE_RESOURCES.length * PRIV_OPS.length;
+  const checked = PRIVILEGE_RESOURCES.reduce(
+    (acc, res) =>
+      acc + PRIV_OPS.filter((op) => value[res.key]?.[op] === true).length,
+    0,
+  );
+  if (checked === total) return "all";
+  return checked > 0 ? "some" : "none";
+}
+
+export function PrivilegesSection({ value, onChange }: PrivilegesSectionProps) {
+  const setOp = (key: string, op: string, checked: boolean) => {
+    onChange({
+      ...value,
+      [key]: { ...(value[key] ?? {}), [op]: checked },
+    });
+  };
+
+  const setResource = (key: string, checked: boolean) => {
+    onChange({
+      ...value,
+      [key]: { view: checked, create: checked, edit: checked, delete: checked },
+    });
+  };
+
+  const setAll = (checked: boolean) => {
+    const next: Record<string, PrivilegeOps> = {};
+    for (const res of PRIVILEGE_RESOURCES) {
+      next[res.key] = {
+        view: checked,
+        create: checked,
+        edit: checked,
+        delete: checked,
+      };
     }
-  }
-  return values;
-}
+    onChange(next);
+  };
 
-export function PrivilegesSection({
-  initialValues,
-  onChange,
-}: PrivilegesSectionProps) {
-  const [privilegeValues, setPrivilegeValues] = useState<
-    Record<string, boolean>
-  >(() => buildDefaultValues(initialValues));
-
-  const updatePrivilege = useCallback(
-    (key: string, op: string, value: boolean) => {
-      setPrivilegeValues((prev) => {
-        const fieldKey = `resources.${key}.${op}`;
-        const newValues = { ...prev, [fieldKey]: value };
-        onChange?.(newValues);
-        return newValues;
-      });
-    },
-    [onChange],
-  );
-
-  const resourceCheckState = useCallback(
-    (key: string): "all" | "some" | "none" => {
-      const checked = PRIV_OPS.filter(
-        (op) => privilegeValues[`resources.${key}.${op}`] === true,
-      ).length;
-      if (checked === PRIV_OPS.length) return "all";
-      return checked > 0 ? "some" : "none";
-    },
-    [privilegeValues],
-  );
-
-  const allCheckState = useCallback((): "all" | "some" | "none" => {
-    const total = PRIVILEGE_RESOURCES.length * PRIV_OPS.length;
-    const checked = PRIVILEGE_RESOURCES.reduce(
-      (acc, res) =>
-        acc +
-        PRIV_OPS.filter(
-          (op) => privilegeValues[`resources.${res.key}.${op}`] === true,
-        ).length,
-      0,
-    );
-    if (checked === total) return "all";
-    return checked > 0 ? "some" : "none";
-  }, [privilegeValues]);
-
-  const setResourceValues = useCallback(
-    (key: string, value: boolean) => {
-      setPrivilegeValues((prev) => {
-        const newValues = { ...prev };
-        for (const op of PRIV_OPS) {
-          newValues[`resources.${key}.${op}`] = value;
-        }
-        onChange?.(newValues);
-        return newValues;
-      });
-    },
-    [onChange],
-  );
-
-  const setAllValues = useCallback(
-    (value: boolean) => {
-      const newValues: Record<string, boolean> = {};
-      for (const res of PRIVILEGE_RESOURCES) {
-        for (const op of PRIV_OPS) {
-          newValues[`resources.${res.key}.${op}`] = value;
-        }
-      }
-      setPrivilegeValues(newValues);
-      onChange?.(newValues);
-    },
-    [onChange],
-  );
-
-  const allState = allCheckState();
+  const allState = getAllState(value);
 
   return (
     <div>
@@ -134,9 +109,8 @@ export function PrivilegesSection({
       <div className="flex items-center gap-2 mb-3 p-2 rounded-md bg-primary/5 border border-primary/20">
         <Checkbox
           id="privileges_all"
-          checked={allState === "all"}
-          data-indeterminate={allState === "some" || undefined}
-          onCheckedChange={(checked) => setAllValues(checked === true)}
+          checked={allState === "all" || (allState === "some" && "indeterminate")}
+          onCheckedChange={(checked) => setAll(checked === true)}
           className="cursor-pointer"
         />
         <Label
@@ -151,7 +125,7 @@ export function PrivilegesSection({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {PRIVILEGE_RESOURCES.map((resource) => {
           const IconComponent = ICON_MAP[resource.icon] || Cog;
-          const state = resourceCheckState(resource.key);
+          const state = getResourceState(value, resource.key);
 
           return (
             <div
@@ -159,16 +133,14 @@ export function PrivilegesSection({
               className="border border-border/50 rounded-lg p-3 bg-card hover:border-primary/50 transition-colors"
             >
               {/* Resource header */}
-              <div
-                className="flex items-center gap-2 pb-2 mb-2 border-b border-border/40 cursor-pointer"
-                onClick={() => setResourceValues(resource.key, state !== "all")}
-              >
+              <div className="flex items-center gap-2 pb-2 mb-2 border-b border-border/40">
                 <Checkbox
                   id={`all_${resource.key}`}
-                  checked={state === "all"}
-                  data-indeterminate={state === "some" || undefined}
+                  checked={
+                    state === "all" || (state === "some" && "indeterminate")
+                  }
                   onCheckedChange={(checked) =>
-                    setResourceValues(resource.key, checked === true)
+                    setResource(resource.key, checked === true)
                   }
                   className="cursor-pointer"
                 />
@@ -185,12 +157,7 @@ export function PrivilegesSection({
               <div className="flex flex-col gap-1.5">
                 {PRIV_OPS.map((op) => {
                   const fieldKey = `resources.${resource.key}.${op}`;
-                  const opLabels: Record<string, string> = {
-                    view: "Ver",
-                    create: "Crear",
-                    edit: "Editar",
-                    delete: "Eliminar",
-                  };
+                  const isChecked = value[resource.key]?.[op] === true;
 
                   return (
                     <label
@@ -199,13 +166,13 @@ export function PrivilegesSection({
                     >
                       <Checkbox
                         id={fieldKey}
-                        checked={privilegeValues[fieldKey] === true}
+                        checked={isChecked}
                         onCheckedChange={(checked) =>
-                          updatePrivilege(resource.key, op, checked === true)
+                          setOp(resource.key, op, checked === true)
                         }
                         className="cursor-pointer"
                       />
-                      <span>{opLabels[op]}</span>
+                      <span>{OP_LABELS[op]}</span>
                     </label>
                   );
                 })}
