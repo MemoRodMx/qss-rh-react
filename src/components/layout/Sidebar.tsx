@@ -282,7 +282,11 @@ export function Sidebar({ collapsed, onToggle, variant = "sidebar" }: SidebarPro
             </div>
 
             {/* Logout with confirmation dialog */}
-            <Dialog open={logoutDialogOpen} onOpenChange={setLogoutDialogOpen}>
+            <Dialog
+              open={logoutDialogOpen}
+              onOpenChange={setLogoutDialogOpen}
+              dismissible={false}
+            >
               <DialogTrigger
                 render={
                   <Button

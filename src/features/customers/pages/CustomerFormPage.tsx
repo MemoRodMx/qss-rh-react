@@ -1032,7 +1032,7 @@ export function CustomerFormPage() {
                         </span>
                         <span className="text-xs font-semibold">Puesto {localIdx + 1}</span>
                       </div>
-                      <AlertDialog>
+                      <AlertDialog dismissible={false}>
                         <AlertDialogTrigger asChild>
                           <Button
                             type="button"

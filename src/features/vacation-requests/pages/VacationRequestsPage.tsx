@@ -57,7 +57,7 @@ function DeleteDialog({
   if (!request) return null;
 
   return (
-    <Dialog open={!!request} onOpenChange={onClose}>
+    <Dialog open={!!request} onOpenChange={onClose} dismissible={false}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

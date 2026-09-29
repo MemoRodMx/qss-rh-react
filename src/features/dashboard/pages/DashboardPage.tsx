@@ -80,7 +80,7 @@ export function DashboardPage() {
         <div className="space-y-1">
           <p className="text-sm font-medium text-accent">{greeting}</p>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Dashboard
+            QSS RRHH
           </h1>
           <p className="text-sm text-muted-foreground">
             Resumen general de la empresa

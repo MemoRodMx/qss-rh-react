@@ -313,7 +313,11 @@ export function AttendanceRecordDetailPage() {
       )}
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        dismissible={false}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Eliminar Registro</DialogTitle>

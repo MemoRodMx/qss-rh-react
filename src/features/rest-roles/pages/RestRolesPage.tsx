@@ -257,7 +257,11 @@ export default function RestRolesPage() {
       )}
 
       {/* Delete Dialog */}
-      <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={() => setDeleteTarget(null)}
+        dismissible={false}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

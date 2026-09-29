@@ -795,6 +795,7 @@ export function DirectSupervisorFormPage() {
           onOpenChange={(open) => {
             if (!open) setConfirmAction(null);
           }}
+          dismissible={false}
         >
           <DialogContent className="sm:max-w-md">
             <DialogHeader>

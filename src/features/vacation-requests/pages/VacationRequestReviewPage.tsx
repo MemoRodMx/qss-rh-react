@@ -377,7 +377,11 @@ export function VacationRequestReviewPage() {
       )}
 
       {/* ── Confirmation Dialog ────────────────────────────────────────────── */}
-      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+      <Dialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        dismissible={false}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">

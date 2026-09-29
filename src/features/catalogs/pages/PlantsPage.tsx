@@ -188,6 +188,7 @@ export function PlantsPage() {
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
+        dismissible={false}
       >
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
