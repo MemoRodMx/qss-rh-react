@@ -23,6 +23,7 @@ import {
 
 import { useAuth } from "@/features/auth/context/AuthContext";
 import { APP_NAME } from "@/lib/constants";
+import { ROLE_LABEL_MAP } from "@/lib/roles";
 import { Avatar, AvatarFallback, AvatarBadge } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -84,32 +85,10 @@ const navSections = [
   },
 ];
 
-const roleConfig: Record<
-  string,
-  { label: string; variant: "default" | "secondary" | "outline" }
-> = {
-  System: { label: "Sistema", variant: "default" },
-  Admin: { label: "Admin", variant: "secondary" },
-  User: { label: "Usuario", variant: "outline" },
-};
-
 function RoleBadge({ role }: { role: string }) {
-  const config = roleConfig[role] ?? {
-    label: role,
-    variant: "default" as const,
-  };
   return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none",
-        config.variant === "default" &&
-          "bg-[hsl(var(--sidebar-accent)_/_0.15)] text-[hsl(var(--sidebar-accent))]",
-        config.variant === "secondary" && "bg-emerald-500/15 text-emerald-400",
-        config.variant === "outline" &&
-          "bg-[hsl(var(--sidebar-text)_/_0.08)] text-[hsl(var(--sidebar-muted))]",
-      )}
-    >
-      {config.label}
+    <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none bg-[hsl(var(--sidebar-accent)_/_0.15)] text-[hsl(var(--sidebar-accent))]">
+      {ROLE_LABEL_MAP[role] ?? role}
     </span>
   );
 }

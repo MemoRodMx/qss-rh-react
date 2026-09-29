@@ -76,20 +76,4 @@ export interface UserListResponse {
 }
 
 // ── Role options ─────────────────────────────────────────────────────────────
-export interface RoleOption {
-  value: string;
-  label: string;
-  icon: string;
-}
-
-export const ALL_ROLE_OPTIONS: RoleOption[] = [
-  { value: "System", label: "System", icon: "Shield" },
-  { value: "Recursos Humanos", label: "Recursos Humanos", icon: "Users" },
-  { value: "Gerente", label: "Gerente", icon: "Briefcase" },
-  { value: "Supervisor", label: "Supervisor", icon: "Eye" },
-  { value: "Coordinador", label: "Coordinador", icon: "GitBranch" },
-];
-
-export const ROLE_ICON_MAP: Record<string, string> = Object.fromEntries(
-  ALL_ROLE_OPTIONS.map((r) => [r.value, r.icon]),
-);
+// Definición centralizada en src/lib/roles.ts (fuente única de verdad).

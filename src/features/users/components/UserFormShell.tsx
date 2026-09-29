@@ -13,14 +13,11 @@ import {
   AlertCircle,
   Shield,
   User,
-  Users,
-  Briefcase,
-  Eye,
-  GitBranch,
 } from "lucide-react";
 import { PrivilegesSection } from "./PrivilegesSection";
 import { EmployeeSearchInput } from "./EmployeeSearchInput";
-import type { RoleOption, EmployeeOption, PrivilegeOps } from "../types";
+import type { EmployeeOption, PrivilegeOps } from "../types";
+import type { RoleOption } from "@/lib/roles";
 import type { UseFormRegister, FieldErrors } from "react-hook-form";
 import type { UserFormValues } from "../types";
 
@@ -55,14 +52,6 @@ interface UserFormShellProps {
   onSubmit: () => void;
   navigate: ReturnType<typeof useNavigate>;
 }
-
-const ROLE_ICONS: Record<string, React.ReactNode> = {
-  System: <Shield className="h-3.5 w-3.5" />,
-  "Recursos Humanos": <Users className="h-3.5 w-3.5" />,
-  Gerente: <Briefcase className="h-3.5 w-3.5" />,
-  Supervisor: <Eye className="h-3.5 w-3.5" />,
-  Coordinador: <GitBranch className="h-3.5 w-3.5" />,
-};
 
 export function UserFormShell({
   isEditMode,
@@ -210,7 +199,7 @@ export function UserFormShell({
                     {roleOptions.map((role) => (
                       <SelectItem key={role.value} value={role.value}>
                         <span className="flex items-center gap-2">
-                          {ROLE_ICONS[role.value]}
+                          <role.icon className="h-3.5 w-3.5" />
                           <span>{role.label}</span>
                         </span>
                       </SelectItem>

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import api from "@/lib/api";
+import { ROLES } from "@/lib/roles";
 import { directSupervisorsService } from "../services/directSupervisorsService";
 import type { AreaOption, ShiftOption, EmployeeSuggestion } from "../types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,11 +103,10 @@ export function DirectSupervisorFormPage() {
     "toggle-access" | "remove-user" | null
   >(null);
 
-  const roleOptions = [
-    { value: "Supervisor", label: "Supervisor" },
-    { value: "Gerente", label: "Gerente" },
-    { value: "Coordinador", label: "Coordinador" },
-  ];
+  const roleOptions = ["Supervisor", "Gerente", "Coordinador"].map((value) => {
+    const role = ROLES.find((r) => r.value === value);
+    return { value, label: role?.label ?? value };
+  });
 
   const {
     handleSubmit,

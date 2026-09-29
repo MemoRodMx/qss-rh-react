@@ -4,9 +4,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { userService } from "../services/userService";
+import { ALL_ROLE_OPTIONS } from "@/lib/roles";
+import { useAuth } from "@/features/auth/context/AuthContext";
 import {
   PRIVILEGE_RESOURCES,
-  ALL_ROLE_OPTIONS,
   type UserFormValues,
   type EmployeeOption,
   type PrivilegeOps,
@@ -72,7 +73,8 @@ export function useUserForm() {
   >([]);
   const [selectedEmployee, setSelectedEmployee] =
     useState<EmployeeOption | null>(null);
-  const [canAssignSystemRole, setCanAssignSystemRole] = useState(false);
+  const { user: currentUser } = useAuth();
+  const canAssignSystemRole = currentUser?.role === "System";
 
   // Build default privilege values
   const buildDefaultPrivileges = useCallback((): Record<string, PrivilegeOps> => {
@@ -211,9 +213,15 @@ export function useUserForm() {
   };
 
   // ── Role options (filter System if not allowed) ────────────────────────────
-  const roleOptions = canAssignSystemRole
+  const MOBILE_ONLY_ROLES = ["Gerente", "Supervisor", "Coordinador"];
+  const roleOptions = (canAssignSystemRole
     ? ALL_ROLE_OPTIONS
-    : ALL_ROLE_OPTIONS.filter((r) => r.value !== "System");
+    : ALL_ROLE_OPTIONS.filter((r) => r.value !== "System")
+  ).map((r) =>
+    MOBILE_ONLY_ROLES.includes(r.value)
+      ? { ...r, label: `${r.label} (exclusivo app móvil)` }
+      : r,
+  );
 
   return {
     // State
@@ -226,7 +234,6 @@ export function useUserForm() {
     employeeSuggestions,
     setEmployeeSuggestions,
     canAssignSystemRole,
-    setCanAssignSystemRole,
 
     // Form
     form,
